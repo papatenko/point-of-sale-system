@@ -9,10 +9,10 @@
       "previewLimit": 50,
       "server": "localhost",
       "port": 3306,
-      "driver": "MariaDB",
-      "database": "point_of_sale",
+      "driver": "MySQL",
+      "database": "point_of_sales",
       "username": "root",
-      "name": "point_of_sale"
+      "name": "point_of_sales"
     }
   ]
 }
