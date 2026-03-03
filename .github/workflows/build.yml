@@ -34,11 +34,12 @@ jobs:
         run: npm install
         working-directory: frontend
 
-      - name: Build frontend
+      - name: Build root
         run: npm run build
-        working-directory: frontend
 
-      - name: Build backend (if applicable)
-        run: |
-          if [ -f package.json ] && grep -q 'build' package.json; then npm run build; else echo "No build script"; fi
-        working-directory: backend
+    #   Building backend just starts the server
+    #   TODO: Figure out how to build turborepo
+    #   - name: Build backend (if applicable)
+    #     run: |
+    #       if [ -f package.json ] && grep -q 'build' package.json; then npm run build; else echo "No build script"; fi
+    #     working-directory: backend
