@@ -101,7 +101,7 @@ CREATE TABLE ingredients (
     ingredient_name      VARCHAR(100) NOT NULL,
     category             VARCHAR(50),
     unit_of_measure      ENUM('g','kg','ml','l','tsp','tbsp','cup','oz','lb','pcs'),
-    current_unit_cost    DECIMAL(8,2) NOT NULL,
+    current_unit_cost    DECIMAL(8,2) UNSIGNED NOT NULL,
     storage_time         SMALLINT,
     preferred_supplier_id INT,
     CONSTRAINT fk_ingredients_supplier
@@ -116,8 +116,8 @@ CREATE TABLE truck_inventory (
     inventory_id      INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
     license_plate     VARCHAR(20)   NOT NULL,
     ingredient_id     INT           NOT NULL,
-    quantity_on_hand  DECIMAL(10,2) NOT NULL DEFAULT 0,
-    reorder_threshold DECIMAL(10,2) NOT NULL,
+    quantity_on_hand  DECIMAL(10,2) UNSIGNED NOT NULL DEFAULT 0,
+    reorder_threshold DECIMAL(10,2) UNSIGNED NOT NULL,
     expiration_date   DATETIME,
     last_restocked    TIMESTAMP,
     CONSTRAINT fk_tinv_truck
@@ -163,7 +163,7 @@ CREATE TABLE checkout (
     order_type     ENUM('walk-in', 'online-pickup') NOT NULL,
     order_status   ENUM('pending', 'preparing', 'ready', 'completed', 'cancelled') NOT NULL,
     scheduled_time DATETIME,
-    total_price    DECIMAL(10,2) NOT NULL,
+    total_price    DECIMAL(10,2) UNSIGNED NOT NULL,
     payment_method ENUM('cash', 'credit', 'debit') NOT NULL,
     payment_status ENUM('pending', 'completed', 'cancelled', 'refunded') NOT NULL,
     CONSTRAINT fk_checkout_truck
@@ -194,7 +194,7 @@ CREATE TABLE supply_orders (
     expected_delivery_date DATE,
     actual_delivery_date   DATE,
     status                 ENUM('pending', 'ordered', 'received', 'cancelled'),
-    total_cost             DECIMAL(10,2),
+    total_cost             DECIMAL(10,2) UNSIGNED,
     CONSTRAINT fk_supplyorder_supplier
         FOREIGN KEY (supplier_id)   REFERENCES suppliers(supplier_id),
     CONSTRAINT fk_supplyorder_truck
@@ -207,9 +207,9 @@ CREATE TABLE supply_order_items (
     po_item_id        INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
     po_id             INT           NOT NULL,
     ingredient_id     INT           NOT NULL,
-    quantity_ordered  DECIMAL(10,2) NOT NULL,
-    quantity_received DECIMAL(10,2) DEFAULT 0,
-    unit_cost         DECIMAL(8,2)  NOT NULL,
+    quantity_ordered  DECIMAL(10,2) UNSIGNED NOT NULL,
+    quantity_received DECIMAL(10,2) UNSIGNED DEFAULT 0,
+    unit_cost         DECIMAL(8,2)  UNSIGNED NOT NULL,
     line_total        DECIMAL(10,2) NOT NULL,
     CONSTRAINT fk_poitems_po
         FOREIGN KEY (po_id)          REFERENCES supply_orders(po_id),
@@ -223,8 +223,8 @@ CREATE TABLE reorder_alerts (
     alert_id          INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
     license_plate     VARCHAR(20)   NOT NULL,
     ingredient_id     INT           NOT NULL,
-    current_quantity  DECIMAL(10,2) NOT NULL,
-    reorder_threshold DECIMAL(10,2) NOT NULL,
+    current_quantity  DECIMAL(10,2) UNSIGNED NOT NULL,
+    reorder_threshold DECIMAL(10,2) UNSIGNED NOT NULL,
     alert_created     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
     alert_status      ENUM('active', 'ordered', 'resolved'),
     resolved_date     TIMESTAMP,
