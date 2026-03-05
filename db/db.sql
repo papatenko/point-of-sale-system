@@ -254,3 +254,5 @@ CREATE TABLE inventory_adjustments (
     CONSTRAINT fk_adjinv_employee
         FOREIGN KEY (adjusted_by)   REFERENCES employees(email)
 );
+
+--using this remember how to add to github
