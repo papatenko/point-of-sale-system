@@ -15,10 +15,9 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-
   resolve: {
     alias: {
-      src: path.resolve("src/"),
+      "@": path.resolve("./src"),
     },
   },
 });
