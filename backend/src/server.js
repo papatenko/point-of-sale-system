@@ -57,26 +57,3 @@ const server = createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log("Listening on port 3000");
 });
-
-// Create a connection to the database
-const connection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
-
-// Connect to the database
-connection.connect((err) => {
-  if (err) throw err;
-  console.log("Connected to MySQL Database!");
-
-  // Example query
-  connection.query("SELECT * FROM users", (err, results) => {
-    if (err) throw err;
-    console.log(results);
-  });
-
-  // Close the connection
-  connection.end();
-});

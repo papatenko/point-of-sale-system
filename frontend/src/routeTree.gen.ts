@@ -8,192 +8,192 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as EmployeeRouteRouteImport } from './routes/employee/route'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as EmployeeIndexRouteImport } from './routes/employee/index'
-import { Route as EmployeeSearchRouteImport } from './routes/employee/search'
-import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
-import { Route as EmployeePosRouteImport } from './routes/employee/pos'
-import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
-import { Route as EmployeeCreationRouteImport } from './routes/employee/creation'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as EmployeeRouteRouteImport } from "./routes/employee/route";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as EmployeeIndexRouteImport } from "./routes/employee/index";
+import { Route as EmployeeSearchRouteImport } from "./routes/employee/search";
+import { Route as EmployeeReportsRouteImport } from "./routes/employee/reports";
+import { Route as EmployeePosRouteImport } from "./routes/employee/pos";
+import { Route as EmployeeInventoryRouteImport } from "./routes/employee/inventory";
+import { Route as EmployeeCreationRouteImport } from "./routes/employee/creation";
 
 const EmployeeRouteRoute = EmployeeRouteRouteImport.update({
-  id: '/employee',
-  path: '/employee',
+  id: "/employee",
+  path: "/employee",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const EmployeeIndexRoute = EmployeeIndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => EmployeeRouteRoute,
-} as any)
+} as any);
 const EmployeeSearchRoute = EmployeeSearchRouteImport.update({
-  id: '/search',
-  path: '/search',
+  id: "/search",
+  path: "/search",
   getParentRoute: () => EmployeeRouteRoute,
-} as any)
+} as any);
 const EmployeeReportsRoute = EmployeeReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
+  id: "/reports",
+  path: "/reports",
   getParentRoute: () => EmployeeRouteRoute,
-} as any)
+} as any);
 const EmployeePosRoute = EmployeePosRouteImport.update({
-  id: '/pos',
-  path: '/pos',
+  id: "/pos",
+  path: "/pos",
   getParentRoute: () => EmployeeRouteRoute,
-} as any)
+} as any);
 const EmployeeInventoryRoute = EmployeeInventoryRouteImport.update({
-  id: '/inventory',
-  path: '/inventory',
+  id: "/inventory",
+  path: "/inventory",
   getParentRoute: () => EmployeeRouteRoute,
-} as any)
+} as any);
 const EmployeeCreationRoute = EmployeeCreationRouteImport.update({
-  id: '/creation',
-  path: '/creation',
+  id: "/creation",
+  path: "/creation",
   getParentRoute: () => EmployeeRouteRoute,
-} as any)
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/employee': typeof EmployeeRouteRouteWithChildren
-  '/employee/creation': typeof EmployeeCreationRoute
-  '/employee/inventory': typeof EmployeeInventoryRoute
-  '/employee/pos': typeof EmployeePosRoute
-  '/employee/reports': typeof EmployeeReportsRoute
-  '/employee/search': typeof EmployeeSearchRoute
-  '/employee/': typeof EmployeeIndexRoute
+  "/": typeof IndexRoute;
+  "/employee": typeof EmployeeRouteRouteWithChildren;
+  "/employee/creation": typeof EmployeeCreationRoute;
+  "/employee/inventory": typeof EmployeeInventoryRoute;
+  "/employee/pos": typeof EmployeePosRoute;
+  "/employee/reports": typeof EmployeeReportsRoute;
+  "/employee/search": typeof EmployeeSearchRoute;
+  "/employee/": typeof EmployeeIndexRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/employee/creation': typeof EmployeeCreationRoute
-  '/employee/inventory': typeof EmployeeInventoryRoute
-  '/employee/pos': typeof EmployeePosRoute
-  '/employee/reports': typeof EmployeeReportsRoute
-  '/employee/search': typeof EmployeeSearchRoute
-  '/employee': typeof EmployeeIndexRoute
+  "/": typeof IndexRoute;
+  "/employee/creation": typeof EmployeeCreationRoute;
+  "/employee/inventory": typeof EmployeeInventoryRoute;
+  "/employee/pos": typeof EmployeePosRoute;
+  "/employee/reports": typeof EmployeeReportsRoute;
+  "/employee/search": typeof EmployeeSearchRoute;
+  "/employee": typeof EmployeeIndexRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/employee': typeof EmployeeRouteRouteWithChildren
-  '/employee/creation': typeof EmployeeCreationRoute
-  '/employee/inventory': typeof EmployeeInventoryRoute
-  '/employee/pos': typeof EmployeePosRoute
-  '/employee/reports': typeof EmployeeReportsRoute
-  '/employee/search': typeof EmployeeSearchRoute
-  '/employee/': typeof EmployeeIndexRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/employee": typeof EmployeeRouteRouteWithChildren;
+  "/employee/creation": typeof EmployeeCreationRoute;
+  "/employee/inventory": typeof EmployeeInventoryRoute;
+  "/employee/pos": typeof EmployeePosRoute;
+  "/employee/reports": typeof EmployeeReportsRoute;
+  "/employee/search": typeof EmployeeSearchRoute;
+  "/employee/": typeof EmployeeIndexRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | '/'
-    | '/employee'
-    | '/employee/creation'
-    | '/employee/inventory'
-    | '/employee/pos'
-    | '/employee/reports'
-    | '/employee/search'
-    | '/employee/'
-  fileRoutesByTo: FileRoutesByTo
+    | "/"
+    | "/employee"
+    | "/employee/creation"
+    | "/employee/inventory"
+    | "/employee/pos"
+    | "/employee/reports"
+    | "/employee/search"
+    | "/employee/";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
-    | '/employee/creation'
-    | '/employee/inventory'
-    | '/employee/pos'
-    | '/employee/reports'
-    | '/employee/search'
-    | '/employee'
+    | "/"
+    | "/employee/creation"
+    | "/employee/inventory"
+    | "/employee/pos"
+    | "/employee/reports"
+    | "/employee/search"
+    | "/employee";
   id:
-    | '__root__'
-    | '/'
-    | '/employee'
-    | '/employee/creation'
-    | '/employee/inventory'
-    | '/employee/pos'
-    | '/employee/reports'
-    | '/employee/search'
-    | '/employee/'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/"
+    | "/employee"
+    | "/employee/creation"
+    | "/employee/inventory"
+    | "/employee/pos"
+    | "/employee/reports"
+    | "/employee/search"
+    | "/employee/";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  EmployeeRouteRoute: typeof EmployeeRouteRouteWithChildren
+  IndexRoute: typeof IndexRoute;
+  EmployeeRouteRoute: typeof EmployeeRouteRouteWithChildren;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/employee': {
-      id: '/employee'
-      path: '/employee'
-      fullPath: '/employee'
-      preLoaderRoute: typeof EmployeeRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/employee/': {
-      id: '/employee/'
-      path: '/'
-      fullPath: '/employee/'
-      preLoaderRoute: typeof EmployeeIndexRouteImport
-      parentRoute: typeof EmployeeRouteRoute
-    }
-    '/employee/search': {
-      id: '/employee/search'
-      path: '/search'
-      fullPath: '/employee/search'
-      preLoaderRoute: typeof EmployeeSearchRouteImport
-      parentRoute: typeof EmployeeRouteRoute
-    }
-    '/employee/reports': {
-      id: '/employee/reports'
-      path: '/reports'
-      fullPath: '/employee/reports'
-      preLoaderRoute: typeof EmployeeReportsRouteImport
-      parentRoute: typeof EmployeeRouteRoute
-    }
-    '/employee/pos': {
-      id: '/employee/pos'
-      path: '/pos'
-      fullPath: '/employee/pos'
-      preLoaderRoute: typeof EmployeePosRouteImport
-      parentRoute: typeof EmployeeRouteRoute
-    }
-    '/employee/inventory': {
-      id: '/employee/inventory'
-      path: '/inventory'
-      fullPath: '/employee/inventory'
-      preLoaderRoute: typeof EmployeeInventoryRouteImport
-      parentRoute: typeof EmployeeRouteRoute
-    }
-    '/employee/creation': {
-      id: '/employee/creation'
-      path: '/creation'
-      fullPath: '/employee/creation'
-      preLoaderRoute: typeof EmployeeCreationRouteImport
-      parentRoute: typeof EmployeeRouteRoute
-    }
+    "/employee": {
+      id: "/employee";
+      path: "/employee";
+      fullPath: "/employee";
+      preLoaderRoute: typeof EmployeeRouteRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/employee/": {
+      id: "/employee/";
+      path: "/";
+      fullPath: "/employee/";
+      preLoaderRoute: typeof EmployeeIndexRouteImport;
+      parentRoute: typeof EmployeeRouteRoute;
+    };
+    "/employee/search": {
+      id: "/employee/search";
+      path: "/search";
+      fullPath: "/employee/search";
+      preLoaderRoute: typeof EmployeeSearchRouteImport;
+      parentRoute: typeof EmployeeRouteRoute;
+    };
+    "/employee/reports": {
+      id: "/employee/reports";
+      path: "/reports";
+      fullPath: "/employee/reports";
+      preLoaderRoute: typeof EmployeeReportsRouteImport;
+      parentRoute: typeof EmployeeRouteRoute;
+    };
+    "/employee/pos": {
+      id: "/employee/pos";
+      path: "/pos";
+      fullPath: "/employee/pos";
+      preLoaderRoute: typeof EmployeePosRouteImport;
+      parentRoute: typeof EmployeeRouteRoute;
+    };
+    "/employee/inventory": {
+      id: "/employee/inventory";
+      path: "/inventory";
+      fullPath: "/employee/inventory";
+      preLoaderRoute: typeof EmployeeInventoryRouteImport;
+      parentRoute: typeof EmployeeRouteRoute;
+    };
+    "/employee/creation": {
+      id: "/employee/creation";
+      path: "/creation";
+      fullPath: "/employee/creation";
+      preLoaderRoute: typeof EmployeeCreationRouteImport;
+      parentRoute: typeof EmployeeRouteRoute;
+    };
   }
 }
 
 interface EmployeeRouteRouteChildren {
-  EmployeeCreationRoute: typeof EmployeeCreationRoute
-  EmployeeInventoryRoute: typeof EmployeeInventoryRoute
-  EmployeePosRoute: typeof EmployeePosRoute
-  EmployeeReportsRoute: typeof EmployeeReportsRoute
-  EmployeeSearchRoute: typeof EmployeeSearchRoute
-  EmployeeIndexRoute: typeof EmployeeIndexRoute
+  EmployeeCreationRoute: typeof EmployeeCreationRoute;
+  EmployeeInventoryRoute: typeof EmployeeInventoryRoute;
+  EmployeePosRoute: typeof EmployeePosRoute;
+  EmployeeReportsRoute: typeof EmployeeReportsRoute;
+  EmployeeSearchRoute: typeof EmployeeSearchRoute;
+  EmployeeIndexRoute: typeof EmployeeIndexRoute;
 }
 
 const EmployeeRouteRouteChildren: EmployeeRouteRouteChildren = {
@@ -203,16 +203,16 @@ const EmployeeRouteRouteChildren: EmployeeRouteRouteChildren = {
   EmployeeReportsRoute: EmployeeReportsRoute,
   EmployeeSearchRoute: EmployeeSearchRoute,
   EmployeeIndexRoute: EmployeeIndexRoute,
-}
+};
 
 const EmployeeRouteRouteWithChildren = EmployeeRouteRoute._addFileChildren(
   EmployeeRouteRouteChildren,
-)
+);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EmployeeRouteRoute: EmployeeRouteRouteWithChildren,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
