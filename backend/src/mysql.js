@@ -14,7 +14,6 @@ export const database = await mysql.createConnection({
   database: DATABASE_NAME,
 });
 
-// arg order matches main: (url, body, method)
 export async function mySQLQuery(url, body = null, method = "GET") {
 
   // ── Employee routes ──────────────────────────────────────────────
