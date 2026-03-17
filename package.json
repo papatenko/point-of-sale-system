@@ -17,5 +17,9 @@
   "devDependencies": {
     "turbo": "^2.8.12"
   },
-  "packageManager": "npm@10.9.4"
+  "packageManager": "npm@10.9.4",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6"
+  }
 }
