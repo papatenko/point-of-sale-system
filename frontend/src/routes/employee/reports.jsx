@@ -5,13 +5,16 @@ export const Route = createFileRoute('/employee/reports')({
 })
 
 function RouteComponent() {
-  return <div style={{ padding: '20px' }}>
+  //return <div>Hello "reports"!</div>
+  return (
+    <div style={{ padding: '20px' }}>
       <h1>Reports Dashboard</h1>
 
       <div style={{ marginTop: '20px' }}>
-        <h2>Total Orders: {totalOrders}</h2>
-        <h2>Total Items Sold: {totalItemsSold}</h2>
-        <h2>Gross Income: ${grossIncome.toFixed(2)}</h2>
+        <div>Total Orders: </div>
+        <div>Total Items Sold: </div>
+        <div>Gross Income: $</div>
       </div>
     </div>
+  )
 }
