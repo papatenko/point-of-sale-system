@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OrderRouteImport } from './routes/order'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as EmployeeRouteRouteImport } from './routes/employee/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmployeeIndexRouteImport } from './routes/employee/index'
@@ -18,9 +20,20 @@ import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
 import { Route as EmployeePosRouteImport } from './routes/employee/pos'
 import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
 import { Route as EmployeeCreationRouteImport } from './routes/employee/creation'
+import { Route as ConfirmationOrderIdRouteImport } from './routes/confirmation.$orderId'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 
+const OrderRoute = OrderRouteImport.update({
+  id: '/order',
+  path: '/order',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EmployeeRouteRoute = EmployeeRouteRouteImport.update({
   id: '/employee',
   path: '/employee',
@@ -66,6 +79,11 @@ const EmployeeCreationRoute = EmployeeCreationRouteImport.update({
   path: '/creation',
   getParentRoute: () => EmployeeRouteRoute,
 } as any)
+const ConfirmationOrderIdRoute = ConfirmationOrderIdRouteImport.update({
+  id: '/confirmation/$orderId',
+  path: '/confirmation/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/auth/signup',
   path: '/auth/signup',
@@ -80,8 +98,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/employee': typeof EmployeeRouteRouteWithChildren
+  '/checkout': typeof CheckoutRoute
+  '/order': typeof OrderRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -92,8 +113,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/checkout': typeof CheckoutRoute
+  '/order': typeof OrderRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -106,8 +130,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/employee': typeof EmployeeRouteRouteWithChildren
+  '/checkout': typeof CheckoutRoute
+  '/order': typeof OrderRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -121,8 +148,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/employee'
+    | '/checkout'
+    | '/order'
     | '/auth/login'
     | '/auth/signup'
+    | '/confirmation/$orderId'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
@@ -133,8 +163,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/checkout'
+    | '/order'
     | '/auth/login'
     | '/auth/signup'
+    | '/confirmation/$orderId'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
@@ -146,8 +179,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/employee'
+    | '/checkout'
+    | '/order'
     | '/auth/login'
     | '/auth/signup'
+    | '/confirmation/$orderId'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
@@ -160,13 +196,30 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EmployeeRouteRoute: typeof EmployeeRouteRouteWithChildren
+  CheckoutRoute: typeof CheckoutRoute
+  OrderRoute: typeof OrderRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
+  ConfirmationOrderIdRoute: typeof ConfirmationOrderIdRoute
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/order': {
+      id: '/order'
+      path: '/order'
+      fullPath: '/order'
+      preLoaderRoute: typeof OrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/employee': {
       id: '/employee'
       path: '/employee'
@@ -230,6 +283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeCreationRouteImport
       parentRoute: typeof EmployeeRouteRoute
     }
+    '/confirmation/$orderId': {
+      id: '/confirmation/$orderId'
+      path: '/confirmation/$orderId'
+      fullPath: '/confirmation/$orderId'
+      preLoaderRoute: typeof ConfirmationOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/signup': {
       id: '/auth/signup'
       path: '/auth/signup'
@@ -272,8 +332,11 @@ const EmployeeRouteRouteWithChildren = EmployeeRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EmployeeRouteRoute: EmployeeRouteRouteWithChildren,
+  CheckoutRoute: CheckoutRoute,
+  OrderRoute: OrderRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
+  ConfirmationOrderIdRoute: ConfirmationOrderIdRoute,
   AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport

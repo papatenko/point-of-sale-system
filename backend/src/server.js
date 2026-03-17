@@ -43,20 +43,42 @@ async function prepareFile(url) {
   return { streamFile, extension, ifPathExists };
 }
 
+// Read the full JSON body from a request
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", (chunk) => { data += chunk; });
+    req.on("end", () => {
+      try {
+        resolve(data ? JSON.parse(data) : null);
+      } catch {
+        resolve(null);
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
 const server = createServer(async (req, res) => {
-  // Frontend Connection
+  // API routes
+  if (req.url.startsWith("/api")) {
+    const body = req.method === "POST" ? await readBody(req) : null;
+    try {
+      const result = await mySQLQuery(req.url, req.method, body);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  // Frontend static files
   const file = await prepareFile(req.url);
   const fileMimeType = MIME_TYPES[file.extension] || MIME_TYPES.default;
-
-  // If frontend requests from MYSQL...
-  if (req.url.startsWith("/api")) {
-    res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end(await mySQLQuery(req.url));
-  } else {
-    // Else, pipe frontend files
-    res.writeHead(200, { "Content-Type": fileMimeType });
-    file.streamFile.pipe(res);
-  }
+  res.writeHead(200, { "Content-Type": fileMimeType });
+  file.streamFile.pipe(res);
 });
 
 server.listen(PORT, () => {

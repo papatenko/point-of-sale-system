@@ -27,6 +27,14 @@ const RootLayout = () => (
               asChild
               className={navigationMenuTriggerStyle()}
             >
+              <Link to="/order">Order Online</Link>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <NavigationMenuLink
+              asChild
+              className={navigationMenuTriggerStyle()}
+            >
               <Link to="/employee">Employee Dashboard</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
