@@ -18,6 +18,7 @@ import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
 import { Route as EmployeePosRouteImport } from './routes/employee/pos'
 import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
 import { Route as EmployeeCreationRouteImport } from './routes/employee/creation'
+import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 
 const EmployeeRouteRoute = EmployeeRouteRouteImport.update({
@@ -65,6 +66,11 @@ const EmployeeCreationRoute = EmployeeCreationRouteImport.update({
   path: '/creation',
   getParentRoute: () => EmployeeRouteRoute,
 } as any)
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/auth/signup',
+  path: '/auth/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/auth/login',
   path: '/auth/login',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/employee'
     | '/auth/login'
+    | '/auth/signup'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth/login'
+    | '/auth/signup'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/'
     | '/employee'
     | '/auth/login'
+    | '/auth/signup'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
@@ -149,6 +161,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EmployeeRouteRoute: typeof EmployeeRouteRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
+  AuthSignupRoute: typeof AuthSignupRoute
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
@@ -217,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeCreationRouteImport
       parentRoute: typeof EmployeeRouteRoute
     }
+    '/auth/signup': {
+      id: '/auth/signup'
+      path: '/auth/signup'
+      fullPath: '/auth/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/login': {
       id: '/auth/login'
       path: '/auth/login'
@@ -253,6 +273,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EmployeeRouteRoute: EmployeeRouteRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
+  AuthSignupRoute: AuthSignupRoute,
   AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport

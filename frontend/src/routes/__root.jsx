@@ -7,10 +7,11 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const RootLayout = () => (
   <>
-    <div className="w-full p-2 flex">
+    <div className="w-full p-2 flex justify-between">
       <NavigationMenu>
         <NavigationMenuList>
           <NavigationMenuItem>
@@ -31,6 +32,11 @@ const RootLayout = () => (
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>
+      <Avatar>
+        <AvatarImage src="https://github.com/shadcn.png" />
+        <AvatarFallback>CN</AvatarFallback>
+        <Link to="/auth/login">Logout</Link>
+      </Avatar>
     </div>
     <Outlet />
     <TanStackRouterDevtools />
