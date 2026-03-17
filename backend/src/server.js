@@ -1,15 +1,13 @@
 import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
-import dotenv from "dotenv";
-import mysql from "mysql2";
-dotenv.config();
+import mysql from "mysql";
 
-// Grab
+import { mySQLQuery } from "./mysql.js";
 
 // Grabs the built /dist/ directory built from Vite
 const FRONTEND_PATH = path.resolve("..") + "/frontend/dist";
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 // Serves for .then() functions, for whether a file exists or not.
 const toBool = [() => true, () => false];
@@ -47,11 +45,19 @@ async function prepareFile(url) {
 }
 
 const server = createServer(async (req, res) => {
+  // Frontend Connection
   const file = await prepareFile(req.url);
-  const statusCode = file.ifPathExists ? 200 : 404;
   const fileMimeType = MIME_TYPES[file.extension] || MIME_TYPES.default;
-  res.writeHead(statusCode, { "Content-Type": fileMimeType });
-  file.streamFile.pipe(res);
+
+  // If frontend requests from MYSQL...
+  if (req.url.startsWith("/api")) {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end(await mySQLQuery(req.url));
+  } else {
+    // Else, pipe frontend files
+    res.writeHead(200, { "Content-Type": fileMimeType });
+    file.streamFile.pipe(res);
+  }
 });
 
 server.listen(PORT, () => {

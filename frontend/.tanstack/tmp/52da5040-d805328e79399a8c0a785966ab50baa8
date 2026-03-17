@@ -12,13 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as EmployeeRouteRouteImport } from './routes/employee/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmployeeIndexRouteImport } from './routes/employee/index'
-import { Route as AuthIndexRouteImport } from './routes/auth/index'
+import { Route as LoginLoginRouteImport } from './routes/login/login'
 import { Route as EmployeeSearchRouteImport } from './routes/employee/search'
 import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
 import { Route as EmployeePosRouteImport } from './routes/employee/pos'
 import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
 import { Route as EmployeeCreationRouteImport } from './routes/employee/creation'
-import { Route as AuthLoginRouteImport } from './routes/auth/login'
 
 const EmployeeRouteRoute = EmployeeRouteRouteImport.update({
   id: '/employee',
@@ -35,9 +34,9 @@ const EmployeeIndexRoute = EmployeeIndexRouteImport.update({
   path: '/',
   getParentRoute: () => EmployeeRouteRoute,
 } as any)
-const AuthIndexRoute = AuthIndexRouteImport.update({
-  id: '/auth/',
-  path: '/auth/',
+const LoginLoginRoute = LoginLoginRouteImport.update({
+  id: '/login/login',
+  path: '/login/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmployeeSearchRoute = EmployeeSearchRouteImport.update({
@@ -65,46 +64,38 @@ const EmployeeCreationRoute = EmployeeCreationRouteImport.update({
   path: '/creation',
   getParentRoute: () => EmployeeRouteRoute,
 } as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/auth/login',
-  path: '/auth/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/employee': typeof EmployeeRouteRouteWithChildren
-  '/auth/login': typeof AuthLoginRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
-  '/auth/': typeof AuthIndexRoute
+  '/login/login': typeof LoginLoginRoute
   '/employee/': typeof EmployeeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth/login': typeof AuthLoginRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
-  '/auth': typeof AuthIndexRoute
+  '/login/login': typeof LoginLoginRoute
   '/employee': typeof EmployeeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/employee': typeof EmployeeRouteRouteWithChildren
-  '/auth/login': typeof AuthLoginRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
-  '/auth/': typeof AuthIndexRoute
+  '/login/login': typeof LoginLoginRoute
   '/employee/': typeof EmployeeIndexRoute
 }
 export interface FileRouteTypes {
@@ -112,44 +103,40 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/employee'
-    | '/auth/login'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
-    | '/auth/'
+    | '/login/login'
     | '/employee/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/auth/login'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
-    | '/auth'
+    | '/login/login'
     | '/employee'
   id:
     | '__root__'
     | '/'
     | '/employee'
-    | '/auth/login'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
-    | '/auth/'
+    | '/login/login'
     | '/employee/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EmployeeRouteRoute: typeof EmployeeRouteRouteWithChildren
-  AuthLoginRoute: typeof AuthLoginRoute
-  AuthIndexRoute: typeof AuthIndexRoute
+  LoginLoginRoute: typeof LoginLoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -175,11 +162,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeIndexRouteImport
       parentRoute: typeof EmployeeRouteRoute
     }
-    '/auth/': {
-      id: '/auth/'
-      path: '/auth'
-      fullPath: '/auth/'
-      preLoaderRoute: typeof AuthIndexRouteImport
+    '/login/login': {
+      id: '/login/login'
+      path: '/login/login'
+      fullPath: '/login/login'
+      preLoaderRoute: typeof LoginLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/employee/search': {
@@ -217,13 +204,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeCreationRouteImport
       parentRoute: typeof EmployeeRouteRoute
     }
-    '/auth/login': {
-      id: '/auth/login'
-      path: '/auth/login'
-      fullPath: '/auth/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -252,8 +232,7 @@ const EmployeeRouteRouteWithChildren = EmployeeRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EmployeeRouteRoute: EmployeeRouteRouteWithChildren,
-  AuthLoginRoute: AuthLoginRoute,
-  AuthIndexRoute: AuthIndexRoute,
+  LoginLoginRoute: LoginLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
