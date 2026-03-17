@@ -17,6 +17,7 @@ export async function getDatabase() {
 }
 
 export async function mySQLQuery(url, body = null, method = "GET") {
+  const db = await getDatabase();
 
   // ── Employee routes ──────────────────────────────────────────────
   if (url === "/api/employee") {
@@ -28,24 +29,24 @@ export async function mySQLQuery(url, body = null, method = "GET") {
     //   console.log("Transaction result:", result);
     //   return JSON.stringify(result);
     // }
-    const [menuItems] = await database.query(
+    const [menuItems] = await db.query(
       "SELECT * FROM menu_items WHERE is_available = TRUE",
     );
     console.log("Fetching menu items:", menuItems.length);
     return JSON.stringify(menuItems);
 
   } else if (url === "/api/employee/reports") {
-    database.query();
+    // TODO
   } else if (url === "/api/employee/inventory") {
-    database.query();
+    // TODO
   } else if (url === "/api/employee/creation") {
-    database.query();
+    // TODO
   } else if (url === "/api/employee/jsearch") {
-    database.query();
+    // TODO
 
   // ── GET /api/trucks ──────────────────────────────────────────────
   } else if (url === "/api/trucks" && method === "GET") {
-    const [rows] = await database.query(`
+    const [rows] = await db.query(`
       SELECT license_plate, truck_name, current_location
       FROM food_trucks
       ORDER BY truck_name
@@ -54,7 +55,7 @@ export async function mySQLQuery(url, body = null, method = "GET") {
 
   // ── GET /api/menu ────────────────────────────────────────────────
   } else if (url === "/api/menu" && method === "GET") {
-    const [rows] = await database.query(`
+    const [rows] = await db.query(`
       SELECT
         m.menu_item_id,
         m.item_name,
@@ -87,7 +88,7 @@ export async function mySQLQuery(url, body = null, method = "GET") {
       .reduce((sum, i) => sum + parseFloat(i.price) * parseInt(i.quantity), 0)
       .toFixed(2);
 
-    const [result] = await database.query(
+    const [result] = await db.query(
       `INSERT INTO checkout
          (order_number, license_plate, customer_email, order_type, order_status,
           total_price, payment_method, payment_status)
@@ -100,7 +101,7 @@ export async function mySQLQuery(url, body = null, method = "GET") {
       const lineTotal = (
         parseFloat(item.price) * parseInt(item.quantity)
       ).toFixed(2);
-      await database.query(
+      await db.query(
         `INSERT INTO order_items (order_id, menu_item_id, quantity, line_total_price)
          VALUES (?, ?, ?, ?)`,
         [orderId, item.menuItemId, item.quantity, lineTotal]
@@ -113,7 +114,7 @@ export async function mySQLQuery(url, body = null, method = "GET") {
   } else if (url.startsWith("/api/orders/") && method === "GET") {
     const orderId = url.replace("/api/orders/", "");
 
-    const [rows] = await database.query(
+    const [rows] = await db.query(
       `SELECT
          c.checkout_id,
          c.order_number,
@@ -160,10 +161,8 @@ export async function mySQLQuery(url, body = null, method = "GET") {
   }
 }
 
-// Test connection
-try {
-  const [results] = await database.query("SELECT 1 + 1 AS solution");
-  console.log("Connected!", results);
-} catch (err) {
-  console.error("Connection failed:", err);
-}
+// Test connection on startup
+getDatabase()
+  .then((db) => db.query("SELECT 1 + 1 AS solution"))
+  .then(([results]) => console.log("DB Connected!", results))
+  .catch((err) => console.error("DB Connection failed:", err));
