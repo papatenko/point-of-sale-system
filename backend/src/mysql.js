@@ -12,7 +12,7 @@ const database = mysql.createConnection({
 
 export async function mySQLQuery(url) {
   if (url === "/api/employee") {
-    return "HI";
+    return "HI FROM MYSQL";
   } else if (url === "/api/employee/pos") {
     database.query();
   } else if (url === "/api/employee/reports") {
@@ -29,16 +29,16 @@ export async function mySQLQuery(url) {
 }
 
 // Test Connect to the database
-mysql.connect((err) => {
-  if (err) throw err;
-  console.log("Connected to MySQL Database!");
+// mysql.connect((err) => {
+//   if (err) throw err;
+//   console.log("Connected to MySQL Database!");
 
-  // Example query
-  mysql.query("SELECT * FROM users", (err, results) => {
-    if (err) throw err;
-    console.log(results);
-  });
+//   // Example query
+//   mysql.query("SELECT * FROM users", (err, results) => {
+//     if (err) throw err;
+//     console.log(results);
+//   });
 
-  // Close the connection
-  connection.end();
-});
+//   // Close the connection
+//   connection.end();
+// });
