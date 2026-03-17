@@ -1,7 +1,6 @@
 import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
-import mysql from "mysql";
 
 import { mySQLQuery } from "./mysql.js";
 
