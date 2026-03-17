@@ -33,9 +33,10 @@ const RootLayout = () => (
         </NavigationMenuList>
       </NavigationMenu>
       <Avatar>
-        <AvatarImage src="https://github.com/shadcn.png" />
-        <AvatarFallback>CN</AvatarFallback>
-        <Link to="/auth/login">Logout</Link>
+        <Link to="/auth/login">
+          <AvatarImage src="https://github.com/shadcn.png" />
+          <AvatarFallback>CN</AvatarFallback>
+        </Link>
       </Avatar>
     </div>
     <Outlet />
