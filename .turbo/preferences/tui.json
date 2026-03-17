@@ -1,8 +1,4 @@
 {
   "is_task_list_visible": true,
-<<<<<<< HEAD
-  "active_task": "frontend#dev"
-=======
-  "active_task": "backend#build"
->>>>>>> 40e601b7544be7f33d4c46fc7ca61e62b389d366
+  "active_task": "frontend#build"
 }

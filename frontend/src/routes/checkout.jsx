@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCart } from "@/redux/cartSlice";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
@@ -18,10 +18,23 @@ function CheckoutPage() {
     0
   );
 
-  const [email, setEmail] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentMethod, setPaymentMethod] = useState("credit");
+  const [licensePlate, setLicensePlate] = useState("");
+  const [trucks, setTrucks] = useState([]);
+  const [trucksLoading, setTrucksLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/trucks")
+      .then((r) => r.json())
+      .then((data) => {
+        setTrucks(data);
+        if (data.length > 0) setLicensePlate(data[0].license_plate);
+      })
+      .catch(() => {})
+      .finally(() => setTrucksLoading(false));
+  }, []);
 
   if (cartItems.length === 0) {
     return (
@@ -47,8 +60,9 @@ function CheckoutPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerEmail: email.trim() || null,
+          customerEmail: null,
           paymentMethod,
+          licensePlate,
           items: cartItems.map((i) => ({
             menuItemId: i.menuItemId,
             quantity: i.quantity,
@@ -90,30 +104,49 @@ function CheckoutPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="md:col-span-3 space-y-5">
             <div className="bg-white rounded-xl shadow-sm border p-6">
-              <h2 className="text-base font-semibold mb-4">
-                Contact Information
-              </h2>
-              <label className="block mb-1.5 text-sm font-medium text-gray-700">
-                Email{" "}
-                <span className="text-gray-400 font-normal">(optional)</span>
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              />
-              <p className="text-xs text-gray-400 mt-2">
-                Provide your email to receive order updates.
-              </p>
+              <h2 className="text-base font-semibold mb-4">Pickup Location</h2>
+              {trucksLoading ? (
+                <p className="text-sm text-gray-400">Loading locations...</p>
+              ) : trucks.length === 0 ? (
+                <p className="text-sm text-red-500">No pickup locations available.</p>
+              ) : (
+                <div className="space-y-2.5">
+                  {trucks.map((truck) => (
+                    <label
+                      key={truck.license_plate}
+                      className={`flex items-start gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
+                        licensePlate === truck.license_plate
+                          ? "border-amber-500 bg-amber-50"
+                          : "border-gray-200 hover:bg-gray-50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="licensePlate"
+                        value={truck.license_plate}
+                        checked={licensePlate === truck.license_plate}
+                        onChange={() => setLicensePlate(truck.license_plate)}
+                        className="accent-amber-600 mt-0.5"
+                      />
+                      <div>
+                        <p className="text-sm font-medium">{truck.truck_name}</p>
+                        {truck.current_location && (
+                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                            <MapPin size={11} />
+                            {truck.current_location}
+                          </p>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border p-6">
               <h2 className="text-base font-semibold mb-4">Payment Method</h2>
               <div className="space-y-2.5">
                 {[
-                  { value: "cash", label: "Cash at Pickup" },
                   { value: "credit", label: "Credit Card at Pickup" },
                   { value: "debit", label: "Debit Card at Pickup" },
                 ].map((opt) => (

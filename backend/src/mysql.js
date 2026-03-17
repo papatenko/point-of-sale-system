@@ -1,23 +1,10 @@
 import mysql from "mysql2/promise";
 
-<<<<<<< HEAD
 const database = await mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-=======
-const DATABASE_HOST = process.env.DB_HOST;
-const DATABASE_USER = process.env.DB_USER;
-const DATABASE_PASSWORD = process.env.DB_PASSWORD;
-const DATABASE_NAME = process.env.DB_NAME;
-
-const database = await mysql.createConnection({
-  host: DATABASE_HOST,
-  user: DATABASE_USER,
-  password: DATABASE_PASSWORD,
-  database: DATABASE_NAME,
->>>>>>> 40e601b7544be7f33d4c46fc7ca61e62b389d366
 });
 
 export async function mySQLQuery(url, method = "GET", body = null) {
@@ -34,6 +21,15 @@ export async function mySQLQuery(url, method = "GET", body = null) {
     // TODO
   } else if (url === "/api/employee/jsearch") {
     // TODO
+
+  // ── GET /api/trucks ──────────────────────────────────────────────
+  } else if (url === "/api/trucks" && method === "GET") {
+    const [rows] = await database.query(`
+      SELECT license_plate, truck_name, current_location
+      FROM food_trucks
+      ORDER BY truck_name
+    `);
+    return rows;
 
   // ── GET /api/menu ────────────────────────────────────────────────
   } else if (url === "/api/menu" && method === "GET") {
@@ -56,10 +52,13 @@ export async function mySQLQuery(url, method = "GET", body = null) {
 
   // ── POST /api/checkout ───────────────────────────────────────────
   } else if (url === "/api/checkout" && method === "POST") {
-    const { customerEmail, paymentMethod, items } = body;
+    const { customerEmail, paymentMethod, licensePlate, items } = body;
 
     if (!items || items.length === 0) {
       throw new Error("Cart is empty.");
+    }
+    if (!licensePlate) {
+      throw new Error("Please select a pickup location.");
     }
 
     const orderNumber = "ORD-" + Date.now();
@@ -71,8 +70,8 @@ export async function mySQLQuery(url, method = "GET", body = null) {
       `INSERT INTO checkout
          (order_number, license_plate, customer_email, order_type, order_status,
           total_price, payment_method, payment_status)
-       VALUES (?, 'ONLINE-1', ?, 'online-pickup', 'pending', ?, ?, 'pending')`,
-      [orderNumber, customerEmail || null, total, paymentMethod]
+       VALUES (?, ?, ?, 'online-pickup', 'pending', ?, ?, 'pending')`,
+      [orderNumber, licensePlate, customerEmail || null, total, paymentMethod]
     );
     const orderId = result.insertId;
 
