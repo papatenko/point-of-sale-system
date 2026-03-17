@@ -1,26 +1,46 @@
 import mysql from "mysql2/promise";
+import { insertTransation } from "./routes/pos.js";
+import "dotenv/config";
 
-const database = await mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+const DATABASE_HOST = process.env.DB_HOST;
+const DATABASE_USER = process.env.DB_USER;
+const DATABASE_PASSWORD = process.env.DB_PASSWORD;
+const DATABASE_NAME = process.env.DB_NAME;
+
+export const database = await mysql.createConnection({
+  host: DATABASE_HOST,
+  user: DATABASE_USER,
+  password: DATABASE_PASSWORD,
+  database: DATABASE_NAME,
 });
 
-export async function mySQLQuery(url, method = "GET", body = null) {
-  // ── Employee routes (existing stubs) ────────────────────────────
+// arg order matches main: (url, body, method)
+export async function mySQLQuery(url, body = null, method = "GET") {
+
+  // ── Employee routes ──────────────────────────────────────────────
   if (url === "/api/employee") {
     return "HI FROM MYSQL";
+
   } else if (url === "/api/employee/pos") {
-    // TODO
+    if (method === "POST" && body) {
+      const result = await insertTransation(body);
+      console.log("Transaction result:", result);
+      return JSON.stringify(result);
+    }
+    const [menuItems] = await database.query(
+      "SELECT * FROM menu_items WHERE is_available = TRUE",
+    );
+    console.log("Fetching menu items:", menuItems.length);
+    return JSON.stringify(menuItems);
+
   } else if (url === "/api/employee/reports") {
-    // TODO
+    database.query();
   } else if (url === "/api/employee/inventory") {
-    // TODO
+    database.query();
   } else if (url === "/api/employee/creation") {
-    // TODO
+    database.query();
   } else if (url === "/api/employee/jsearch") {
-    // TODO
+    database.query();
 
   // ── GET /api/trucks ──────────────────────────────────────────────
   } else if (url === "/api/trucks" && method === "GET") {

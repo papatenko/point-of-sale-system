@@ -64,7 +64,7 @@ const server = createServer(async (req, res) => {
   if (req.url.startsWith("/api")) {
     const body = req.method === "POST" ? await readBody(req) : null;
     try {
-      const result = await mySQLQuery(req.url, req.method, body);
+      const result = await mySQLQuery(req.url, body, req.method);
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(result));
     } catch (err) {
