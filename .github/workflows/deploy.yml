@@ -11,11 +11,6 @@ jobs:
       contents: read
       packages: write
     steps:
-      - name: Checkout code and CI
-        uses: actions/checkout@v4
-      - run: npm ci
-      - run: npm run build
-
       - name: Trigger Coolify redeploy
         run: |
           curl -X POST "${{ secrets.COOLIFY_WEBHOOK }}" \
