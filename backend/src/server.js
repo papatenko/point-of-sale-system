@@ -50,8 +50,16 @@ const server = createServer(async (req, res) => {
 
   // If frontend requests from MYSQL...
   if (req.url.startsWith("/api")) {
+    let body = null;
+    if (req.method === "POST") {
+      body = await new Promise((resolve) => {
+        let data = "";
+        req.on("data", (chunk) => (data += chunk));
+        req.on("end", () => resolve(JSON.parse(data)));
+      });
+    }
     res.writeHead(200, { "Content-Type": "text/plain" });
-    res.end(await mySQLQuery(req.url));
+    res.end(await mySQLQuery(req.url, body));
   } else {
     // Else, pipe frontend files
     res.writeHead(200, { "Content-Type": fileMimeType });
