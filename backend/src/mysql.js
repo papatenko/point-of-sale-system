@@ -1,10 +1,10 @@
-import mysql from "mysql";
+import mysql from "mysql2/promise";
 
 const DATABASE_HOST = process.env.DB_HOST;
 const DATABASE_USER = process.env.DB_USER;
 const DATABASE_PASSWORD = process.env.DB_PASSWORD;
 
-const database = mysql.createConnection({
+const database = await mysql.createConnection({
   host: DATABASE_HOST,
   user: DATABASE_USER,
   password: DATABASE_PASSWORD,
@@ -28,17 +28,10 @@ export async function mySQLQuery(url) {
   }
 }
 
-// Test Connect to the database
-// mysql.connect((err) => {
-//   if (err) throw err;
-//   console.log("Connected to MySQL Database!");
-
-//   // Example query
-//   mysql.query("SELECT * FROM users", (err, results) => {
-//     if (err) throw err;
-//     console.log(results);
-//   });
-
-//   // Close the connection
-//   connection.end();
-// });
+// Test connection
+try {
+  const [results] = await database.query("SELECT 1 + 1 AS solution");
+  console.log("Connected!", results);
+} catch (err) {
+  console.error("Connection failed:", err);
+}
