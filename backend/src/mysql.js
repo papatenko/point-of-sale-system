@@ -1,10 +1,23 @@
 import mysql from "mysql2/promise";
 
+<<<<<<< HEAD
 const database = await mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+=======
+const DATABASE_HOST = process.env.DB_HOST;
+const DATABASE_USER = process.env.DB_USER;
+const DATABASE_PASSWORD = process.env.DB_PASSWORD;
+const DATABASE_NAME = process.env.DB_NAME;
+
+const database = await mysql.createConnection({
+  host: DATABASE_HOST,
+  user: DATABASE_USER,
+  password: DATABASE_PASSWORD,
+  database: DATABASE_NAME,
+>>>>>>> 40e601b7544be7f33d4c46fc7ca61e62b389d366
 });
 
 export async function mySQLQuery(url, method = "GET", body = null) {
