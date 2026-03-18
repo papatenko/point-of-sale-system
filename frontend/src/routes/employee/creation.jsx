@@ -1,14 +1,59 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-export const Route = createFileRoute('/employee/creation')({
+export const Route = createFileRoute("/employee/creation")({
   component: CreationComponent,
-})
+});
+
+const GENDER_OPTIONS = [
+  { id: 1, label: "Male" },
+  { id: 2, label: "Female" },
+  { id: 3, label: "Non-binary" },
+  { id: 4, label: "Prefer not to say" },
+];
+
+const ETHNICITY_OPTIONS = [
+  { id: 1, label: "Arab" },
+  { id: 2, label: "Asian" },
+  { id: 3, label: "Black or African American" },
+  { id: 4, label: "Hispanic or Latino" },
+  { id: 5, label: "Native American" },
+  { id: 6, label: "Pacific Islander" },
+  { id: 7, label: "White" },
+  { id: 8, label: "Prefer not to say" },
+];
 
 function CreationComponent() {
   const navigate = useNavigate();
-
+  const [trucks, setTrucks] = useState([]);
+  const [trucksLoading, setTrucksLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     adminPassword: "",
     email: "",
@@ -17,39 +62,48 @@ function CreationComponent() {
     password: "",
     phone_number: "",
     role: "cashier",
-    gender: 1,
-    ethnicity: 1,
+    gender: "1",
+    ethnicity: "1",
     license_plate: "",
     hire_date: "",
     hourly_rate: "",
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const licensePlates = trucks.map((t) => t.license_plate);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleSelectChange = (name, value) => {
+    setForm({ ...form, [name]: value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch("http://localhost:3000/api/employee/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        "http://localhost:3000/api/employee/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            adminPassword: form.adminPassword,
+            employeeData: {
+              ...form,
+              gender: parseInt(form.gender),
+              ethnicity: parseInt(form.ethnicity),
+            },
+          }),
         },
-        body: JSON.stringify({
-          adminPassword: form.adminPassword,
-          employeeData: form,
-        }),
-      });
+      );
 
-      // Verificar si la respuesta es JSON antes de parsearla
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
@@ -60,7 +114,6 @@ function CreationComponent() {
           alert(data.error || "Error creating employee");
         }
       } else {
-        // Si no es JSON, leer como texto
         const text = await response.text();
         console.error("Non-JSON response:", text);
         alert("Server error: Invalid response format");
@@ -73,235 +126,252 @@ function CreationComponent() {
     }
   };
 
+  useEffect(() => {
+    fetch("/api/trucks")
+      .then((r) => r.json())
+      .then((data) => {
+        setTrucks(data);
+        if (data.length > 0)
+          setForm((f) => ({ ...f, license_plate: data[0].license_plate }));
+      })
+      .catch(() => {})
+      .finally(() => setTrucksLoading(false));
+  }, []);
+
   return (
     <div className="flex justify-center items-center min-h-screen p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="p-8 bg-white shadow-md rounded w-96 space-y-4"
-      >
-        <h2 className="text-xl font-bold mb-4">Create Employee</h2>
+      <Card className="w-full max-w-lg shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl">Create Employee</CardTitle>
+          <CardDescription>
+            Add a new employee to the system. Admin password required.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Admin Password */}
+            <div className="space-y-1">
+              <Label htmlFor="adminPassword">Admin Password</Label>
+              <Input
+                id="adminPassword"
+                name="adminPassword"
+                type="password"
+                placeholder="Enter admin password"
+                value={form.adminPassword}
+                onChange={handleChange}
+                autoComplete="off"
+                required
+              />
+            </div>
 
-        {/* Admin Password */}
-        <div>
-          <label htmlFor="adminPassword" className="block mb-1 text-sm font-medium">
-            Admin Password
-          </label>
-          <input
-            id="adminPassword"
-            name="adminPassword"
-            type="password"
-            placeholder="Admin Password"
-            value={form.adminPassword}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="off" // No autocomplete for admin password
-            required
-          />
-        </div>
+            <div className="border-t pt-4">
+              <p className="text-sm text-muted-foreground mb-4">
+                Employee Details
+              </p>
 
-        {/* Email */}
-        <div>
-          <label htmlFor="email" className="block mb-1 text-sm font-medium">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="email"
-            required
-          />
-        </div>
+              {/* Email */}
+              <div className="space-y-1 mb-4">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="employee@example.com"
+                  value={form.email}
+                  onChange={handleChange}
+                  autoComplete="email"
+                  required
+                />
+              </div>
 
-        {/* First Name */}
-        <div>
-          <label htmlFor="first_name" className="block mb-1 text-sm font-medium">
-            First Name
-          </label>
-          <input
-            id="first_name"
-            name="first_name"
-            type="text"
-            placeholder="First Name"
-            value={form.first_name}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="given-name"
-            required
-          />
-        </div>
+              {/* First / Last Name */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="space-y-1">
+                  <Label htmlFor="first_name">First Name</Label>
+                  <Input
+                    id="first_name"
+                    name="first_name"
+                    type="text"
+                    placeholder="First name"
+                    value={form.first_name}
+                    onChange={handleChange}
+                    autoComplete="given-name"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="last_name">Last Name</Label>
+                  <Input
+                    id="last_name"
+                    name="last_name"
+                    type="text"
+                    placeholder="Last name"
+                    value={form.last_name}
+                    onChange={handleChange}
+                    autoComplete="family-name"
+                    required
+                  />
+                </div>
+              </div>
 
-        {/* Last Name */}
-        <div>
-          <label htmlFor="last_name" className="block mb-1 text-sm font-medium">
-            Last Name
-          </label>
-          <input
-            id="last_name"
-            name="last_name"
-            type="text"
-            placeholder="Last Name"
-            value={form.last_name}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="family-name"
-            required
-          />
-        </div>
+              {/* Password */}
+              <div className="space-y-1 mb-4">
+                <Label htmlFor="password">Employee Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Set a password"
+                  value={form.password}
+                  onChange={handleChange}
+                  autoComplete="new-password"
+                  required
+                />
+              </div>
 
-        {/* Employee Password */}
-        <div>
-          <label htmlFor="password" className="block mb-1 text-sm font-medium">
-            Employee Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Employee Password"
-            value={form.password}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="new-password"
-            required
-          />
-        </div>
+              {/* Phone */}
+              <div className="space-y-1 mb-4">
+                <Label htmlFor="phone_number">Phone Number</Label>
+                <Input
+                  id="phone_number"
+                  name="phone_number"
+                  type="tel"
+                  placeholder="(optional)"
+                  value={form.phone_number}
+                  onChange={handleChange}
+                  autoComplete="tel"
+                />
+              </div>
 
-        {/* Phone Number */}
-        <div>
-          <label htmlFor="phone_number" className="block mb-1 text-sm font-medium">
-            Phone Number
-          </label>
-          <input
-            id="phone_number"
-            name="phone_number"
-            type="tel"
-            placeholder="Phone Number"
-            value={form.phone_number}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="tel"
-          />
-        </div>
+              {/* Role */}
+              <div className="space-y-1 mb-4">
+                <Label>Role</Label>
+                <Select
+                  value={form.role}
+                  onValueChange={(v) => handleSelectChange("role", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cashier">Cashier</SelectItem>
+                    <SelectItem value="cook">Cook</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-        {/* Role */}
-        <div>
-          <label htmlFor="role" className="block mb-1 text-sm font-medium">
-            Role
-          </label>
-          <select
-            id="role"
-            name="role"
-            value={form.role}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="off"
-          >
-            <option value="cashier">Cashier</option>
-            <option value="cook">Cook</option>
-            <option value="manager">Manager</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
+              {/* Gender */}
+              <div className="space-y-1 mb-4">
+                <Label>Gender</Label>
+                <Select
+                  value={form.gender}
+                  onValueChange={(v) => handleSelectChange("gender", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GENDER_OPTIONS.map((g) => (
+                      <SelectItem key={g.id} value={String(g.id)}>
+                        {g.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-        {/* Gender */}
-        <div>
-          <label htmlFor="gender" className="block mb-1 text-sm font-medium">
-            Gender ID
-          </label>
-          <input
-            id="gender"
-            name="gender"
-            type="number"
-            placeholder="Gender ID"
-            value={form.gender}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="off"
-          />
-        </div>
+              {/* Ethnicity */}
+              <div className="space-y-1 mb-4">
+                <Label>Ethnicity</Label>
+                <Select
+                  value={form.ethnicity}
+                  onValueChange={(v) => handleSelectChange("ethnicity", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select ethnicity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ETHNICITY_OPTIONS.map((e) => (
+                      <SelectItem key={e.id} value={String(e.id)}>
+                        {e.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-        {/* Ethnicity */}
-        <div>
-          <label htmlFor="ethnicity" className="block mb-1 text-sm font-medium">
-            Ethnicity ID
-          </label>
-          <input
-            id="ethnicity"
-            name="ethnicity"
-            type="number"
-            placeholder="Ethnicity ID"
-            value={form.ethnicity}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="off"
-          />
-        </div>
+              {/* License Plate */}
+              <div className="space-y-1 mb-4">
+                <Label>Truck License Plate</Label>
+                {trucksLoading ? (
+                  <p className="text-sm text-muted-foreground">
+                    Loading trucks...
+                  </p>
+                ) : trucks.length === 0 ? (
+                  <p className="text-sm text-destructive">
+                    No trucks available.
+                  </p>
+                ) : (
+                  <Combobox
+                    items={licensePlates}
+                    onValueChange={(v) =>
+                      handleSelectChange("license_plate", v)
+                    }
+                  >
+                    <ComboboxInput placeholder="Select a truck" />
+                    <ComboboxContent>
+                      <ComboboxEmpty>No trucks found.</ComboboxEmpty>
+                      <ComboboxList>
+                        {licensePlates.map((plate) => (
+                          <ComboboxItem key={plate} value={plate}>
+                            {plate}
+                          </ComboboxItem>
+                        ))}
+                      </ComboboxList>
+                    </ComboboxContent>
+                  </Combobox>
+                )}
+              </div>
 
-        {/* License Plate */}
-        <div>
-          <label htmlFor="license_plate" className="block mb-1 text-sm font-medium">
-            Truck License Plate
-          </label>
-          <input
-            id="license_plate"
-            name="license_plate"
-            type="text"
-            placeholder="Truck License Plate"
-            value={form.license_plate}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="off"
-          />
-        </div>
+              {/* Hire Date / Hourly Rate */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="hire_date">Hire Date</Label>
+                  <Input
+                    id="hire_date"
+                    name="hire_date"
+                    type="date"
+                    value={form.hire_date}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="hourly_rate">Hourly Rate ($)</Label>
+                  <Input
+                    id="hourly_rate"
+                    name="hourly_rate"
+                    type="number"
+                    step="0.01"
+                    placeholder="15.00"
+                    value={form.hourly_rate}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+            </div>
 
-        {/* Hire Date */}
-        <div>
-          <label htmlFor="hire_date" className="block mb-1 text-sm font-medium">
-            Hire Date
-          </label>
-          <input
-            id="hire_date"
-            name="hire_date"
-            type="date"
-            placeholder="Hire Date"
-            value={form.hire_date}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="off"
-          />
-        </div>
-
-        {/* Hourly Rate */}
-        <div>
-          <label htmlFor="hourly_rate" className="block mb-1 text-sm font-medium">
-            Hourly Rate
-          </label>
-          <input
-            id="hourly_rate"
-            name="hourly_rate"
-            type="number"
-            step="0.01"
-            placeholder="Hourly Rate"
-            value={form.hourly_rate}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-            autoComplete="off"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full p-2 bg-blue-600 text-white rounded hover:bg-blue-700 mt-4 disabled:bg-blue-300"
-        >
-          {isSubmitting ? "Creating..." : "Create Employee"}
-        </button>
-      </form>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full mt-2"
+            >
+              {isSubmitting ? "Creating..." : "Create Employee"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

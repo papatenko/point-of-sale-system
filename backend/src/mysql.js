@@ -4,6 +4,7 @@ import "dotenv/config";
 import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
 import { getTrucks } from "./routes/truck.js";
+import { handleEmployeeCreate } from "./auth/create_employ.js";
 
 let database = null;
 
@@ -22,7 +23,13 @@ export async function getDatabase() {
 // Test DB ENV
 console.log("DB_HOST:", process.env.DB_HOST);
 
-export async function mySQLQuery(url, body = null, method = "GET") {
+export async function mySQLQuery(
+  url,
+  body = null,
+  method = "GET",
+  req = null,
+  res = null,
+) {
   const db = await getDatabase();
 
   // ── Employee routes ──────────────────────────────────────────────
@@ -59,6 +66,9 @@ export async function mySQLQuery(url, body = null, method = "GET") {
     // ── GET /api/orders/:orderId ─────────────────────────────────────
   } else if (url.startsWith("/api/orders/") && method === "GET") {
     return getOrders(url, db);
+  } else if (url.startsWith("/api/employee/create") && method === "POST") {
+    await handleEmployeeCreate(req, res, body);
+    return; // Importante: return para no continuar
   } else {
     return null;
   }
