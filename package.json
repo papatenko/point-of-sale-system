@@ -19,11 +19,8 @@
   },
   "packageManager": "npm@10.9.4",
   "dependencies": {
-<<<<<<< HEAD
     "bcrypt": "^6.0.0",
-    "cors": "^2.8.6"
-=======
+    "cors": "^2.8.6",
     "mysql2": "^3.20.0"
->>>>>>> 63722e050676487881bf1355ee8737d3d75e49a5
   }
 }

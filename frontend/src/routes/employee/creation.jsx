@@ -37,7 +37,7 @@ function CreationComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch("http://localhost:3000/api/employee/creation", {
+      const response = await fetch("http://localhost:3000/api/employee/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
