@@ -1,7 +1,6 @@
 import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
-import { handleEmployeeCreate } from "./auth/create_employ.js";
 import { mySQLQuery } from "./mysql.js";
 import { getDatabase } from "./mysql.js";
 
@@ -63,6 +62,21 @@ function readBody(req) {
 }
 
 const server = createServer(async (req, res) => {
+  // CORS headers on every request
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS",
+  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  // handle preflight
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   // API routes
   if (req.url.startsWith("/api")) {
     const body = req.method === "POST" ? await readBody(req) : null;

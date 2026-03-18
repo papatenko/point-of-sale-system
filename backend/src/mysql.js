@@ -19,6 +19,9 @@ export async function getDatabase() {
   return database;
 }
 
+// Test DB ENV
+console.log("DB_HOST:", process.env.DB_HOST);
+
 export async function mySQLQuery(url, body = null, method = "GET") {
   const db = await getDatabase();
 
