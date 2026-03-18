@@ -38,6 +38,7 @@ const RootLayout = () => (
               <Link to="/employee">Employee Dashboard</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
+          
         </NavigationMenuList>
       </NavigationMenu>
       <Avatar>

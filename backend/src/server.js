@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
-
+import { handleEmployeeCreate } from "./auth/create_employ.js";
 import { mySQLQuery } from "./mysql.js";
 
 // Grabs the built /dist/ directory built from Vite
@@ -27,7 +27,7 @@ const MIME_TYPES = {
 async function prepareFile(url) {
   let filePath = FRONTEND_PATH + url;
   if (url === "/") filePath = FRONTEND_PATH + "/index.html";
-
+ 
   // Checks to see if path exists in the filesystem
   const ifPathExists = await fs.promises.access(filePath).then(...toBool);
 
