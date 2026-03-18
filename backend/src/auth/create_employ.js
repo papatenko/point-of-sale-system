@@ -9,7 +9,7 @@
 // app.post("/api/employee/create", async (req, res) => {
 //   try {
 //     console.log("Creating employee with data:", req.body);
-    
+
 //     const token = req.headers.authorization?.split(" ")[1];
 //     if (!token) {
 //       return res.status(401).json({ error: "No token provided" });
@@ -17,7 +17,7 @@
 
 //     // Verificar que es manager
 //     verifyManager(token);
-    
+
 //     const { adminPassword, employeeData } = req.body;
 
 //     // Verificar password de admin
@@ -25,18 +25,18 @@
 //       return res.status(403).json({ error: "Invalid admin password" });
 //     }
 
-//     const { 
-//       email, 
-//       first_name, 
-//       last_name, 
-//       password, 
-//       phone_number, 
-//       role, 
-//       gender, 
-//       ethnicity, 
-//       license_plate, 
-//       hire_date, 
-//       hourly_rate 
+//     const {
+//       email,
+//       first_name,
+//       last_name,
+//       password,
+//       phone_number,
+//       role,
+//       gender,
+//       ethnicity,
+//       license_plate,
+//       hire_date,
+//       hourly_rate
 //     } = employeeData;
 
 //     // Validar datos requeridos
@@ -50,13 +50,13 @@
 //     // 1. Insertar en users table
 //     console.log("Inserting into users...");
 //     const userResult = await mySQLQuery("/api/register-user", [
-//       email, 
-//       first_name, 
-//       last_name, 
-//       hashedPassword, 
-//       phone_number || null, 
-//       role || 'employee', 
-//       gender || 1, 
+//       email,
+//       first_name,
+//       last_name,
+//       hashedPassword,
+//       phone_number || null,
+//       role || 'employee',
+//       gender || 1,
 //       ethnicity || 1
 //     ]);
 //     console.log("User created:", userResult);
@@ -64,10 +64,10 @@
 //     // 2. Insertar en employees table
 //     console.log("Inserting into employees...");
 //     const employeeResult = await mySQLQuery("/api/employee/creation", [
-//       email, 
-//       license_plate || null, 
-//       role || 'employee', 
-//       hire_date || null, 
+//       email,
+//       license_plate || null,
+//       role || 'employee',
+//       hire_date || null,
 //       hourly_rate || null
 //     ]);
 //     console.log("Employee created:", employeeResult);
@@ -88,23 +88,23 @@
 //     // }
 
 //     // 5. Responder con éxito
-//     res.status(200).json({ 
+//     res.status(200).json({
 //       success: true,
 //       message: "Employee created successfully",
 //       employeeId: userResult.insertId || employeeResult.insertId,
-//       employee: { 
-//         email, 
-//         first_name, 
-//         last_name, 
-//         role 
+//       employee: {
+//         email,
+//         first_name,
+//         last_name,
+//         role
 //       }
 //     });
 
 //   } catch (err) {
 //     console.error("Error creating employee:", err);
-//     res.status(500).json({ 
+//     res.status(500).json({
 //       success: false,
-//       error: err.message || "Internal server error" 
+//       error: err.message || "Internal server error"
 //     });
 //   }
 // });
@@ -112,13 +112,12 @@
 // export default app;
 
 // auth/create-employee.js
-import bcrypt from "bcrypt";
 import { mySQLQuery } from "../mysql.js";
 
 export async function handleEmployeeCreate(req, res, body) {
   try {
     console.log("Creating employee with data:", body);
-    
+
     // Verificar token
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
@@ -129,7 +128,7 @@ export async function handleEmployeeCreate(req, res, body) {
 
     // Aquí puedes verificar el token con tu función verifyManager
     // verifyManager(token);
-    
+
     const { adminPassword, employeeData } = body;
 
     // Verificar password de admin
@@ -139,18 +138,18 @@ export async function handleEmployeeCreate(req, res, body) {
       return;
     }
 
-    const { 
-      email, 
-      first_name, 
-      last_name, 
-      password, 
-      phone_number, 
-      role, 
-      gender, 
-      ethnicity, 
-      license_plate, 
-      hire_date, 
-      hourly_rate 
+    const {
+      email,
+      first_name,
+      last_name,
+      password,
+      phone_number,
+      role: user_type,
+      gender,
+      ethnicity,
+      license_plate,
+      hire_date,
+      hourly_rate,
     } = employeeData;
 
     // Validar datos requeridos
@@ -160,70 +159,75 @@ export async function handleEmployeeCreate(req, res, body) {
       return;
     }
 
-    // Hash de la contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // 1. Insertar en users table
     console.log("Inserting into users...");
     const userResult = await mySQLQuery("/api/register-user", [
-      email, 
-      first_name, 
-      last_name, 
-      hashedPassword, 
-      phone_number || null, 
-      role || 'employee', 
-      gender || 1, 
-      ethnicity || 1
+      email,
+      first_name,
+      last_name,
+      password,
+      phone_number || null,
+      "employee",
+      gender || 1,
+      ethnicity || 1,
     ]);
     console.log("User created:", userResult);
 
     // 2. Insertar en employees table
     console.log("Inserting into employees...");
-    
+
     // Verificar que license_plate existe en food_trucks o usar uno por defecto
     let finalLicensePlate = license_plate;
     if (!finalLicensePlate) {
       // Buscar un food truck por defecto
       const trucks = await mySQLQuery("/api/food-trucks", []);
-      finalLicensePlate = trucks[0]?.license_plate || 'ABC-123';
+      finalLicensePlate = trucks[0]?.license_plate || "ABC-123";
     }
-    
+
     const employeeResult = await mySQLQuery("/api/employee/create", [
-      email, 
-      finalLicensePlate, 
-      role || 'cashier', 
-      hire_date || new Date().toISOString().split('T')[0], 
-      hourly_rate || 15.00
+      email,
+      finalLicensePlate,
+      user_type || "cashier",
+      hire_date || new Date().toISOString().split("T")[0],
+      hourly_rate || 15.0,
     ]);
     console.log("Employee created:", employeeResult);
 
     // 3. Si es manager, insertar en managers table
-    if (role === "manager") {
+    if (user_type === "manager") {
       console.log("Inserting into managers...");
-      const managerResult = await mySQLQuery("/api/register-manager", [email, 0.0]);
+      const managerResult = await mySQLQuery("/api/register-manager", [
+        email,
+        0.0,
+      ]);
       console.log("Manager created:", managerResult);
     }
 
     // 4. Responder con éxito
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ 
-      success: true,
-      message: "Employee created successfully",
-      employeeId: userResult.insertId || employeeResult.insertId,
-      employee: { 
-        email, 
-        first_name, 
-        last_name, 
-        role 
-      }
-    }));
-
+    res.end(
+      JSON.stringify({
+        success: true,
+        message: "Employee created successfully",
+        employeeId: userResult.insertId || employeeResult.insertId,
+        employee: {
+          email,
+          first_name,
+          last_name,
+          role: user_type,
+        },
+      }),
+    );
+    return;
   } catch (err) {
     console.error("Error creating employee:", err);
     res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ 
-      success: false,
-      error: err.message || "Internal server error" 
-    }));
+    res.end(
+      JSON.stringify({
+        success: false,
+        error: err.message || "Internal server error",
+      }),
+    );
+    return;
   }
 }

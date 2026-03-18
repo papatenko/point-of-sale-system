@@ -14,35 +14,35 @@ export const database = await mysql.createConnection({
   database: DATABASE_NAME,
 });
 
-export async function mySQLQuery(url,  params = []) {
+export async function mySQLQuery(url, params = []) {
   // rebeca routes for auth XD
-    if (url === "/api/users") {
+  if (url === "/api/users") {
     const [rows] = await database.query("SELECT * FROM users");
     return rows;
   } else if (url === "/api/register-user") {
     const [result] = await database.query(
-      "INSERT INTO users(username, password) VALUES (?, ?)",
-      params
+      "INSERT INTO users(email, first_name, last_name, password, phone_number, user_type, gender, ethnicity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      params,
     );
     return result;
   } else if (url === "/api/register-manager") {
     const [result] = await database.query(
       `INSERT INTO managers(email, budget)
        VALUES (?, ?)`,
-      params
+      params,
     );
     return result;
-  }else if (url === "/api/employee/create") {
+  } else if (url === "/api/employee/create") {
     // Handle employee creation - insert into employees table
     const [result] = await database.query(
       `INSERT INTO employees 
        (email, license_plate, role, hire_date, hourly_rate) 
        VALUES (?, ?, ?, ?, ?)`,
-      params
+      params,
     );
     return result;
   }
-  
+
   // Default return for unhandled routes
   return { insertId: null };
 }
@@ -68,10 +68,10 @@ export async function mySQLQuery(url,  params = []) {
 //   }   else if (url === "/api/employee/creation") {
 //       // CORREGIDO
 //       return new Promise((resolve, reject) => {
-//         const query = `INSERT INTO employees 
-//                        (email, license_plate, role, hire_date, hourly_rate) 
+//         const query = `INSERT INTO employees
+//                        (email, license_plate, role, hire_date, hourly_rate)
 //                        VALUES (?, ?, ?, ?, ?)`;
-        
+
 //         database.query(query, params, (err, result) => {
 //           if (err) {
 //             console.error("Error creating employee:", err);
@@ -98,4 +98,3 @@ try {
 } catch (err) {
   console.error("Connection failed:", err);
 }
-
