@@ -80,12 +80,12 @@ app.post("/api/employee/create", async (req, res) => {
     }
 
     // 4. Enviar notificación
-    try {
-      sendNotification("+3465260235", `Employee account for ${first_name} ${last_name} created.`);
-    } catch (notifyError) {
-      console.error("Notification error:", notifyError);
-      // No fallar la petición si la notificación falla
-    }
+    // try {
+    //   sendNotification("+3465260235", `Employee account for ${first_name} ${last_name} created.`);
+    // } catch (notifyError) {
+    //   console.error("Notification error:", notifyError);
+    //   No fallar la petición si la notificación falla
+    // }
 
     // 5. Responder con éxito
     res.status(200).json({ 
