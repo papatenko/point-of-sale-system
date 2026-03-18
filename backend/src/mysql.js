@@ -92,8 +92,3 @@ export async function employeeCreateQuery(url, params = []) {
   // Default return for unhandled routes
   return { insertId: null };
 }
-
-getDatabase()
-  .then((db) => db.query("SELECT 1 + 1 AS solution"))
-  .then(([results]) => console.log("DB Connected!", results))
-  .catch((err) => console.error("DB Connection failed:", err));
