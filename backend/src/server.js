@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
-
+import { handleEmployeeCreate } from "./auth/create_employ.js";
 import { mySQLQuery } from "./mysql.js";
 
 // Grabs the built /dist/ directory built from Vite
@@ -27,7 +27,7 @@ const MIME_TYPES = {
 async function prepareFile(url) {
   let filePath = FRONTEND_PATH + url;
   if (url === "/") filePath = FRONTEND_PATH + "/index.html";
-
+ 
   // Checks to see if path exists in the filesystem
   const ifPathExists = await fs.promises.access(filePath).then(...toBool);
 
@@ -95,67 +95,16 @@ const server = createServer(async (req, res) => {
       // Procesar diferentes rutas de API
       let result;
       
-      if (req.url === "/api/employee/create") {
-        // Extraer los datos del body
-        const { adminPassword, employeeData } = body;
-        
-        // Verificar admin password
-        if (adminPassword !== "Spiderman") {
-          result = { error: "Invalid admin password" };
-        } else {
-          // Extraer datos del empleado
-          const { 
-            email, 
-            first_name, 
-            last_name, 
-            password, 
-            phone_number, 
-            role, 
-            gender, 
-            ethnicity, 
-            license_plate, 
-            hire_date, 
-            hourly_rate 
-          } = employeeData;
-          
-          // 1. Registrar usuario
-          const userResult = await mySQLQuery("/api/register-user", [
-            email, 
-            first_name, 
-            last_name, 
-            password, // En producción, hashear esto
-            phone_number || null, 
-            role || 'cashier', 
-            gender || 1, 
-            ethnicity || 1
-          ]);
-          
-          // 2. Registrar empleado
-          const employeeResult = await mySQLQuery("/api/employee/create", [
-            email,
-            license_plate || 'ABC-123', // Temporal - debe existir en food_trucks
-            role || 'cashier',
-            hire_date || new Date().toISOString().split('T')[0],
-            hourly_rate || 15.00
-          ]);
-          
-          // 3. Si es manager, registrar en managers
-          if (role === "manager") {
-            await mySQLQuery("/api/register-manager", [email, 0.0]);
-          }
-          
-          result = { 
-            success: true, 
-            message: "Employee created successfully",
-            employee: { email, first_name, last_name, role }
-          };
-        }
+      if (req.url === "/api/employee/create" && req.method === "POST") {
+        // USA EL HANDLER QUE IMPORTAMOS
+        await handleEmployeeCreate(req, res, body);
+        return; // Importante: return para no continuar
       } else {
         // Para otras rutas API, pasar el body como parámetros
         result = await mySQLQuery(req.url, body);
+        res.end(JSON.stringify(result));
       }
       
-      res.end(JSON.stringify(result));
     } catch (error) {
       console.error("API Error:", error);
       res.end(JSON.stringify({ error: error.message }));
