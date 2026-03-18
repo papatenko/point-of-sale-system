@@ -13,10 +13,7 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cartItems = useSelector((s) => s.cart.items);
-  const cartTotal = cartItems.reduce(
-    (sum, i) => sum + i.price * i.quantity,
-    0
-  );
+  const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const [paymentMethod, setPaymentMethod] = useState("credit");
   const [licensePlate, setLicensePlate] = useState("");
@@ -108,7 +105,9 @@ function CheckoutPage() {
               {trucksLoading ? (
                 <p className="text-sm text-gray-400">Loading locations...</p>
               ) : trucks.length === 0 ? (
-                <p className="text-sm text-red-500">No pickup locations available.</p>
+                <p className="text-sm text-red-500">
+                  No pickup locations available.
+                </p>
               ) : (
                 <div className="space-y-2.5">
                   {trucks.map((truck) => (
@@ -129,7 +128,9 @@ function CheckoutPage() {
                         className="accent-amber-600 mt-0.5"
                       />
                       <div>
-                        <p className="text-sm font-medium">{truck.truck_name}</p>
+                        <p className="text-sm font-medium">
+                          {truck.truck_name}
+                        </p>
                         {truck.current_location && (
                           <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                             <MapPin size={11} />
