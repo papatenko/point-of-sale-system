@@ -27,7 +27,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export const Route = createFileRoute("/employee/creation")({
+export const Route = createFileRoute("/employee/create/employee")({
   component: CreationComponent,
 });
 
@@ -140,7 +140,7 @@ function CreationComponent() {
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4">
-      <Card className="w-full max-w-lg shadow-lg">
+      <Card className="w-full max-w-2xl shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl">Create Employee</CardTitle>
           <CardDescription>
@@ -148,8 +148,8 @@ function CreationComponent() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Admin Password */}
+          <form onSubmit={handleSubmit}>
+            {/* Admin Password - full width */}
             <div className="space-y-1">
               <Label htmlFor="adminPassword">Admin Password</Label>
               <Input
@@ -169,23 +169,23 @@ function CreationComponent() {
                 Employee Details
               </p>
 
-              {/* Email */}
-              <div className="space-y-1 mb-4">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="employee@example.com"
-                  value={form.email}
-                  onChange={handleChange}
-                  autoComplete="email"
-                  required
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Email - full width */}
+                <div className="space-y-1 md:col-span-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="employee@example.com"
+                    value={form.email}
+                    onChange={handleChange}
+                    autoComplete="email"
+                    required
+                  />
+                </div>
 
-              {/* First / Last Name */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
+                {/* First Name */}
                 <div className="space-y-1">
                   <Label htmlFor="first_name">First Name</Label>
                   <Input
@@ -199,6 +199,8 @@ function CreationComponent() {
                     required
                   />
                 </div>
+
+                {/* Last Name */}
                 <div className="space-y-1">
                   <Label htmlFor="last_name">Last Name</Label>
                   <Input
@@ -212,131 +214,129 @@ function CreationComponent() {
                     required
                   />
                 </div>
-              </div>
 
-              {/* Password */}
-              <div className="space-y-1 mb-4">
-                <Label htmlFor="password">Employee Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Set a password"
-                  value={form.password}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                  required
-                />
-              </div>
+                {/* Password */}
+                <div className="space-y-1">
+                  <Label htmlFor="password">Employee Password</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Set a password"
+                    value={form.password}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
 
-              {/* Phone */}
-              <div className="space-y-1 mb-4">
-                <Label htmlFor="phone_number">Phone Number</Label>
-                <Input
-                  id="phone_number"
-                  name="phone_number"
-                  type="tel"
-                  placeholder="(optional)"
-                  value={form.phone_number}
-                  onChange={handleChange}
-                  autoComplete="tel"
-                />
-              </div>
+                {/* Phone */}
+                <div className="space-y-1">
+                  <Label htmlFor="phone_number">Phone Number</Label>
+                  <Input
+                    id="phone_number"
+                    name="phone_number"
+                    type="tel"
+                    placeholder="(optional)"
+                    value={form.phone_number}
+                    onChange={handleChange}
+                    autoComplete="tel"
+                  />
+                </div>
 
-              {/* Role */}
-              <div className="space-y-1 mb-4">
-                <Label>Role</Label>
-                <Select
-                  value={form.role}
-                  onValueChange={(v) => handleSelectChange("role", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cashier">Cashier</SelectItem>
-                    <SelectItem value="cook">Cook</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Gender */}
-              <div className="space-y-1 mb-4">
-                <Label>Gender</Label>
-                <Select
-                  value={form.gender}
-                  onValueChange={(v) => handleSelectChange("gender", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GENDER_OPTIONS.map((g) => (
-                      <SelectItem key={g.id} value={String(g.id)}>
-                        {g.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Ethnicity */}
-              <div className="space-y-1 mb-4">
-                <Label>Ethnicity</Label>
-                <Select
-                  value={form.ethnicity}
-                  onValueChange={(v) => handleSelectChange("ethnicity", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select ethnicity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ETHNICITY_OPTIONS.map((e) => (
-                      <SelectItem key={e.id} value={String(e.id)}>
-                        {e.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* License Plate */}
-              <div className="space-y-1 mb-4">
-                <Label>Truck License Plate</Label>
-                {trucksLoading ? (
-                  <p className="text-sm text-muted-foreground">
-                    Loading trucks...
-                  </p>
-                ) : trucks.length === 0 ? (
-                  <p className="text-sm text-destructive">
-                    No trucks available.
-                  </p>
-                ) : (
-                  <Combobox
-                    items={licensePlates}
-                    onValueChange={(v) =>
-                      handleSelectChange("license_plate", v)
-                    }
+                {/* Role */}
+                <div className="space-y-1">
+                  <Label>Role</Label>
+                  <Select
+                    value={form.role}
+                    onValueChange={(v) => handleSelectChange("role", v)}
                   >
-                    <ComboboxInput placeholder="Select a truck" />
-                    <ComboboxContent>
-                      <ComboboxEmpty>No trucks found.</ComboboxEmpty>
-                      <ComboboxList>
-                        {licensePlates.map((plate) => (
-                          <ComboboxItem key={plate} value={plate}>
-                            {plate}
-                          </ComboboxItem>
-                        ))}
-                      </ComboboxList>
-                    </ComboboxContent>
-                  </Combobox>
-                )}
-              </div>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cashier">Cashier</SelectItem>
+                      <SelectItem value="cook">Cook</SelectItem>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Hire Date / Hourly Rate */}
-              <div className="grid grid-cols-2 gap-3">
+                {/* License Plate */}
+                <div className="space-y-1">
+                  <Label>Truck License Plate</Label>
+                  {trucksLoading ? (
+                    <p className="text-sm text-muted-foreground">
+                      Loading trucks...
+                    </p>
+                  ) : trucks.length === 0 ? (
+                    <p className="text-sm text-destructive">
+                      No trucks available.
+                    </p>
+                  ) : (
+                    <Combobox
+                      items={licensePlates}
+                      onValueChange={(v) =>
+                        handleSelectChange("license_plate", v)
+                      }
+                    >
+                      <ComboboxInput placeholder="Select a truck" />
+                      <ComboboxContent>
+                        <ComboboxEmpty>No trucks found.</ComboboxEmpty>
+                        <ComboboxList>
+                          {licensePlates.map((plate) => (
+                            <ComboboxItem key={plate} value={plate}>
+                              {plate}
+                            </ComboboxItem>
+                          ))}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                  )}
+                </div>
+
+                {/* Gender */}
+                <div className="space-y-1">
+                  <Label>Gender</Label>
+                  <Select
+                    value={form.gender}
+                    onValueChange={(v) => handleSelectChange("gender", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GENDER_OPTIONS.map((g) => (
+                        <SelectItem key={g.id} value={String(g.id)}>
+                          {g.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Ethnicity */}
+                <div className="space-y-1">
+                  <Label>Ethnicity</Label>
+                  <Select
+                    value={form.ethnicity}
+                    onValueChange={(v) => handleSelectChange("ethnicity", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select ethnicity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ETHNICITY_OPTIONS.map((e) => (
+                        <SelectItem key={e.id} value={String(e.id)}>
+                          {e.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Hire Date */}
                 <div className="space-y-1">
                   <Label htmlFor="hire_date">Hire Date</Label>
                   <Input
@@ -347,6 +347,8 @@ function CreationComponent() {
                     onChange={handleChange}
                   />
                 </div>
+
+                {/* Hourly Rate */}
                 <div className="space-y-1">
                   <Label htmlFor="hourly_rate">Hourly Rate ($)</Label>
                   <Input

@@ -5,6 +5,7 @@ import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
 import { getTrucks } from "./routes/truck.js";
 import { handleEmployeeCreate } from "./auth/create_employ.js";
+import { createIngredient, getIngredients, getSuppliers } from "./routes/ingredients.js";
 
 let database = null;
 
@@ -68,7 +69,13 @@ export async function mySQLQuery(
     return getOrders(url, db);
   } else if (url.startsWith("/api/employee/create") && method === "POST") {
     await handleEmployeeCreate(req, res, body);
-    return; // Importante: return para no continuar
+    return;
+  } else if (url === "/api/ingredients" && method === "POST") {
+    return await createIngredient(body, db);
+  } else if (url === "/api/ingredients" && method === "GET") {
+    return await getIngredients(db);
+  } else if (url === "/api/suppliers" && method === "GET") {
+    return await getSuppliers(db);
   } else {
     return null;
   }
