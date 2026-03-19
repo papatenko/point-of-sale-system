@@ -1,4 +1,3 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
 import {
   PackageIcon, AlertTriangleIcon, CheckCircle2Icon,
@@ -12,41 +11,28 @@ import { Badge }    from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-  DialogDescription, DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const Route = createFileRoute("/employee/inventory")({
-  component: InventoryPage,
-});
+import { fmt, useToast } from "@/utils/format";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const fmt = (n) => (n == null ? "—" : parseFloat(n).toFixed(2));
-
-function useToast() {
-  const [toast, setToast] = useState(null);
-  const show = (msg, type = "success") => {
-    setToast({ msg, type, id: Date.now() });
-    setTimeout(() => setToast(null), 4000);
-  };
-  return { toast, show };
-}
+// ─── Badge className constants ────────────────────────────────────────────────
+// The installed Badge only has: default, secondary, destructive, outline,
+// ghost, link. We compose warning / success on top of "outline" via className.
+const BADGE_WARNING = "border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-300";
+const BADGE_SUCCESS = "border-emerald-300 bg-emerald-100 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300";
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ item }) {
   if (item.quantityOnHand === 0)
     return <Badge variant="destructive">Out of Stock</Badge>;
   if (item.needsReorder)
-    return <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-500">Below Threshold</Badge>;
+    return <Badge variant="destructive" className="bg-orange-500 dark:bg-orange-600">Below Threshold</Badge>;
 
   const ratio = item.reorderThreshold > 0 ? item.quantityOnHand / item.reorderThreshold : 2;
   if (ratio < 1.5)
-    return <Badge variant="warning">Running Low</Badge>;
-  return <Badge variant="success">In Stock</Badge>;
+    return <Badge variant="outline" className={BADGE_WARNING}>Running Low</Badge>;
+  return <Badge variant="outline" className={BADGE_SUCCESS}>In Stock</Badge>;
 }
 
 // ─── Expiry Badge ─────────────────────────────────────────────────────────────
@@ -54,18 +40,16 @@ function ExpiryBadge({ date }) {
   if (!date) return <span className="text-muted-foreground text-xs">—</span>;
   const days = Math.floor((new Date(date) - new Date()) / 86_400_000);
   if (days < 0)  return <Badge variant="destructive">Expired</Badge>;
-  if (days <= 3) return <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-500">{days}d left</Badge>;
-  if (days <= 7) return <Badge variant="warning">{days}d left</Badge>;
+  if (days <= 3) return <Badge variant="destructive" className="bg-orange-500 dark:bg-orange-600">{days}d left</Badge>;
+  if (days <= 7) return <Badge variant="outline" className={BADGE_WARNING}>{days}d left</Badge>;
   return <span className="text-xs text-muted-foreground">{new Date(date).toLocaleDateString()}</span>;
 }
 
-// ─── Quantity Bar — plain div instead of <Progress> ──────────────────────────
-// Progress was a single-use wrapper around one div; this is cleaner inline.
+// ─── Quantity Bar ─────────────────────────────────────────────────────────────
 function QuantityBar({ item }) {
   const ratio = item.reorderThreshold > 0
     ? Math.min(item.quantityOnHand / (item.reorderThreshold * 2), 1)
     : 1;
-
   const fillColor =
     item.quantityOnHand === 0 ? "bg-destructive"
     : item.needsReorder       ? "bg-orange-500"
@@ -78,34 +62,33 @@ function QuantityBar({ item }) {
         {fmt(item.quantityOnHand)}{" "}
         <span className="text-muted-foreground font-normal">{item.unitOfMeasure}</span>
       </span>
-      {/* Replaces <Progress> — same visual, no extra component */}
       <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${fillColor}`}
-          style={{ width: `${Math.round(ratio * 100)}%` }}
-        />
+        <div className={`h-full rounded-full transition-all ${fillColor}`}
+          style={{ width: `${Math.round(ratio * 100)}%` }} />
       </div>
     </div>
   );
 }
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
+// "variant" here is an internal prop — unrelated to Badge or any shadcn variant.
 function StatCard({ icon: Icon, label, value, variant = "default" }) {
-  const colorMap = {
+  const color = {
     default: "text-foreground",
     danger:  "text-destructive",
-    warning: "text-amber-500",
-    success: "text-emerald-500",
-  };
+    warning: "text-amber-600 dark:text-amber-400",
+    success: "text-emerald-600 dark:text-emerald-400",
+  }[variant] ?? "text-foreground";
+
   return (
     <Card>
       <CardContent className="pt-6 pb-5">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">{label}</p>
-            <p className={`text-3xl font-extrabold tabular-nums ${colorMap[variant]}`}>{value}</p>
+            <p className={`text-3xl font-extrabold tabular-nums ${color}`}>{value}</p>
           </div>
-          <div className={`p-2 rounded-lg bg-muted ${colorMap[variant]}`}>
+          <div className={`p-2 rounded-lg bg-muted ${color}`}>
             <Icon className="size-5" />
           </div>
         </div>
@@ -114,8 +97,7 @@ function StatCard({ icon: Icon, label, value, variant = "default" }) {
   );
 }
 
-// ─── Loading rows — plain divs instead of <Skeleton> ─────────────────────────
-// Skeleton is just animate-pulse + rounded bg; no need to import for this.
+// ─── Loading rows ─────────────────────────────────────────────────────────────
 function LoadingRows({ count = 5 }) {
   return (
     <div className="p-6 space-y-3">
@@ -153,7 +135,7 @@ function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
           <div className="grid gap-1.5">
             <label className="text-sm font-medium">Adjustment type</label>
             <Select value={type} onValueChange={setType}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -185,8 +167,7 @@ function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
 
           <div className="grid gap-1.5">
             <label className="text-sm font-medium">
-              Reason{" "}
-              <span className="text-muted-foreground font-normal">(optional)</span>
+              Reason <span className="text-muted-foreground font-normal">(optional)</span>
             </label>
             <Input
               placeholder="e.g. prepared 12 shawarma wraps"
@@ -213,11 +194,10 @@ function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
 
 // ─── Reorder Dialog ───────────────────────────────────────────────────────────
 function ReorderDialog({ item, open, onOpenChange, onConfirm, loading }) {
-  const [qty, setQty] = useState("");
-
   const suggested = item
     ? Math.max(item.reorderThreshold * 3 - item.quantityOnHand, item.reorderThreshold).toFixed(2)
     : "0";
+  const [qty, setQty] = useState(suggested);
 
   useEffect(() => { if (open) setQty(suggested); }, [open, suggested]);
 
@@ -271,8 +251,8 @@ function ReorderDialog({ item, open, onOpenChange, onConfirm, loading }) {
   );
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
-function InventoryPage() {
+// ─── Page ─────────────────────────────────────────────────────────────────────
+export function InventoryPage() {
   const currentUser = "manager@example.com";
 
   const [trucks,        setTrucks]        = useState([]);
@@ -283,20 +263,16 @@ function InventoryPage() {
   const [loading,       setLoading]       = useState(false);
   const [search,        setSearch]        = useState("");
   const [filterStatus,  setFilterStatus]  = useState("all");
-
-  const [adjustItem,   setAdjustItem]   = useState(null);
-  const [reorderItem,  setReorderItem]  = useState(null);
-  const [modalLoading, setModalLoading] = useState(false);
+  const [adjustItem,    setAdjustItem]    = useState(null);
+  const [reorderItem,   setReorderItem]   = useState(null);
+  const [modalLoading,  setModalLoading]  = useState(false);
 
   const { toast, show: showToast } = useToast();
 
   useEffect(() => {
     fetch("/api/trucks")
       .then((r) => r.json())
-      .then((data) => {
-        setTrucks(data);
-        if (data.length > 0) setSelectedTruck(data[0].license_plate);
-      })
+      .then((data) => { setTrucks(data); if (data.length > 0) setSelectedTruck(data[0].license_plate); })
       .catch(() => showToast("Failed to load trucks", "error"));
   }, []);
 
@@ -312,9 +288,7 @@ function InventoryPage() {
       setInventory(Array.isArray(inv)  ? inv  : []);
       setAlerts   (Array.isArray(alt)  ? alt  : []);
       setHistory  (Array.isArray(hist) ? hist : []);
-    } catch {
-      showToast("Failed to load inventory", "error");
-    }
+    } catch { showToast("Failed to load inventory", "error"); }
     setLoading(false);
   }, []);
 
@@ -323,53 +297,34 @@ function InventoryPage() {
   const handleAdjust = async ({ qty, type, reason }) => {
     setModalLoading(true);
     try {
-      const res = await fetch("/api/inventory/use", {
+      const res  = await fetch("/api/inventory/use", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          licensePlate:   selectedTruck,
-          ingredientId:   adjustItem.ingredientId,
-          quantityUsed:   qty,
-          adjustmentType: type,
-          reason,
-          adjustedBy:     currentUser,
-        }),
+        body: JSON.stringify({ licensePlate: selectedTruck, ingredientId: adjustItem.ingredientId, quantityUsed: qty, adjustmentType: type, reason, adjustedBy: currentUser }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      showToast(
-        `Updated. New qty: ${fmt(data.newQuantity)} ${adjustItem.unitOfMeasure}` +
-        (data.alertCreated ? " — Reorder alert created!" : "")
-      );
+      showToast(`Updated. New qty: ${fmt(data.newQuantity)} ${adjustItem.unitOfMeasure}` + (data.alertCreated ? " — Reorder alert created!" : ""));
       setAdjustItem(null);
       loadData(selectedTruck);
-    } catch (err) {
-      showToast(err.message, "error");
-    }
+    } catch (err) { showToast(err.message, "error"); }
     setModalLoading(false);
   };
 
   const handleReorder = async ({ qty }) => {
     setModalLoading(true);
     try {
-      const res = await fetch("/api/inventory/reorder", {
+      const res  = await fetch("/api/inventory/reorder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          licensePlate:    selectedTruck,
-          ingredientId:    reorderItem.ingredientId,
-          quantityOrdered: qty,
-          createdBy:       currentUser,
-        }),
+        body: JSON.stringify({ licensePlate: selectedTruck, ingredientId: reorderItem.ingredientId, quantityOrdered: qty, createdBy: currentUser }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       showToast(`Order placed — PO #${data.poId} for ${fmt(qty)} ${reorderItem.unitOfMeasure}`);
       setReorderItem(null);
       loadData(selectedTruck);
-    } catch (err) {
-      showToast(err.message, "error");
-    }
+    } catch (err) { showToast(err.message, "error"); }
     setModalLoading(false);
   };
 
@@ -389,9 +344,16 @@ function InventoryPage() {
   const outOfStockCount   = inventory.filter((i) => i.quantityOnHand === 0).length;
   const selectedTruckName = trucks.find((t) => t.license_plate === selectedTruck)?.truck_name ?? "";
 
+  // ── Shared TabsTrigger className ─────────────────────────────────────────────
+  // The uploaded TabsTrigger has `flex-1` by default which stretches each tab to
+  // fill equal space. `flex-none` overrides that so tabs are content-width.
+  // `rounded-none` removes the default rounded-md. `h-auto` overrides the
+  // h-[calc(100%-1px)] so height comes from our py-3 padding instead.
+  const triggerCls = "flex-none rounded-none h-auto py-3 px-5 gap-2 data-[state=active]:shadow-none";
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      {/* ── Page Header ─────────────────────────────────────────── */}
+      {/* ── Header ──────────────────────────────────────────────── */}
       <div className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -405,15 +367,11 @@ function InventoryPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => loadData(selectedTruck)}
-              disabled={loading}
-            >
+            <Button variant="outline" size="sm" onClick={() => loadData(selectedTruck)} disabled={loading}>
               <RefreshCwIcon className={`size-4 ${loading ? "animate-spin" : ""}`} />
               Refresh
             </Button>
+            {/* SelectTrigger defaults to w-fit in the uploaded file; w-56 overrides it */}
             <Select value={selectedTruck} onValueChange={setSelectedTruck}>
               <SelectTrigger className="w-56">
                 <TruckIcon className="size-4 text-muted-foreground" />
@@ -440,8 +398,7 @@ function InventoryPage() {
           <StatCard icon={BellIcon}          label="Active Alerts"     value={activeAlertCount} variant={activeAlertCount > 0 ? "warning" : "success"} />
         </div>
 
-        {/* ── Alert banner — plain div instead of <Alert> ───────── */}
-        {/* Alert was a single-use styled div; this is identical visually */}
+        {/* ── Alert banner ──────────────────────────────────────── */}
         {activeAlertCount > 0 && (
           <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
             <AlertTriangleIcon className="size-4 mt-0.5 shrink-0" />
@@ -450,40 +407,59 @@ function InventoryPage() {
                 {activeAlertCount} ingredient{activeAlertCount > 1 ? "s" : ""} need{activeAlertCount === 1 ? "s" : ""} reordering
               </p>
               <p className="text-sm opacity-80">
-                Check the <strong>Reorder Alerts</strong> tab to place orders for low-stock ingredients.
+                Check the <strong>Reorder Alerts</strong> tab to place orders.
               </p>
             </div>
           </div>
         )}
 
         {/* ── Tabs ──────────────────────────────────────────────── */}
-        <Tabs defaultValue="inventory" className="gap-0">
-          <TabsList className="w-full justify-start rounded-b-none border border-b-0 bg-muted/50 h-auto p-0">
-            <TabsTrigger value="inventory" className="rounded-none rounded-tl-lg data-[state=active]:shadow-none border-r py-3 px-5 gap-2">
+        {/*
+          TabsList uses variant="line" from the uploaded tabs.jsx.
+          "line" gives: `gap-1 bg-transparent` as the base — no rounded pill
+          background — which is the right foundation for a border-tab design.
+          We add `border-b w-full justify-start` on top of that.
+
+          We do NOT use variant="default" here because the uploaded version's
+          default gives a `bg-muted rounded-lg p-[3px]` pill container, and the
+          triggers get `h-[calc(100%-1px)]` which collapses when the parent
+          has no fixed height — causing zero-height tabs.
+        */}
+        <Tabs defaultValue="inventory">
+          <TabsList
+            variant="line"
+            className="w-full justify-start border-b rounded-none gap-0 pb-0"
+          >
+            <TabsTrigger value="inventory" className={`${triggerCls} border-b-2 border-transparent data-[state=active]:border-primary`}>
               <PackageIcon className="size-4" />
               Inventory
               {belowThreshCount > 0 && (
-                <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0">{belowThreshCount}</Badge>
+                <Badge variant="destructive" className="ml-1 h-4 px-1.5 text-[10px]">
+                  {belowThreshCount}
+                </Badge>
               )}
             </TabsTrigger>
 
-            <TabsTrigger value="alerts" className="rounded-none data-[state=active]:shadow-none border-r py-3 px-5 gap-2">
+            <TabsTrigger value="alerts" className={`${triggerCls} border-b-2 border-transparent data-[state=active]:border-primary`}>
               <BellIcon className="size-4" />
               Reorder Alerts
               {activeAlertCount > 0 && (
-                <Badge variant="warning" className="ml-1 text-xs px-1.5 py-0">{activeAlertCount}</Badge>
+                // "warning" variant doesn't exist — use outline + amber className
+                <Badge variant="outline" className={`ml-1 h-4 px-1.5 text-[10px] ${BADGE_WARNING}`}>
+                  {activeAlertCount}
+                </Badge>
               )}
             </TabsTrigger>
 
-            <TabsTrigger value="history" className="rounded-none rounded-tr-lg data-[state=active]:shadow-none py-3 px-5 gap-2">
+            <TabsTrigger value="history" className={`${triggerCls} border-b-2 border-transparent data-[state=active]:border-primary`}>
               <HistoryIcon className="size-4" />
               Adjustment History
             </TabsTrigger>
           </TabsList>
 
-          {/* ── INVENTORY TAB ──────────────────────────────────── */}
-          <TabsContent value="inventory" className="mt-0">
-            <Card className="rounded-tl-none">
+          {/* ── Inventory tab ──────────────────────────────────── */}
+          <TabsContent value="inventory">
+            <Card className="rounded-t-none border-t-0">
               <CardHeader className="border-b pb-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="relative flex-1 min-w-48">
@@ -568,7 +544,7 @@ function InventoryPage() {
                                 title={
                                   item.needsReorder
                                     ? "Place a reorder"
-                                    : `Reorder only available when below threshold (${fmt(item.reorderThreshold)} ${item.unitOfMeasure})`
+                                    : `Reorder only when below threshold (${fmt(item.reorderThreshold)} ${item.unitOfMeasure})`
                                 }
                               >
                                 <ShoppingCartIcon className="size-3.5" />
@@ -585,13 +561,13 @@ function InventoryPage() {
             </Card>
           </TabsContent>
 
-          {/* ── ALERTS TAB ─────────────────────────────────────── */}
-          <TabsContent value="alerts" className="mt-0">
-            <Card className="rounded-tl-none rounded-t-none">
+          {/* ── Alerts tab ─────────────────────────────────────── */}
+          <TabsContent value="alerts">
+            <Card className="rounded-t-none border-t-0">
               <CardHeader className="border-b">
                 <CardTitle className="text-base">Reorder Alerts</CardTitle>
                 <CardDescription>
-                  Ingredients that have fallen below their reorder threshold. Only these may be reordered.
+                  Ingredients below their reorder threshold. Only these may be reordered.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -631,7 +607,8 @@ function InventoryPage() {
                             <TableCell>
                               {a.alertStatus === "active"
                                 ? <Badge variant="destructive">Active</Badge>
-                                : <Badge variant="warning">Ordered</Badge>
+                                // "warning" variant doesn't exist — use outline + amber className
+                                : <Badge variant="outline" className={BADGE_WARNING}>Ordered</Badge>
                               }
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
@@ -644,7 +621,9 @@ function InventoryPage() {
                                   Reorder Now
                                 </Button>
                               ) : (
-                                <Badge variant="outline" className="text-muted-foreground">Order placed</Badge>
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  Order placed
+                                </Badge>
                               )}
                             </TableCell>
                           </TableRow>
@@ -657,9 +636,9 @@ function InventoryPage() {
             </Card>
           </TabsContent>
 
-          {/* ── HISTORY TAB ────────────────────────────────────── */}
-          <TabsContent value="history" className="mt-0">
-            <Card className="rounded-tl-none rounded-t-none">
+          {/* ── History tab ────────────────────────────────────── */}
+          <TabsContent value="history">
+            <Card className="rounded-t-none border-t-0">
               <CardHeader className="border-b">
                 <CardTitle className="text-base">Adjustment History</CardTitle>
                 <CardDescription>Last 40 inventory changes for this truck</CardDescription>
@@ -725,7 +704,7 @@ function InventoryPage() {
         </Tabs>
       </div>
 
-      {/* ── Modals ──────────────────────────────────────────────── */}
+      {/* ── Dialogs ─────────────────────────────────────────────── */}
       <AdjustDialog
         item={adjustItem}
         open={!!adjustItem}
@@ -741,7 +720,7 @@ function InventoryPage() {
         loading={modalLoading}
       />
 
-      {/* ── Toast — always a plain div, no component needed ─────── */}
+      {/* ── Toast ───────────────────────────────────────────────── */}
       {toast && (
         <div className={`fixed bottom-5 right-5 z-50 flex items-start gap-3 rounded-xl border bg-card shadow-xl px-4 py-3.5 max-w-sm text-sm animate-in slide-in-from-bottom-4 ${toast.type === "error" ? "border-destructive/50" : "border-emerald-500/50"}`}>
           {toast.type === "error"
