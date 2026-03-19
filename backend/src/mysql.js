@@ -32,7 +32,9 @@ export async function mySQLQuery(
   res = null,
 ) {
   const db = await getDatabase();
-
+  // basePath strips the query string so "/api/inventory?licensePlate=X"
+  // matches the inventory branches below without breaking existing routes.
+  const basePath = url.split("?")[0];
   // ── Employee routes ──────────────────────────────────────────────
   if (url === "/api/employee") {
     return "HI FROM MYSQL";
@@ -76,6 +78,21 @@ export async function mySQLQuery(
     return await getIngredients(db);
   } else if (url === "/api/suppliers" && method === "GET") {
     return await getSuppliers(db);
+    // ── Inventory routes ─────────────────────────────────────────────
+    // More-specific sub-paths are checked before the bare GET so they
+    // are not swallowed by the /api/inventory branch.
+  } else if (basePath === "/api/inventory/use-recipe" && method === "POST") {
+    return await useRecipe(body, db);
+  } else if (basePath === "/api/inventory/use" && method === "POST") {
+    return await useInventory(body, db);
+  } else if (basePath === "/api/inventory/reorder" && method === "POST") {
+    return await reorderInventory(body, db);
+  } else if (basePath === "/api/inventory/alerts" && method === "GET") {
+    return await getInventoryAlerts(url, db);
+  } else if (basePath === "/api/inventory/history" && method === "GET") {
+    return await getInventoryHistory(url, db);
+  } else if (basePath === "/api/inventory" && method === "GET") {
+    return await getInventory(url, db);
   } else {
     return null;
   }
