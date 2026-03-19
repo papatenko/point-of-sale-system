@@ -9,6 +9,14 @@ import { createIngredient, getIngredients, deleteIngredient } from "./routes/ing
 import { getEmployees, deleteEmployee } from "./routes/employees.js";
 import { getMenuItems, createMenuItem, deleteMenuItem } from "./routes/menu_items.js";
 import { getSuppliers, createSupplier, deleteSupplier } from "./routes/suppliers.js";
+import {
+  getInventory,
+  useInventory,
+  useRecipe,
+  reorderInventory,
+  getInventoryAlerts,
+  getInventoryHistory,
+} from "./routes/Inventory.js";
 
 let database = null;
 
