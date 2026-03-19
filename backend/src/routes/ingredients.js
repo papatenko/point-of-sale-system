@@ -5,7 +5,8 @@ export async function getIngredients(db) {
     LEFT JOIN suppliers s ON i.preferred_supplier_id = s.supplier_id
     ORDER BY i.ingredient_name
   `);
-  return JSON.stringify(rows);
+  // Return raw rows; the HTTP server will JSON.stringify once.
+  return rows;
 }
 
 export async function createIngredient(body, db) {
@@ -19,16 +20,16 @@ export async function createIngredient(body, db) {
   } = body;
 
   if (!ingredient_name || !unit_of_measure || !current_unit_cost) {
-    return JSON.stringify({
+    return {
       error: "Missing required fields: ingredient_name, unit_of_measure, current_unit_cost",
-    });
+    };
   }
 
   const validUnits = ["g", "kg", "ml", "l", "tsp", "tbsp", "cup", "oz", "lb", "pcs"];
   if (!validUnits.includes(unit_of_measure)) {
-    return JSON.stringify({
+    return {
       error: `Invalid unit_of_measure. Must be one of: ${validUnits.join(", ")}`,
-    });
+    };
   }
 
   const [result] = await db.query(
@@ -45,18 +46,18 @@ export async function createIngredient(body, db) {
     ]
   );
 
-  return JSON.stringify({
+  return {
     success: true,
     ingredient_id: result.insertId,
     message: "Ingredient created successfully",
-  });
+  };
 }
 
 export async function deleteIngredient(body, db) {
   const { ingredient_id } = body;
 
   if (!ingredient_id) {
-    return JSON.stringify({ error: "ingredient_id is required" });
+    return { error: "ingredient_id is required" };
   }
 
   const [result] = await db.query(
@@ -65,11 +66,11 @@ export async function deleteIngredient(body, db) {
   );
 
   if (result.affectedRows === 0) {
-    return JSON.stringify({ error: "Ingredient not found" });
+    return { error: "Ingredient not found" };
   }
 
-  return JSON.stringify({
+  return {
     success: true,
     message: "Ingredient deleted successfully",
-  });
+  };
 }
