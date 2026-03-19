@@ -50,6 +50,7 @@ function EmployeesDatabaseComponent() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
   const [form, setForm] = useState({
     email: "",
     first_name: "",
@@ -65,6 +66,19 @@ function EmployeesDatabaseComponent() {
     adminPassword: "",
   });
 
+  const normalizeEmployeesResponse = (data) => {
+    if (Array.isArray(data)) return data;
+    if (typeof data === "string") {
+      try {
+        const parsed = JSON.parse(data);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -72,9 +86,17 @@ function EmployeesDatabaseComponent() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setEmployees(Array.isArray(data) ? data : []);
+      if (!res.ok) {
+        setFetchError(data?.error || "Failed to fetch employees");
+        setEmployees([]);
+        return;
+      }
+      setFetchError(null);
+      setEmployees(normalizeEmployeesResponse(data));
     } catch (err) {
       console.error("Failed to fetch employees:", err);
+      setFetchError("Failed to fetch employees");
+      setEmployees([]);
     } finally {
       setLoading(false);
     }
@@ -412,7 +434,9 @@ function EmployeesDatabaseComponent() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {fetchError ? (
+            <p className="text-destructive text-sm py-4">{fetchError}</p>
+          ) : loading ? (
             <p className="text-muted-foreground">Loading...</p>
           ) : (
             <div className="rounded-md border">
