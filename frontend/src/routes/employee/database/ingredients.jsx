@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/database/DataTable";
-import { CreateForm } from "@/components/database/CreateForm";
+import { DataTable } from "@/components/database/data-table";
+import { CreateForm } from "@/components/database/create-form";
 import { Plus } from "lucide-react";
 
 export const Route = createFileRoute("/employee/database/ingredients")({
@@ -122,8 +122,8 @@ function IngredientsDatabaseComponent() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="p-6 space-y-6 w-full">
+      <div className="flex justify-between items-center w-full">
         <div>
           <h1 className="text-2xl font-bold">Ingredients</h1>
           <p className="text-muted-foreground">

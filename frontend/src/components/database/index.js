@@ -1,2 +1,2 @@
-export { DataTable } from "./DataTable";
-export { CreateForm } from "./CreateForm";
+export { DataTable } from "./data-table";
+export { CreateForm } from "./create-form";

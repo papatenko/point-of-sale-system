@@ -31,7 +31,7 @@ export function DataTable({
       searchKeys.some((key) => {
         const value = item[key];
         return value?.toString().toLowerCase().includes(term);
-      })
+      }),
     );
   }, [data, searchTerm, searchKeys]);
 
@@ -47,7 +47,7 @@ export function DataTable({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 w-full">
       <div className="flex items-center gap-2">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
@@ -58,8 +58,8 @@ export function DataTable({
         />
       </div>
 
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border w-full [&>div]:!overflow-visible">
+        <Table className="w-full">
           <TableHeader>
             <TableRow>
               {columns.map((col) => (
@@ -71,13 +71,19 @@ export function DataTable({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={columns.length + 1} className="text-center py-8">
+                <TableCell
+                  colSpan={columns.length + 1}
+                  className="text-center py-8"
+                >
                   Loading...
                 </TableCell>
               </TableRow>
             ) : filteredData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length + 1} className="text-center py-8 text-muted-foreground">
+                <TableCell
+                  colSpan={columns.length + 1}
+                  className="text-center py-8 text-muted-foreground"
+                >
                   {emptyMessage}
                 </TableCell>
               </TableRow>

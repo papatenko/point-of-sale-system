@@ -19,6 +19,7 @@ import {
 export function CreateForm({
   title = "Add New Item",
   fields,
+  extraFields,
   onSubmit,
   onCancel,
   isSubmitting = false,
@@ -107,6 +108,26 @@ export function CreateForm({
                     required={field.required}
                   />
                 )}
+              </div>
+            ))}
+
+            {extraFields?.map((field) => (
+              <div key={field.name} className="flex-1 min-w-[200px] space-y-1">
+                <Label htmlFor={field.name}>
+                  {field.label}
+                  {field.required && <span className="text-destructive"> *</span>}
+                </Label>
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  type={field.type || "text"}
+                  step={field.step}
+                  min={field.min}
+                  placeholder={field.placeholder}
+                  value={field.value}
+                  onChange={field.onChange}
+                  required={field.required}
+                />
               </div>
             ))}
           </div>
