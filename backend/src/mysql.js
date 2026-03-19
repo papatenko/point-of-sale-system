@@ -3,7 +3,7 @@ import { getMenu } from "./routes/menu.js";
 import "dotenv/config";
 import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
-import { getTrucks } from "./routes/truck.js";
+import { getTrucks, createTruck, updateTruck, deleteTruck } from "./routes/truck.js";
 import { handleEmployeeCreate } from "./auth/create_employ.js";
 import { createIngredient, getIngredients, deleteIngredient } from "./routes/ingredients.js";
 import { getEmployees, deleteEmployee } from "./routes/employees.js";
@@ -71,6 +71,12 @@ export async function mySQLQuery(
     // ── GET /api/trucks ──────────────────────────────────────────────
   } else if (url === "/api/trucks" && method === "GET") {
     return await getTrucks(db);
+  } else if (url === "/api/trucks" && method === "POST") {
+    return await createTruck(body, db);
+  } else if (url === "/api/trucks" && method === "PUT") {
+    return await updateTruck(body, db);
+  } else if (url === "/api/trucks" && method === "DELETE") {
+    return await deleteTruck(body, db);
     // ── GET /api/menu ────────────────────────────────────────────────
   } else if (url === "/api/menu" && method === "GET") {
     return await getMenu();
@@ -105,6 +111,14 @@ export async function mySQLQuery(
     return await createSupplier(body, db);
   } else if (url === "/api/suppliers" && method === "DELETE") {
     return await deleteSupplier(body, db);
+  } else if (url === "/api/recipes" && method === "GET") {
+    return await getRecipes(db);
+  } else if (url === "/api/recipes" && method === "POST") {
+    return await createRecipe(body, db);
+  } else if (url === "/api/recipes" && method === "PUT") {
+    return await updateRecipe(body, db);
+  } else if (url === "/api/recipes" && method === "DELETE") {
+    return await deleteRecipe(body, db);
     // ── Inventory routes ─────────────────────────────────────────────
     // More-specific sub-paths are checked before the bare GET so they
     // are not swallowed by the /api/inventory branch.

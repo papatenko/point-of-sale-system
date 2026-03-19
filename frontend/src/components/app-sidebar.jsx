@@ -15,6 +15,8 @@ import {
   Users,
   Utensils,
   Truck,
+  Scroll,
+  Archive,
 } from "lucide-react";
 
 const employee_routes = [
@@ -48,7 +50,9 @@ const database_routes = [
   { name: "Ingredients", url: "/employee/database/ingredients", icon: Beef },
   { name: "Employees", url: "/employee/database/employees", icon: Users },
   { name: "Menu Items", url: "/employee/database/menu_items", icon: Utensils },
-  { name: "Suppliers", url: "/employee/database/suppliers", icon: Truck },
+  { name: "Suppliers", url: "/employee/database/suppliers", icon: Archive },
+  { name: "Food Trucks", url: "/employee/database/food-trucks", icon: Truck },
+  { name: "Recipes", url: "/employee/database/recipes", icon: Scroll },
 ];
 
 export function AppSidebar() {
@@ -70,7 +74,9 @@ export function AppSidebar() {
               </SidebarMenuItem>
             );
           })}
-          <div className="px-2 py-1.5 mt-4 text-sm font-semibold">Database Entries</div>
+          <div className="px-2 py-1.5 mt-4 text-sm font-semibold">
+            Database Entries
+          </div>
           {database_routes.map((route) => {
             const Icon = route.icon;
             return (
