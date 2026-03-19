@@ -1,14 +1,26 @@
 import mysql from "mysql2/promise";
 import { getMenu } from "./routes/menu.js";
-import "dotenv/config";
+import dotenv from "dotenv";
 import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
 import { getTrucks } from "./routes/truck.js";
 import { handleEmployeeCreate } from "./auth/create_employ.js";
-import { createIngredient, getIngredients, deleteIngredient } from "./routes/ingredients.js";
+import {
+  createIngredient,
+  getIngredients,
+  deleteIngredient,
+} from "./routes/ingredients.js";
 import { getEmployees, deleteEmployee } from "./routes/employees.js";
-import { getMenuItems, createMenuItem, deleteMenuItem } from "./routes/menu_items.js";
-import { getSuppliers, createSupplier, deleteSupplier } from "./routes/suppliers.js";
+import {
+  getMenuItems,
+  createMenuItem,
+  deleteMenuItem,
+} from "./routes/menu_items.js";
+import {
+  getSuppliers,
+  createSupplier,
+  deleteSupplier,
+} from "./routes/suppliers.js";
 import {
   getInventory,
   useInventory,
@@ -18,10 +30,21 @@ import {
   getInventoryHistory,
 } from "./routes/Inventory.js";
 
+// Only load .env if not in production
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config(); // loads .env for local dev
+}
+
 let database = null;
 
 export async function getDatabase() {
   if (!database) {
+    const missing = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"].filter(
+      (k) => !process.env[k],
+    );
+    if (missing.length > 0) {
+      throw new Error(`Missing env vars: ${missing.join(", ")}`);
+    }
     database = await mysql.createConnection({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,

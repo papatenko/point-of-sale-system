@@ -5,14 +5,15 @@ export async function getEmployees(db) {
     JOIN users u ON e.email = u.email
     ORDER BY u.last_name, u.first_name
   `);
-  return JSON.stringify(rows);
+  // Return raw rows; the HTTP server will JSON.stringify once.
+  return rows;
 }
 
 export async function deleteEmployee(body, db) {
   const { email } = body;
 
   if (!email) {
-    return JSON.stringify({ error: "email is required" });
+    return { error: "email is required" };
   }
 
   const [result] = await db.query(
@@ -21,11 +22,11 @@ export async function deleteEmployee(body, db) {
   );
 
   if (result.affectedRows === 0) {
-    return JSON.stringify({ error: "Employee not found" });
+    return { error: "Employee not found" };
   }
 
-  return JSON.stringify({
+  return {
     success: true,
     message: "Employee deleted successfully",
-  });
+  };
 }

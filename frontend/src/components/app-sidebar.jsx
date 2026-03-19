@@ -38,7 +38,7 @@ const employee_routes = [
   },
   {
     name: "Search Screen",
-    url: "/employee/jsearch",
+    url: "/employee/search",
     roles: ["manager", "admin"],
     icon: Search,
   },

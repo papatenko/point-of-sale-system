@@ -1,29 +1,36 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Trash2, Plus, Search } from "lucide-react";
+import { DataTable } from "@/components/database/data-table";
+import { CreateForm } from "@/components/database/create-form";
+import { Plus } from "lucide-react";
 
 export const Route = createFileRoute("/employee/database/suppliers")({
   component: SuppliersDatabaseComponent,
 });
 
+const COLUMNS = [
+  { key: "supplier_id", label: "ID" },
+  { key: "supplier_name", label: "Name" },
+  { key: "contact_person", label: "Contact" },
+  { key: "email", label: "Email" },
+  { key: "phone_number", label: "Phone" },
+];
+
+const CREATE_FIELDS = [
+  { name: "supplier_name", label: "Supplier Name", type: "text", required: true },
+  { name: "contact_person", label: "Contact Person", type: "text" },
+  { name: "email", label: "Email", type: "email" },
+  { name: "phone_number", label: "Phone", type: "text" },
+  { name: "address", label: "Address", type: "text" },
+];
+
 function SuppliersDatabaseComponent() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [form, setForm] = useState({
-    supplier_name: "",
-    contact_person: "",
-    email: "",
-    phone_number: "",
-    address: "",
-  });
 
   const fetchSuppliers = async () => {
     try {
@@ -44,12 +51,7 @@ function SuppliersDatabaseComponent() {
     fetchSuppliers();
   }, []);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleCreateSubmit = async (formData) => {
     setIsSubmitting(true);
     setError(null);
     const token = localStorage.getItem("token");
@@ -62,31 +64,32 @@ function SuppliersDatabaseComponent() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          supplier_name: form.supplier_name,
-          contact_person: form.contact_person || null,
-          email: form.email || null,
-          phone_number: form.phone_number || null,
-          address: form.address || null,
+          supplier_name: formData.supplier_name,
+          contact_person: formData.contact_person || null,
+          email: formData.email || null,
+          phone_number: formData.phone_number || null,
+          address: formData.address || null,
         }),
       });
       const data = await res.json();
 
       if (res.ok) {
-        setForm({ supplier_name: "", contact_person: "", email: "", phone_number: "", address: "" });
         setShowCreateForm(false);
         fetchSuppliers();
       } else {
         setError(data.error || "Failed to create supplier");
+        throw new Error(data.error);
       }
     } catch (err) {
-      setError("Failed to create supplier");
+      if (!err.message.includes("Failed to create")) {
+        setError("Failed to create supplier");
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this supplier?")) return;
     const token = localStorage.getItem("token");
 
     try {
@@ -110,13 +113,9 @@ function SuppliersDatabaseComponent() {
     }
   };
 
-  const filteredSuppliers = suppliers.filter((s) =>
-    s.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="p-6 space-y-6 w-full">
+      <div className="flex justify-between items-center w-full">
         <div>
           <h1 className="text-2xl font-bold">Suppliers</h1>
           <p className="text-muted-foreground">Manage your supplier contacts</p>
@@ -128,104 +127,29 @@ function SuppliersDatabaseComponent() {
       </div>
 
       {showCreateForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Add New Supplier</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                  {error}
-                </div>
-              )}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <Label htmlFor="supplier_name">Supplier Name *</Label>
-                  <Input id="supplier_name" name="supplier_name" value={form.supplier_name} onChange={handleChange} required />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="contact_person">Contact Person</Label>
-                  <Input id="contact_person" name="contact_person" value={form.contact_person} onChange={handleChange} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" name="email" type="email" value={form.email} onChange={handleChange} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="phone_number">Phone</Label>
-                  <Input id="phone_number" name="phone_number" value={form.phone_number} onChange={handleChange} />
-                </div>
-                <div className="space-y-1 col-span-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input id="address" name="address" value={form.address} onChange={handleChange} />
-                </div>
-              </div>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Supplier"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+        <CreateForm
+          title="Add New Supplier"
+          fields={CREATE_FIELDS}
+          onSubmit={handleCreateSubmit}
+          onCancel={() => {
+            setShowCreateForm(false);
+            setError(null);
+          }}
+          isSubmitting={isSubmitting}
+          error={error}
+          submitLabel="Create Supplier"
+        />
       )}
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4" />
-            <Input
-              placeholder="Search suppliers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-muted-foreground">Loading...</p>
-          ) : (
-            <div className="rounded-md border">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-3 text-left text-sm font-medium">ID</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Contact</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Phone</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSuppliers.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                        No suppliers found
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredSuppliers.map((supplier) => (
-                      <tr key={supplier.supplier_id} className="border-b">
-                        <td className="px-4 py-3 text-sm">{supplier.supplier_id}</td>
-                        <td className="px-4 py-3 text-sm">{supplier.supplier_name}</td>
-                        <td className="px-4 py-3 text-sm">{supplier.contact_person || "-"}</td>
-                        <td className="px-4 py-3 text-sm">{supplier.email || "-"}</td>
-                        <td className="px-4 py-3 text-sm">{supplier.phone_number || "-"}</td>
-                        <td className="px-4 py-3">
-                          <Button variant="destructive" size="sm" onClick={() => handleDelete(supplier.supplier_id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <DataTable
+        columns={COLUMNS}
+        data={suppliers}
+        searchKeys={["supplier_name", "contact_person", "email"]}
+        deleteIdKey="supplier_id"
+        onDelete={handleDelete}
+        loading={loading}
+        emptyMessage="No suppliers found"
+      />
     </div>
   );
 }
