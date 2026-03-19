@@ -2,7 +2,6 @@ import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
 import { mySQLQuery } from "./mysql.js";
-import { getDatabase } from "./mysql.js";
 
 // Grabs the built /dist/ directory built from Vite
 const FRONTEND_PATH = path.resolve("..") + "/frontend/dist";

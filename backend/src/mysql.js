@@ -3,7 +3,12 @@ import { getMenu } from "./routes/menu.js";
 import dotenv from "dotenv";
 import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
-import { getTrucks, createTruck, updateTruck, deleteTruck } from "./routes/truck.js";
+import {
+  getTrucks,
+  createTruck,
+  updateTruck,
+  deleteTruck,
+} from "./routes/truck.js";
 import { handleEmployeeCreate } from "./auth/create_employ.js";
 import {
   createIngredient,
@@ -29,6 +34,12 @@ import {
   getInventoryAlerts,
   getInventoryHistory,
 } from "./routes/Inventory.js";
+import {
+  getRecipes,
+  createRecipe,
+  deleteRecipe,
+  updateRecipe,
+} from "./routes/recipes.js";
 
 // Only load .env if not in production
 if (process.env.NODE_ENV !== "production") {
@@ -36,23 +47,28 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 let database = null;
+let pool = null;
 
-export async function getDatabase() {
-  if (!database) {
+export function getDatabase() {
+  if (!pool) {
     const missing = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"].filter(
       (k) => !process.env[k],
     );
     if (missing.length > 0) {
       throw new Error(`Missing env vars: ${missing.join(", ")}`);
     }
-    database = await mysql.createConnection({
+
+    pool = mysql.createPool({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
     });
   }
-  return database;
+  return pool;
 }
 
 // Test DB ENV
