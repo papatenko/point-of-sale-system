@@ -14,6 +14,14 @@ let database = null;
 
 export async function getDatabase() {
   if (!database) {
+    const requiredEnv = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"];
+    const missing = requiredEnv.filter((k) => !process.env[k]);
+    if (missing.length > 0) {
+      throw new Error(
+        `Database env not configured. Missing: ${missing.join(", ")}. ` +
+          `Create a backend .env file with DB_HOST, DB_USER, DB_PASSWORD, DB_NAME and restart the server.`,
+      );
+    }
     database = await mysql.createConnection({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
