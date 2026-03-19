@@ -21,6 +21,14 @@ import {
   createSupplier,
   deleteSupplier,
 } from "./routes/suppliers.js";
+import {
+  getInventory,
+  useInventory,
+  useRecipe,
+  reorderInventory,
+  getInventoryAlerts,
+  getInventoryHistory,
+} from "./routes/Inventory.js";
 
 // Only load .env if not in production
 if (process.env.NODE_ENV !== "production") {
