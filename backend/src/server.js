@@ -98,12 +98,6 @@ const server = createServer(async (req, res) => {
   file.streamFile.pipe(res);
 });
 
-// Test DB Connection
-getDatabase()
-  .then((db) => db.query("SELECT 1 + 1 AS solution"))
-  .then(([results]) => console.log("DB Connected!", results))
-  .catch((err) => console.error("DB Connection failed:", err));
-
 server.listen(PORT, () => {
   console.log("Listening on port 3000");
 });

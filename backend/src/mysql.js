@@ -1,26 +1,41 @@
 import mysql from "mysql2/promise";
 import { getMenu } from "./routes/menu.js";
-import "dotenv/config";
+import dotenv from "dotenv";
 import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
 import { getTrucks } from "./routes/truck.js";
 import { handleEmployeeCreate } from "./auth/create_employ.js";
-import { createIngredient, getIngredients, deleteIngredient } from "./routes/ingredients.js";
+import {
+  createIngredient,
+  getIngredients,
+  deleteIngredient,
+} from "./routes/ingredients.js";
 import { getEmployees, deleteEmployee } from "./routes/employees.js";
-import { getMenuItems, createMenuItem, deleteMenuItem } from "./routes/menu_items.js";
-import { getSuppliers, createSupplier, deleteSupplier } from "./routes/suppliers.js";
+import {
+  getMenuItems,
+  createMenuItem,
+  deleteMenuItem,
+} from "./routes/menu_items.js";
+import {
+  getSuppliers,
+  createSupplier,
+  deleteSupplier,
+} from "./routes/suppliers.js";
+
+// Only load .env if not in production
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config(); // loads .env for local dev
+}
 
 let database = null;
 
 export async function getDatabase() {
   if (!database) {
-    const requiredEnv = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"];
-    const missing = requiredEnv.filter((k) => !process.env[k]);
+    const missing = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"].filter(
+      (k) => !process.env[k],
+    );
     if (missing.length > 0) {
-      throw new Error(
-        `Database env not configured. Missing: ${missing.join(", ")}. ` +
-          `Create a backend .env file with DB_HOST, DB_USER, DB_PASSWORD, DB_NAME and restart the server.`,
-      );
+      throw new Error(`Missing env vars: ${missing.join(", ")}`);
     }
     database = await mysql.createConnection({
       host: process.env.DB_HOST,
@@ -43,7 +58,9 @@ export async function mySQLQuery(
   res = null,
 ) {
   const db = await getDatabase();
-
+  // basePath strips the query string so "/api/inventory?licensePlate=X"
+  // matches the inventory branches below without breaking existing routes.
+  const basePath = url.split("?")[0];
   // ── Employee routes ──────────────────────────────────────────────
   if (url === "/api/employee") {
     return "HI FROM MYSQL";
@@ -68,7 +85,7 @@ export async function mySQLQuery(
     // TODO
     // ── GET /api/trucks ──────────────────────────────────────────────
   } else if (url === "/api/trucks" && method === "GET") {
-    return getTrucks(db);
+    return await getTrucks(db);
     // ── GET /api/menu ────────────────────────────────────────────────
   } else if (url === "/api/menu" && method === "GET") {
     return await getMenu();
@@ -103,6 +120,21 @@ export async function mySQLQuery(
     return await createSupplier(body, db);
   } else if (url === "/api/suppliers" && method === "DELETE") {
     return await deleteSupplier(body, db);
+    // ── Inventory routes ─────────────────────────────────────────────
+    // More-specific sub-paths are checked before the bare GET so they
+    // are not swallowed by the /api/inventory branch.
+  } else if (basePath === "/api/inventory/use-recipe" && method === "POST") {
+    return await useRecipe(body, db);
+  } else if (basePath === "/api/inventory/use" && method === "POST") {
+    return await useInventory(body, db);
+  } else if (basePath === "/api/inventory/reorder" && method === "POST") {
+    return await reorderInventory(body, db);
+  } else if (basePath === "/api/inventory/alerts" && method === "GET") {
+    return await getInventoryAlerts(url, db);
+  } else if (basePath === "/api/inventory/history" && method === "GET") {
+    return await getInventoryHistory(url, db);
+  } else if (basePath === "/api/inventory" && method === "GET") {
+    return await getInventory(url, db);
   } else {
     return null;
   }
