@@ -17,6 +17,7 @@ function SuppliersDatabaseComponent() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
   const [form, setForm] = useState({
     supplier_name: "",
     contact_person: "",
@@ -25,6 +26,19 @@ function SuppliersDatabaseComponent() {
     address: "",
   });
 
+  const normalizeSuppliersResponse = (data) => {
+    if (Array.isArray(data)) return data;
+    if (typeof data === "string") {
+      try {
+        const parsed = JSON.parse(data);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
   const fetchSuppliers = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -32,9 +46,17 @@ function SuppliersDatabaseComponent() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setSuppliers(Array.isArray(data) ? data : []);
+      if (!res.ok) {
+        setFetchError(data?.error || "Failed to fetch suppliers");
+        setSuppliers([]);
+        return;
+      }
+      setFetchError(null);
+      setSuppliers(normalizeSuppliersResponse(data));
     } catch (err) {
       console.error("Failed to fetch suppliers:", err);
+      setFetchError("Failed to fetch suppliers");
+      setSuppliers([]);
     } finally {
       setLoading(false);
     }
@@ -182,7 +204,9 @@ function SuppliersDatabaseComponent() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {fetchError ? (
+            <p className="text-destructive text-sm py-4">{fetchError}</p>
+          ) : loading ? (
             <p className="text-muted-foreground">Loading...</p>
           ) : (
             <div className="rounded-md border">
