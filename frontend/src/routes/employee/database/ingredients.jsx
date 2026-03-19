@@ -52,11 +52,25 @@ function IngredientsDatabaseComponent() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
   const [form, setForm] = useState({
     ingredient_name: "",
     unit_of_measure: "",
     current_unit_cost: "",
   });
+
+  const normalizeIngredientsResponse = (data) => {
+    if (Array.isArray(data)) return data;
+    if (typeof data === "string") {
+      try {
+        const parsed = JSON.parse(data);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
 
   const fetchIngredients = async () => {
     try {
@@ -65,9 +79,17 @@ function IngredientsDatabaseComponent() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setIngredients(Array.isArray(data) ? data : []);
+      if (!res.ok) {
+        setFetchError(data?.error || "Failed to fetch ingredients");
+        setIngredients([]);
+        return;
+      }
+      setFetchError(null);
+      setIngredients(normalizeIngredientsResponse(data));
     } catch (err) {
       console.error("Failed to fetch ingredients:", err);
+      setFetchError("Failed to fetch ingredients");
+      setIngredients([]);
     } finally {
       setLoading(false);
     }
@@ -245,7 +267,9 @@ function IngredientsDatabaseComponent() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {fetchError ? (
+            <p className="text-destructive text-sm py-4">{fetchError}</p>
+          ) : loading ? (
             <p className="text-muted-foreground">Loading...</p>
           ) : (
             <Table>

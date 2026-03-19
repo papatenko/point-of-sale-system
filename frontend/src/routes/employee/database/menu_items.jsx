@@ -17,11 +17,27 @@ function MenuItemsDatabaseComponent() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [fetchError, setFetchError] = useState(null);
   const [form, setForm] = useState({
     item_name: "",
     price: "",
     description: "",
   });
+
+  const normalizeMenuItemsResponse = (data) => {
+    // Some backend paths have historically returned JSON-stringified arrays.
+    // This keeps the UI working even if that happens again.
+    if (Array.isArray(data)) return data;
+    if (typeof data === "string") {
+      try {
+        const parsed = JSON.parse(data);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
 
   const fetchMenuItems = async () => {
     try {
@@ -30,9 +46,17 @@ function MenuItemsDatabaseComponent() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setMenuItems(Array.isArray(data) ? data : []);
+      if (!res.ok) {
+        setFetchError(data?.error || "Failed to fetch menu items");
+        setMenuItems([]);
+        return;
+      }
+      setFetchError(null);
+      setMenuItems(normalizeMenuItemsResponse(data));
     } catch (err) {
       console.error("Failed to fetch menu items:", err);
+      setFetchError("Failed to fetch menu items");
+      setMenuItems([]);
     } finally {
       setLoading(false);
     }
@@ -170,7 +194,9 @@ function MenuItemsDatabaseComponent() {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {fetchError ? (
+            <p className="text-destructive text-sm py-4">{fetchError}</p>
+          ) : loading ? (
             <p className="text-muted-foreground">Loading...</p>
           ) : (
             <div className="rounded-md border">
