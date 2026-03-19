@@ -62,7 +62,7 @@ export async function mySQLQuery(
     // TODO
     // ── GET /api/trucks ──────────────────────────────────────────────
   } else if (url === "/api/trucks" && method === "GET") {
-    return getTrucks(db);
+    return await getTrucks(db);
     // ── GET /api/menu ────────────────────────────────────────────────
   } else if (url === "/api/menu" && method === "GET") {
     return await getMenu();
