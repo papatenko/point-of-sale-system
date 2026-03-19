@@ -4,6 +4,8 @@ import "dotenv/config";
 import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
 import { getTrucks } from "./routes/truck.js";
+import { handleEmployeeCreate } from "./auth/create_employ.js";
+import { createIngredient, getIngredients, getSuppliers } from "./routes/ingredients.js";
 
 let database = null;
 
@@ -22,7 +24,13 @@ export async function getDatabase() {
 // Test DB ENV
 console.log("DB_HOST:", process.env.DB_HOST);
 
-export async function mySQLQuery(url, body = null, method = "GET") {
+export async function mySQLQuery(
+  url,
+  body = null,
+  method = "GET",
+  req = null,
+  res = null,
+) {
   const db = await getDatabase();
 
   // ── Employee routes ──────────────────────────────────────────────
@@ -59,6 +67,15 @@ export async function mySQLQuery(url, body = null, method = "GET") {
     // ── GET /api/orders/:orderId ─────────────────────────────────────
   } else if (url.startsWith("/api/orders/") && method === "GET") {
     return getOrders(url, db);
+  } else if (url.startsWith("/api/employee/create") && method === "POST") {
+    await handleEmployeeCreate(req, res, body);
+    return;
+  } else if (url === "/api/ingredients" && method === "POST") {
+    return await createIngredient(body, db);
+  } else if (url === "/api/ingredients" && method === "GET") {
+    return await getIngredients(db);
+  } else if (url === "/api/suppliers" && method === "GET") {
+    return await getSuppliers(db);
   } else {
     return null;
   }

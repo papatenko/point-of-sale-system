@@ -19,10 +19,12 @@ import { Route as EmployeeSearchRouteImport } from './routes/employee/search'
 import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
 import { Route as EmployeePosRouteImport } from './routes/employee/pos'
 import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
-import { Route as EmployeeCreationRouteImport } from './routes/employee/creation'
 import { Route as ConfirmationOrderIdRouteImport } from './routes/confirmation.$orderId'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as EmployeeCreateRouteRouteImport } from './routes/employee/create/route'
+import { Route as EmployeeCreateIngredientRouteImport } from './routes/employee/create/ingredient'
+import { Route as EmployeeCreateEmployeeRouteImport } from './routes/employee/create/employee'
 
 const OrderRoute = OrderRouteImport.update({
   id: '/order',
@@ -74,11 +76,6 @@ const EmployeeInventoryRoute = EmployeeInventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => EmployeeRouteRoute,
 } as any)
-const EmployeeCreationRoute = EmployeeCreationRouteImport.update({
-  id: '/creation',
-  path: '/creation',
-  getParentRoute: () => EmployeeRouteRoute,
-} as any)
 const ConfirmationOrderIdRoute = ConfirmationOrderIdRouteImport.update({
   id: '/confirmation/$orderId',
   path: '/confirmation/$orderId',
@@ -94,37 +91,57 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmployeeCreateRouteRoute = EmployeeCreateRouteRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => EmployeeRouteRoute,
+} as any)
+const EmployeeCreateIngredientRoute =
+  EmployeeCreateIngredientRouteImport.update({
+    id: '/ingredient',
+    path: '/ingredient',
+    getParentRoute: () => EmployeeCreateRouteRoute,
+  } as any)
+const EmployeeCreateEmployeeRoute = EmployeeCreateEmployeeRouteImport.update({
+  id: '/employee',
+  path: '/employee',
+  getParentRoute: () => EmployeeCreateRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/order': typeof OrderRoute
+  '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
-  '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
   '/employee/': typeof EmployeeIndexRoute
+  '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
+  '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/checkout': typeof CheckoutRoute
   '/order': typeof OrderRoute
+  '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
-  '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
   '/auth': typeof AuthIndexRoute
   '/employee': typeof EmployeeIndexRoute
+  '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
+  '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -132,16 +149,18 @@ export interface FileRoutesById {
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/order': typeof OrderRoute
+  '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
-  '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
   '/employee/': typeof EmployeeIndexRoute
+  '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
+  '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -150,47 +169,53 @@ export interface FileRouteTypes {
     | '/employee'
     | '/checkout'
     | '/order'
+    | '/employee/create'
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
-    | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
     | '/auth/'
     | '/employee/'
+    | '/employee/create/employee'
+    | '/employee/create/ingredient'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/checkout'
     | '/order'
+    | '/employee/create'
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
-    | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
     | '/auth'
     | '/employee'
+    | '/employee/create/employee'
+    | '/employee/create/ingredient'
   id:
     | '__root__'
     | '/'
     | '/employee'
     | '/checkout'
     | '/order'
+    | '/employee/create'
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
-    | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
     | '/auth/'
     | '/employee/'
+    | '/employee/create/employee'
+    | '/employee/create/ingredient'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -276,13 +301,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeInventoryRouteImport
       parentRoute: typeof EmployeeRouteRoute
     }
-    '/employee/creation': {
-      id: '/employee/creation'
-      path: '/creation'
-      fullPath: '/employee/creation'
-      preLoaderRoute: typeof EmployeeCreationRouteImport
-      parentRoute: typeof EmployeeRouteRoute
-    }
     '/confirmation/$orderId': {
       id: '/confirmation/$orderId'
       path: '/confirmation/$orderId'
@@ -304,11 +322,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/employee/create': {
+      id: '/employee/create'
+      path: '/create'
+      fullPath: '/employee/create'
+      preLoaderRoute: typeof EmployeeCreateRouteRouteImport
+      parentRoute: typeof EmployeeRouteRoute
+    }
+    '/employee/create/ingredient': {
+      id: '/employee/create/ingredient'
+      path: '/ingredient'
+      fullPath: '/employee/create/ingredient'
+      preLoaderRoute: typeof EmployeeCreateIngredientRouteImport
+      parentRoute: typeof EmployeeCreateRouteRoute
+    }
+    '/employee/create/employee': {
+      id: '/employee/create/employee'
+      path: '/employee'
+      fullPath: '/employee/create/employee'
+      preLoaderRoute: typeof EmployeeCreateEmployeeRouteImport
+      parentRoute: typeof EmployeeCreateRouteRoute
+    }
   }
 }
 
+interface EmployeeCreateRouteRouteChildren {
+  EmployeeCreateEmployeeRoute: typeof EmployeeCreateEmployeeRoute
+  EmployeeCreateIngredientRoute: typeof EmployeeCreateIngredientRoute
+}
+
+const EmployeeCreateRouteRouteChildren: EmployeeCreateRouteRouteChildren = {
+  EmployeeCreateEmployeeRoute: EmployeeCreateEmployeeRoute,
+  EmployeeCreateIngredientRoute: EmployeeCreateIngredientRoute,
+}
+
+const EmployeeCreateRouteRouteWithChildren =
+  EmployeeCreateRouteRoute._addFileChildren(EmployeeCreateRouteRouteChildren)
+
 interface EmployeeRouteRouteChildren {
-  EmployeeCreationRoute: typeof EmployeeCreationRoute
+  EmployeeCreateRouteRoute: typeof EmployeeCreateRouteRouteWithChildren
   EmployeeInventoryRoute: typeof EmployeeInventoryRoute
   EmployeePosRoute: typeof EmployeePosRoute
   EmployeeReportsRoute: typeof EmployeeReportsRoute
@@ -317,7 +369,7 @@ interface EmployeeRouteRouteChildren {
 }
 
 const EmployeeRouteRouteChildren: EmployeeRouteRouteChildren = {
-  EmployeeCreationRoute: EmployeeCreationRoute,
+  EmployeeCreateRouteRoute: EmployeeCreateRouteRouteWithChildren,
   EmployeeInventoryRoute: EmployeeInventoryRoute,
   EmployeePosRoute: EmployeePosRoute,
   EmployeeReportsRoute: EmployeeReportsRoute,

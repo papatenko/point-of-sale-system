@@ -88,32 +88,9 @@ export async function handleEmployeeCreate(req, res, body) {
       ]);
       console.log("Manager created:", managerResult);
     }
-
-    // 4. Responder con éxito
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(
-      JSON.stringify({
-        success: true,
-        message: "Employee created successfully",
-        employeeId: userResult.insertId || employeeResult.insertId,
-        employee: {
-          email,
-          first_name,
-          last_name,
-          role: user_type,
-        },
-      }),
-    );
     return;
   } catch (err) {
     console.error("Error creating employee:", err);
-    res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(
-      JSON.stringify({
-        success: false,
-        error: err.message || "Internal server error",
-      }),
-    );
     return;
   }
 }
