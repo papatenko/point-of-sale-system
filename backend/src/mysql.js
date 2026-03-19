@@ -5,7 +5,10 @@ import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
 import { getTrucks } from "./routes/truck.js";
 import { handleEmployeeCreate } from "./auth/create_employ.js";
-import { createIngredient, getIngredients, getSuppliers } from "./routes/ingredients.js";
+import { createIngredient, getIngredients, deleteIngredient } from "./routes/ingredients.js";
+import { getEmployees, deleteEmployee } from "./routes/employees.js";
+import { getMenuItems, createMenuItem, deleteMenuItem } from "./routes/menu_items.js";
+import { getSuppliers, createSupplier, deleteSupplier } from "./routes/suppliers.js";
 
 let database = null;
 
@@ -74,8 +77,24 @@ export async function mySQLQuery(
     return await createIngredient(body, db);
   } else if (url === "/api/ingredients" && method === "GET") {
     return await getIngredients(db);
+  } else if (url === "/api/ingredients" && method === "DELETE") {
+    return await deleteIngredient(body, db);
+  } else if (url === "/api/employees" && method === "GET") {
+    return await getEmployees(db);
+  } else if (url === "/api/employees" && method === "DELETE") {
+    return await deleteEmployee(body, db);
+  } else if (url === "/api/menu-items" && method === "GET") {
+    return await getMenuItems(db);
+  } else if (url === "/api/menu-items" && method === "POST") {
+    return await createMenuItem(body, db);
+  } else if (url === "/api/menu-items" && method === "DELETE") {
+    return await deleteMenuItem(body, db);
   } else if (url === "/api/suppliers" && method === "GET") {
     return await getSuppliers(db);
+  } else if (url === "/api/suppliers" && method === "POST") {
+    return await createSupplier(body, db);
+  } else if (url === "/api/suppliers" && method === "DELETE") {
+    return await deleteSupplier(body, db);
   } else {
     return null;
   }

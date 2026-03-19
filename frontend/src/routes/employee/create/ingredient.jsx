@@ -128,6 +128,8 @@ function CreateIngredientComponent() {
       .finally(() => setSuppliersLoading(false));
   }, []);
 
+  console.log("Suppliers:", suppliers);
+
   const supplierOptions = suppliers.map((s) => ({
     value: String(s.supplier_id),
     label: s.supplier_name,
@@ -190,7 +192,9 @@ function CreateIngredientComponent() {
                 <Label>Unit of Measure *</Label>
                 <Select
                   value={form.unit_of_measure}
-                  onValueChange={(v) => handleSelectChange("unit_of_measure", v)}
+                  onValueChange={(v) =>
+                    handleSelectChange("unit_of_measure", v)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select unit" />
@@ -279,11 +283,7 @@ function CreateIngredientComponent() {
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1"
-              >
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
                 {isSubmitting ? "Creating..." : "Create Ingredient"}
               </Button>
             </div>

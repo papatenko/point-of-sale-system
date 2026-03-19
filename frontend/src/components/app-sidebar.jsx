@@ -11,7 +11,6 @@ import {
   BarChart3,
   Package,
   Search,
-  Plus,
   Beef,
   Users,
   Utensils,
@@ -45,31 +44,11 @@ const employee_routes = [
   },
 ];
 
-const create_routes = [
-  {
-    name: "Create Ingredient",
-    url: "/employee/create/ingredient",
-    roles: ["manager", "admin"],
-    icon: Beef,
-  },
-  {
-    name: "Create Employee",
-    url: "/employee/create/employee",
-    roles: ["admin"],
-    icon: Users,
-  },
-  {
-    name: "Create Menu Item",
-    url: "/employee/create/menu_item",
-    roles: ["manager", "admin"],
-    icon: Utensils,
-  },
-  {
-    name: "Create Supplier",
-    url: "/employee/create/supplier",
-    roles: ["manager", "admin"],
-    icon: Truck,
-  },
+const database_routes = [
+  { name: "Ingredients", url: "/employee/database/ingredients", icon: Beef },
+  { name: "Employees", url: "/employee/database/employees", icon: Users },
+  { name: "Menu Items", url: "/employee/database/menu_items", icon: Utensils },
+  { name: "Suppliers", url: "/employee/database/suppliers", icon: Truck },
 ];
 
 export function AppSidebar() {
@@ -91,8 +70,8 @@ export function AppSidebar() {
               </SidebarMenuItem>
             );
           })}
-          <div className="px-2 py-1.5 mt-4 text-sm font-semibold">Create</div>
-          {create_routes.map((route) => {
+          <div className="px-2 py-1.5 mt-4 text-sm font-semibold">Database Entries</div>
+          {database_routes.map((route) => {
             const Icon = route.icon;
             return (
               <SidebarMenuItem key={route.name}>

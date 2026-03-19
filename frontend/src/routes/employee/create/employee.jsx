@@ -139,8 +139,8 @@ function CreationComponent() {
   }, []);
 
   return (
-    <div className="flex justify-center items-center min-h-screen p-4">
-      <Card className="w-full max-w-2xl shadow-lg">
+    <div className="flex justify-center items-center min-h-screen w-full p-4">
+      <Card className="max-w-2xl shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl">Create Employee</CardTitle>
           <CardDescription>

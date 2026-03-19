@@ -1,3 +1,13 @@
+export async function getIngredients(db) {
+  const [rows] = await db.query(`
+    SELECT i.*, s.supplier_name as preferred_supplier_name
+    FROM ingredients i
+    LEFT JOIN suppliers s ON i.preferred_supplier_id = s.supplier_id
+    ORDER BY i.ingredient_name
+  `);
+  return JSON.stringify(rows);
+}
+
 export async function createIngredient(body, db) {
   const {
     ingredient_name,
@@ -21,24 +31,6 @@ export async function createIngredient(body, db) {
     });
   }
 
-  if (isNaN(parseFloat(current_unit_cost)) || parseFloat(current_unit_cost) < 0) {
-    return JSON.stringify({
-      error: "current_unit_cost must be a valid positive number",
-    });
-  }
-
-  if (preferred_supplier_id !== null && preferred_supplier_id !== undefined) {
-    const [supplier] = await db.query(
-      "SELECT supplier_id FROM suppliers WHERE supplier_id = ?",
-      [preferred_supplier_id]
-    );
-    if (supplier.length === 0) {
-      return JSON.stringify({
-        error: "Preferred supplier not found",
-      });
-    }
-  }
-
   const [result] = await db.query(
     `INSERT INTO ingredients 
      (ingredient_name, category, unit_of_measure, current_unit_cost, storage_time, preferred_supplier_id)
@@ -60,22 +52,24 @@ export async function createIngredient(body, db) {
   });
 }
 
-export async function getIngredients(db) {
-  const [rows] = await db.query(`
-    SELECT i.*, s.supplier_name as preferred_supplier_name
-    FROM ingredients i
-    LEFT JOIN suppliers s ON i.preferred_supplier_id = s.supplier_id
-    ORDER BY i.ingredient_name
-  `);
-  return JSON.stringify(rows);
-}
+export async function deleteIngredient(body, db) {
+  const { ingredient_id } = body;
 
-export async function getSuppliers(db) {
-  const [rows] = await db.query(`
-    SELECT supplier_id, supplier_name 
-    FROM suppliers 
-    WHERE is_reliable_supplier = TRUE
-    ORDER BY supplier_name
-  `);
-  return JSON.stringify(rows);
+  if (!ingredient_id) {
+    return JSON.stringify({ error: "ingredient_id is required" });
+  }
+
+  const [result] = await db.query(
+    "DELETE FROM ingredients WHERE ingredient_id = ?",
+    [ingredient_id]
+  );
+
+  if (result.affectedRows === 0) {
+    return JSON.stringify({ error: "Ingredient not found" });
+  }
+
+  return JSON.stringify({
+    success: true,
+    message: "Ingredient deleted successfully",
+  });
 }
