@@ -47,32 +47,12 @@ const server = createServer(async (req, res) => {
   // Frontend Connection
   const file = await prepareFile(req.url);
   const fileMimeType = MIME_TYPES[file.extension] || MIME_TYPES.default;
-
-  // If frontend requests from MYSQL...
-//   if (req.url.startsWith("/api")) {
-//     let body = null;
-//     if (req.method === "POST") {
-//       body = await new Promise((resolve) => {
-//         let data = "";
-//         req.on("data", (chunk) => (data += chunk));
-//         req.on("end", () => resolve(JSON.parse(data)));
-//       });
-//     }
-//     res.writeHead(200, { "Content-Type": "text/plain" });
-//     res.end(await mySQLQuery(req.url, body));
-//   } else {
-//     // Else, pipe frontend files
-//     res.writeHead(200, { "Content-Type": fileMimeType });
-//     file.streamFile.pipe(res);
-//   }
-// });
-
-// server.listen(PORT, () => {
-//   console.log("Listening on port 3000");
-// });
+   console.log("🌐 URL:", req.url, "| METHOD:", req.method);
   // If frontend requests from MYSQL...
   if (req.url.startsWith("/api")) {
     let body = null;
+
+
     if (req.method === "POST") {
       body = await new Promise((resolve) => {
         let data = "";
@@ -86,35 +66,114 @@ const server = createServer(async (req, res) => {
         });
       });
       
-      console.log("API Request:", req.url, body); // Para debugging
+      console.log("API Request:", req.url, body); //debugging
     }
     
     res.writeHead(200, { "Content-Type": "application/json" });
     
-    try {
-      // Procesar diferentes rutas de API
-      let result;
+//     try {
+//       let result;
       
-      if (req.url === "/api/employee/create" && req.method === "POST") {
-        // USA EL HANDLER QUE IMPORTAMOS
-        await handleEmployeeCreate(req, res, body);
-        return; // Importante: return para no continuar
-      } else {
-        // Para otras rutas API, pasar el body como parámetros
-        result = await mySQLQuery(req.url, body);
-        res.end(JSON.stringify(result));
+//       // PRIMERO: Manejar rutas especiales
+//       if (req.url === "/api/auth/login" && req.method === "POST") {
+//         // Login especial - pasar email y password como parámetros
+//         if (body && body.email && body.password) {
+//           console.log("Login attempt:", body.email);
+//           result = await mySQLQuery("/api/auth/login", [body.email, body.password]);
+//         } else {
+//           result = { success: false, error: "Email and password required" };
+//         }
+//       } else if (req.url === "/api/employee/create" && req.method === "POST") {
+//         // Crear empleado - usa handler especial
+//         await handleEmployeeCreate(req, res, body);
+//         return; // Importante: return para no continuar
+//       } else {
+//         // Para otras rutas API, pasar el body como parámetros
+//         result = await mySQLQuery(req.url, body);
+//       }
+      
+//       res.end(JSON.stringify(result));
+      
+//     } catch (error) {
+//       console.error("API Error:", error);
+//       res.end(JSON.stringify({ error: error.message }));
+//     }
+//   } else {
+//     // Else, pipe frontend files (archivos estáticos)
+//     res.writeHead(200, { "Content-Type": fileMimeType });
+//     file.streamFile.pipe(res);
+//   }
+// });
+
+    try {
+          let result;
+          
+          // ===== RUTAS ESPECIALES =====
+          if (req.url === "/api/auth/login" && req.method === "POST") {
+            // LOGIN - pasar email y password como array
+            if (body && body.email && body.password) {
+              console.log("📨 BODY:", body);
+
+              const params = [body.email, body.password];
+              console.log("🚀 PARAMS SENT:", params);
+
+              result = await mySQLQuery("/api/auth/login", params);
+            } else {
+              result = { success: false, error: "Email and password required" };
+            }
+          }
+          else if (req.url === "/api/employee/create" && req.method === "POST") {
+            await handleEmployeeCreate(req, res, body);
+            return;
+          } 
+          else {
+        // Para otras rutas (GET generalmente)
+        // Convertir body a array si es necesario
+        
+        // Si es GET o no hay body, pasar array vacío
+        let queryParams = [];
+        
+        // Si hay body, convertir a array apropiadamente
+        if (body) {
+          if (Array.isArray(body)) {
+            // Si ya es array, usarlo directamente
+            queryParams = body;
+          } else if (typeof body === 'object') {
+            // Si es objeto, decidir según la ruta qué hacer
+            if (req.url === "/api/register-user") {
+              // Para registro, espera [email, password]?
+              queryParams = [body.email, body.password];
+            } else {
+              // Por defecto, poner el objeto como único elemento del array
+              queryParams = [body];
+            }
+          } else {
+            // Si es string, number, etc.
+            queryParams = [body];
+          }
+        }
+        
+        // Para depuración
+        console.log(`📦 Query params for ${req.url}:`, queryParams);
+        
+        // Ejecutar query con los parámetros convertidos
+        result = await mySQLQuery(req.url, queryParams);
       }
+      
+      res.end(JSON.stringify(result));
       
     } catch (error) {
       console.error("API Error:", error);
       res.end(JSON.stringify({ error: error.message }));
     }
-  } else {
-    // Else, pipe frontend files
-    res.writeHead(200, { "Content-Type": fileMimeType });
-    file.streamFile.pipe(res);
-  }
-});
+  } 
+      // ========== ARCHIVOS ESTÁTICOS ==========
+      else {
+        res.writeHead(200, { "Content-Type": fileMimeType });
+        file.streamFile.pipe(res);
+      }
+    });
+
 
 server.listen(PORT, () => {
   console.log("Listening on port 3000");
