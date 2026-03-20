@@ -9,13 +9,13 @@ export const Route = createFileRoute("/employee")({
 
 function EmployeeLayoutComponent() {
   const navigate = useNavigate();
+const user = useSelector((state) => state.auth.user);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate({ to: "/login" }); // Redirige al login si no hay token
-    }
-  }, []);
+useEffect(() => {
+  if (!user) {
+    navigate({ to: "/auth/login" });
+  }
+}, [user]);
   
   return (
     <div className="h-full relative">

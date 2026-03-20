@@ -6,6 +6,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { Link } from "@tanstack/react-router";
+import LogoutButton from "./logout";
 
 const employee_routes = [
   {
@@ -49,6 +50,8 @@ export function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+          
+        <LogoutButton />
         </SidebarMenu>
       </SidebarHeader>
     </Sidebar>
