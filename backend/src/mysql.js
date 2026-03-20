@@ -46,7 +46,6 @@ if (process.env.NODE_ENV !== "production") {
   dotenv.config(); // loads .env for local dev
 }
 
-let database = null;
 let pool = null;
 
 export function getDatabase() {
@@ -89,11 +88,6 @@ export async function mySQLQuery(
   if (url === "/api/employee") {
     return "HI FROM MYSQL";
   } else if (url === "/api/employee/pos") {
-    // if (method === "POST" && body) {
-    //   const result = await insertTransation(body);
-    //   console.log("Transaction result:", result);
-    //   return JSON.stringify(result);
-    // }
     const [menuItems] = await db.query(
       "SELECT * FROM menu_items WHERE is_available = TRUE",
     );
@@ -107,7 +101,23 @@ export async function mySQLQuery(
     // TODO
   } else if (url === "/api/employee/jsearch") {
     // TODO
-    // ── GET /api/trucks ──────────────────────────────────────────────
+  // ── Auth routes ──────────────────────────────────────────────────
+  } else if (url === "/api/auth/login" && method === "POST") {
+    // body arrives as { email, password } object from server.js
+    const email = Array.isArray(body) ? body[0] : body?.email;
+    const password = Array.isArray(body) ? body[1] : body?.password;
+    if (!email || !password) {
+      return { success: false, error: "Email and password required" };
+    }
+    return await employeeCreateQuery("/api/auth/login", [email, password]);
+  } else if (url === "/api/employee/create" && method === "POST") {
+    await handleEmployeeCreate(req, res, body);
+    return; // writes its own response
+  } else if (url === "/api/register-customer" && method === "POST") {
+    const { handleCustomerCreate } = await import("./auth/create_users.js");
+    await handleCustomerCreate(req, res, body);
+    return; // writes its own response
+  // ── GET /api/trucks ──────────────────────────────────────────────
   } else if (url === "/api/trucks" && method === "GET") {
     return await getTrucks(db);
   } else if (url === "/api/trucks" && method === "POST") {
@@ -116,13 +126,13 @@ export async function mySQLQuery(
     return await updateTruck(body, db);
   } else if (url === "/api/trucks" && method === "DELETE") {
     return await deleteTruck(body, db);
-    // ── GET /api/menu ────────────────────────────────────────────────
+  // ── GET /api/menu ────────────────────────────────────────────────
   } else if (url === "/api/menu" && method === "GET") {
     return await getMenu();
-    // ── POST /api/checkout ───────────────────────────────────────────
+  // ── POST /api/checkout ───────────────────────────────────────────
   } else if (url === "/api/checkout" && method === "POST") {
     return checkoutOrder(body, db);
-    // ── GET /api/orders/:orderId ─────────────────────────────────────
+  // ── GET /api/orders/:orderId ─────────────────────────────────────
   } else if (url.startsWith("/api/orders/") && method === "GET") {
     return getOrders(url, db);
   } else if (url.startsWith("/api/employee/create") && method === "POST") {
@@ -158,9 +168,7 @@ export async function mySQLQuery(
     return await updateRecipe(body, db);
   } else if (url === "/api/recipes" && method === "DELETE") {
     return await deleteRecipe(body, db);
-    // ── Inventory routes ─────────────────────────────────────────────
-    // More-specific sub-paths are checked before the bare GET so they
-    // are not swallowed by the /api/inventory branch.
+  // ── Inventory routes ─────────────────────────────────────────────
   } else if (basePath === "/api/inventory/use-recipe" && method === "POST") {
     return await useRecipe(body, db);
   } else if (basePath === "/api/inventory/use" && method === "POST") {
@@ -177,111 +185,112 @@ export async function mySQLQuery(
     return null;
   }
 }
+
 export async function employeeCreateQuery(url, params = []) {
-  // rebeca routes for auth XD
-       if (url === "/api/users") {
+  // FIX: use getDatabase() instead of the old uninitialized `database` variable
+  const database = await getDatabase();
+
+  if (url === "/api/users") {
     const [rows] = await database.query("SELECT * FROM users");
     return rows;
   } else if (url === "/api/auth/login") {
-  console.log(" PARAMS:", params);
-  console.log(" LENGTH:", params?.length);
-  console.log(" TYPE:", typeof params);
-  
-  try {
-    // Verificar que params existe y tiene al menos 2 elementos
-    if (!Array.isArray(params) || params.length < 2) {
-      return { success: false, error: "Invalid parameters, hello " };
-    }
-    
-    const [rows] = await database.query(
-      `SELECT u.*, e.role as employee_role, e.license_plate, e.hire_date, e.hourly_rate 
-       FROM users u
-       LEFT JOIN employees e ON u.email = e.email
-       WHERE u.email = ? AND u.password = ? AND u.user_type = 'employee'`,
-      [params[0], params[1]],
-      console.log( [params[0], params[1]])
-    );
-    
-    console.log("✅ Query ejecutada, rows:", rows);
-    
-    // Verificar que rows existe y tiene elementos
-    if (rows && rows.length > 0) {
-      const user = rows[0];
-      const role = user.employee_role || 'employee';
-      
+    console.log(" PARAMS:", params);
+    console.log(" LENGTH:", params?.length);
+    console.log(" TYPE:", typeof params);
+
+    try {
+      // Verify params exists and has at least 2 elements
+      if (!Array.isArray(params) || params.length < 2) {
+        return { success: false, error: "Invalid parameters" };
+      }
+
+      const [rows] = await database.query(
+        `SELECT u.*, e.role as employee_role, e.license_plate, e.hire_date, e.hourly_rate 
+         FROM users u
+         LEFT JOIN employees e ON u.email = e.email
+         WHERE u.email = ? AND u.password = ? AND u.user_type = 'employee'`,
+        [params[0], params[1]],
+      );
+
+      console.log("✅ Query executed, rows:", rows);
+
+      if (rows && rows.length > 0) {
+        const user = rows[0];
+        const role = user.employee_role || "employee";
+
+        return {
+          success: true,
+          user: {
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            user_type: user.user_type,
+            role: role,
+            license_plate: user.license_plate,
+            hire_date: user.hire_date,
+            hourly_rate: user.hourly_rate,
+          },
+          token: JSON.stringify({
+            email: user.email,
+            role: role,
+            name: `${user.first_name} ${user.last_name}`,
+          }),
+        };
+      } else {
+        console.log("❌ No user found with those credentials");
+        return {
+          success: false,
+          error: "Invalid email or password",
+        };
+      }
+    } catch (error) {
+      console.error("❌ Login query error:", error);
       return {
-        success: true,
-        user: {
-          email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          user_type: user.user_type,
-          role: role,
-          license_plate: user.license_plate,
-          hire_date: user.hire_date,
-          hourly_rate: user.hourly_rate
-        },
-        token: JSON.stringify({ 
-          email: user.email, 
-          role: role,
-          name: `${user.first_name} ${user.last_name}`
-        })
-      };
-    } else {
-      console.log("❌ No se encontró usuario con esas credenciales");
-      return { 
-        success: false, 
-        error: "Invalid email or password" 
+        success: false,
+        error: "Database error: " + error.message,
       };
     }
-  } catch (error) {
-    console.error("❌ Error en query de login:", error);
-    return { 
-      success: false, 
-      error: "Database error: " + error.message 
-    };
-  }
-}else if (url === "/api/food-trucks") {
-    const [rows] = await database.query("SELECT license_plate, truck_name FROM food_trucks");
+  } else if (url === "/api/food-trucks") {
+    const [rows] = await database.query(
+      "SELECT license_plate, truck_name FROM food_trucks",
+    );
     return rows;
-  }else if (url === "/api/register-user") {
-  const [result] = await database.query(
-    "INSERT INTO users(email, first_name, last_name, password, phone_number, user_type, gender, ethnicity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    params
-  );
-  return result;
-} else if (url === "/api/register-customer") {
-  const [result] = await database.query(
-    "INSERT INTO customers(email, first_name, last_name, password, phone_number, gender, ethnicity) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    params
-  );
-  return result;
-}else if (url === "/api/employee") {
-  const [rows] = await database.query(
-    `SELECT e.*, u.first_name, u.last_name, u.email 
-     FROM employees e
-     JOIN users u ON e.email = u.email
-     WHERE u.user_type = 'employee'`
-  );
-  return rows;
-}else if (url === "/api/register-manager") {
+  } else if (url === "/api/register-user") {
     const [result] = await database.query(
-      `INSERT INTO managers(email, budget)
-       VALUES (?, ?)`,
-      params
+      "INSERT INTO users(email, first_name, last_name, password, phone_number, user_type, gender, ethnicity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      params,
     );
     return result;
-  }else if (url === "/api/employee/create") {
-    // Handle employee creation - insert into employees table
+  } else if (url === "/api/register-customer") {
+    const [result] = await database.query(
+      "INSERT INTO customers(email, first_name, last_name, password, phone_number, gender, ethnicity) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      params,
+    );
+    return result;
+  } else if (url === "/api/employee") {
+    const [rows] = await database.query(
+      `SELECT e.*, u.first_name, u.last_name, u.email 
+       FROM employees e
+       JOIN users u ON e.email = u.email
+       WHERE u.user_type = 'employee'`,
+    );
+    return rows;
+  } else if (url === "/api/register-manager") {
+    const [result] = await database.query(
+      `INSERT INTO managers(email, budget) VALUES (?, ?)`,
+      params,
+    );
+    return result;
+  } else if (url === "/api/employee/create") {
     const [result] = await database.query(
       `INSERT INTO employees 
        (email, license_plate, role, hire_date, hourly_rate) 
        VALUES (?, ?, ?, ?, ?)`,
-      params
+      params,
     );
     return result;
   }
-  
+
   // Default return for unhandled routes
   return { insertId: null };
 }

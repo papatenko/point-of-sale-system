@@ -1,18 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useSelector } from "react-redux";
 
 export const Route = createFileRoute("/employee/")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const [data, setData] = useState([]);
+  const user = useSelector((state) => state.auth.user);
 
-  useEffect(() => {
-    fetch("http://localhost:3000/api/employee")
-      .then((res) => res.text())
-      .then((data) => setData(data));
-  }, []);
-
-  return <div>{data}</div>;
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-2">
+        Welcome{user?.first_name ? `, ${user.first_name}` : ""}!
+      </h1>
+      <p className="text-muted-foreground">
+        Select an option from the sidebar to get started.
+      </p>
+    </div>
+  );
 }

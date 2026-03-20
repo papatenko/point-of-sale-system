@@ -13,49 +13,41 @@ function LoginComponent() {
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  
-  const { isLoading, error } = useSelector((state) => state.auth)
 
+  const { isLoading, error, user } = useSelector((state) => state.auth)
+
+  // If already logged in (Redux rehydrated from localStorage), go straight to dashboard.
   useEffect(() => {
-    const user = localStorage.getItem('user');
     if (user) {
-      navigate({ to: '/employee' });
+      navigate({ to: '/employee', replace: true });
     }
-  }, [navigate]);
+  }, [user, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
+
     dispatch(setLoading(true));
     dispatch(setError(null));
 
     try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
       console.log("Login response:", data);
-      
-      // Verificar si el login fue exitoso
+
       if (data && data.success === true && data.user) {
-        // Guardar SOLO el usuario en localStorage (sin token)
+        // Persist to localStorage so authSlice can rehydrate on next load.
         localStorage.setItem('user', JSON.stringify(data.user));
-        
-        // Guardar SOLO el usuario en Redux (sin token)
-        dispatch(setLogin({
-          user: data.user
-          // 👈 No incluimos token
-        }));
-        
-        navigate({ to: '/employee' });
-      } 
-      else {
-        // Mostrar el error que viene del backend
+
+        dispatch(setLogin({ user: data.user }));
+
+        // replace:true so the back button doesn't return to login.
+        navigate({ to: '/employee', replace: true });
+      } else {
         dispatch(setError(data.error || 'Invalid credentials'));
       }
     } catch (err) {
@@ -73,13 +65,13 @@ function LoginComponent() {
         className="p-8 bg-white shadow-md rounded w-96"
       >
         <h2 className="text-2xl font-bold mb-6 text-center">Employee Login</h2>
-        
+
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
           </div>
         )}
-        
+
         <div className="mb-4">
           <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-700">
             Email
@@ -121,15 +113,10 @@ function LoginComponent() {
         >
           {isLoading ? 'Checking...' : 'Login'}
         </button>
-        
+
         <p className="mt-4 text-xs text-gray-500 text-center">
           Only employees can access this system
         </p>
-
-        {/* Datos de prueba para desarrollo */}
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-         
-        </div>
       </form>
     </div>
   )
