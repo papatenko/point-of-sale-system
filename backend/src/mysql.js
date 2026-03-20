@@ -82,12 +82,18 @@ export async function mySQLQuery(url,  params = []) {
     const [rows] = await database.query("SELECT license_plate, truck_name FROM food_trucks");
     return rows;
   }else if (url === "/api/register-user") {
-    const [result] = await database.query(
-      "INSERT INTO users(username, password) VALUES (?, ?)",
-      params
-    );
-    return result;
-  } else if (url === "/api/employee") {
+  const [result] = await database.query(
+    "INSERT INTO users(email, first_name, last_name, password, phone_number, user_type, gender, ethnicity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    params
+  );
+  return result;
+} else if (url === "/api/register-customer") {
+  const [result] = await database.query(
+    "INSERT INTO customers(email, first_name, last_name, password, phone_number, gender, ethnicity) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    params
+  );
+  return result;
+}else if (url === "/api/employee") {
   const [rows] = await database.query(
     `SELECT e.*, u.first_name, u.last_name, u.email 
      FROM employees e
@@ -117,49 +123,6 @@ export async function mySQLQuery(url,  params = []) {
   return { insertId: null };
 }
 
-// export async function mySQLQuery(url, body = null, method = "GET") {
-//   if (url === "/api/employee") {
-//     return "HI FROM MYSQL";
-//   } else if (url === "/api/employee/pos") {
-//     if (method === "POST" && body) {
-//       const result = await insertTransation(body);
-//       console.log("Transaction result:", result);
-//       return JSON.stringify(result);
-//     }
-//     const [menuItems] = await database.query(
-//       "SELECT * FROM menu_items WHERE is_available = TRUE",
-//     );
-//     console.log("Fetching menu items:", menuItems.length);
-//     return JSON.stringify(menuItems);
-//   } else if (url === "/api/employee/reports") {
-//     database.query();
-//   } else if (url === "/api/employee/inventory") {
-//     database.query();
-//   }   else if (url === "/api/employee/creation") {
-//       // CORREGIDO
-//       return new Promise((resolve, reject) => {
-//         const query = `INSERT INTO employees 
-//                        (email, license_plate, role, hire_date, hourly_rate) 
-//                        VALUES (?, ?, ?, ?, ?)`;
-        
-//         database.query(query, params, (err, result) => {
-//           if (err) {
-//             console.error("Error creating employee:", err);
-//             reject(err);
-//           } else {
-//             console.log("Employee created with ID:", result.insertId);
-//             resolve(result); // Esto devuelve { insertId, affectedRows, etc. }
-//           }
-//         });
-//       });
-//     }   else if (url === "/api/employee/jsearch") {
-//     database.query();
-//   } else if (url === "/api/auth/login") {
-//     database.query();
-//   }  else {
-//     return "";
-//   }
-// }
 
 // Test connection
 try {

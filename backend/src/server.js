@@ -2,6 +2,7 @@ import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
 import { handleEmployeeCreate } from "./auth/create_employ.js";
+import{handleCustomerCreate} from './auth/create_users.js'
 import { mySQLQuery } from "./mysql.js";
 
 // Grabs the built /dist/ directory built from Vite
@@ -70,40 +71,7 @@ const server = createServer(async (req, res) => {
     }
     
     res.writeHead(200, { "Content-Type": "application/json" });
-    
-//     try {
-//       let result;
-      
-//       // PRIMERO: Manejar rutas especiales
-//       if (req.url === "/api/auth/login" && req.method === "POST") {
-//         // Login especial - pasar email y password como parámetros
-//         if (body && body.email && body.password) {
-//           console.log("Login attempt:", body.email);
-//           result = await mySQLQuery("/api/auth/login", [body.email, body.password]);
-//         } else {
-//           result = { success: false, error: "Email and password required" };
-//         }
-//       } else if (req.url === "/api/employee/create" && req.method === "POST") {
-//         // Crear empleado - usa handler especial
-//         await handleEmployeeCreate(req, res, body);
-//         return; // Importante: return para no continuar
-//       } else {
-//         // Para otras rutas API, pasar el body como parámetros
-//         result = await mySQLQuery(req.url, body);
-//       }
-      
-//       res.end(JSON.stringify(result));
-      
-//     } catch (error) {
-//       console.error("API Error:", error);
-//       res.end(JSON.stringify({ error: error.message }));
-//     }
-//   } else {
-//     // Else, pipe frontend files (archivos estáticos)
-//     res.writeHead(200, { "Content-Type": fileMimeType });
-//     file.streamFile.pipe(res);
-//   }
-// });
+
 
     try {
           let result;
@@ -125,7 +93,10 @@ const server = createServer(async (req, res) => {
           else if (req.url === "/api/employee/create" && req.method === "POST") {
             await handleEmployeeCreate(req, res, body);
             return;
-          } 
+          } else if (req.url === "/api/register-customer" && req.method === "POST") {
+            await handleCustomerCreate(req, res, body);
+            return;
+          }
           else {
         // Para otras rutas (GET generalmente)
         // Convertir body a array si es necesario
@@ -139,7 +110,7 @@ const server = createServer(async (req, res) => {
             // Si ya es array, usarlo directamente
             queryParams = body;
           } else if (typeof body === 'object') {
-            // Si es objeto, decidir según la ruta qué hacer
+            
             if (req.url === "/api/register-user") {
               // Para registro, espera [email, password]?
               queryParams = [body.email, body.password];

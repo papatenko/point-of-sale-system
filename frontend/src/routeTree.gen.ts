@@ -10,20 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as EmployeeRouteRouteImport } from './routes/employee/route'
+import { Route as CustumerRouteRouteImport } from './routes/custumer/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmployeeIndexRouteImport } from './routes/employee/index'
+import { Route as CustumerIndexRouteImport } from './routes/custumer/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as EmployeeSearchRouteImport } from './routes/employee/search'
 import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
 import { Route as EmployeePosRouteImport } from './routes/employee/pos'
 import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
 import { Route as EmployeeCreationRouteImport } from './routes/employee/creation'
+import { Route as CustumerRegisterRouteImport } from './routes/custumer/register'
+import { Route as CustumerLoginRouteImport } from './routes/custumer/login'
+import { Route as CustumerHomeRouteImport } from './routes/custumer/home'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 
 const EmployeeRouteRoute = EmployeeRouteRouteImport.update({
   id: '/employee',
   path: '/employee',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CustumerRouteRoute = CustumerRouteRouteImport.update({
+  id: '/custumer',
+  path: '/custumer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +45,11 @@ const EmployeeIndexRoute = EmployeeIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => EmployeeRouteRoute,
+} as any)
+const CustumerIndexRoute = CustumerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CustumerRouteRoute,
 } as any)
 const AuthIndexRoute = AuthIndexRouteImport.update({
   id: '/auth/',
@@ -66,6 +81,21 @@ const EmployeeCreationRoute = EmployeeCreationRouteImport.update({
   path: '/creation',
   getParentRoute: () => EmployeeRouteRoute,
 } as any)
+const CustumerRegisterRoute = CustumerRegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => CustumerRouteRoute,
+} as any)
+const CustumerLoginRoute = CustumerLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => CustumerRouteRoute,
+} as any)
+const CustumerHomeRoute = CustumerHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => CustumerRouteRoute,
+} as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/auth/signup',
   path: '/auth/signup',
@@ -79,86 +109,115 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/custumer': typeof CustumerRouteRouteWithChildren
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/custumer/home': typeof CustumerHomeRoute
+  '/custumer/login': typeof CustumerLoginRoute
+  '/custumer/register': typeof CustumerRegisterRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
+  '/custumer/': typeof CustumerIndexRoute
   '/employee/': typeof EmployeeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/custumer/home': typeof CustumerHomeRoute
+  '/custumer/login': typeof CustumerLoginRoute
+  '/custumer/register': typeof CustumerRegisterRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
   '/auth': typeof AuthIndexRoute
+  '/custumer': typeof CustumerIndexRoute
   '/employee': typeof EmployeeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/custumer': typeof CustumerRouteRouteWithChildren
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/custumer/home': typeof CustumerHomeRoute
+  '/custumer/login': typeof CustumerLoginRoute
+  '/custumer/register': typeof CustumerRegisterRoute
   '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
+  '/custumer/': typeof CustumerIndexRoute
   '/employee/': typeof EmployeeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/custumer'
     | '/employee'
     | '/auth/login'
     | '/auth/signup'
+    | '/custumer/home'
+    | '/custumer/login'
+    | '/custumer/register'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
     | '/auth/'
+    | '/custumer/'
     | '/employee/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth/login'
     | '/auth/signup'
+    | '/custumer/home'
+    | '/custumer/login'
+    | '/custumer/register'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
     | '/auth'
+    | '/custumer'
     | '/employee'
   id:
     | '__root__'
     | '/'
+    | '/custumer'
     | '/employee'
     | '/auth/login'
     | '/auth/signup'
+    | '/custumer/home'
+    | '/custumer/login'
+    | '/custumer/register'
     | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
     | '/auth/'
+    | '/custumer/'
     | '/employee/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CustumerRouteRoute: typeof CustumerRouteRouteWithChildren
   EmployeeRouteRoute: typeof EmployeeRouteRouteWithChildren
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
@@ -174,6 +233,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/custumer': {
+      id: '/custumer'
+      path: '/custumer'
+      fullPath: '/custumer'
+      preLoaderRoute: typeof CustumerRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -187,6 +253,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/employee/'
       preLoaderRoute: typeof EmployeeIndexRouteImport
       parentRoute: typeof EmployeeRouteRoute
+    }
+    '/custumer/': {
+      id: '/custumer/'
+      path: '/'
+      fullPath: '/custumer/'
+      preLoaderRoute: typeof CustumerIndexRouteImport
+      parentRoute: typeof CustumerRouteRoute
     }
     '/auth/': {
       id: '/auth/'
@@ -230,6 +303,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeCreationRouteImport
       parentRoute: typeof EmployeeRouteRoute
     }
+    '/custumer/register': {
+      id: '/custumer/register'
+      path: '/register'
+      fullPath: '/custumer/register'
+      preLoaderRoute: typeof CustumerRegisterRouteImport
+      parentRoute: typeof CustumerRouteRoute
+    }
+    '/custumer/login': {
+      id: '/custumer/login'
+      path: '/login'
+      fullPath: '/custumer/login'
+      preLoaderRoute: typeof CustumerLoginRouteImport
+      parentRoute: typeof CustumerRouteRoute
+    }
+    '/custumer/home': {
+      id: '/custumer/home'
+      path: '/home'
+      fullPath: '/custumer/home'
+      preLoaderRoute: typeof CustumerHomeRouteImport
+      parentRoute: typeof CustumerRouteRoute
+    }
     '/auth/signup': {
       id: '/auth/signup'
       path: '/auth/signup'
@@ -246,6 +340,24 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface CustumerRouteRouteChildren {
+  CustumerHomeRoute: typeof CustumerHomeRoute
+  CustumerLoginRoute: typeof CustumerLoginRoute
+  CustumerRegisterRoute: typeof CustumerRegisterRoute
+  CustumerIndexRoute: typeof CustumerIndexRoute
+}
+
+const CustumerRouteRouteChildren: CustumerRouteRouteChildren = {
+  CustumerHomeRoute: CustumerHomeRoute,
+  CustumerLoginRoute: CustumerLoginRoute,
+  CustumerRegisterRoute: CustumerRegisterRoute,
+  CustumerIndexRoute: CustumerIndexRoute,
+}
+
+const CustumerRouteRouteWithChildren = CustumerRouteRoute._addFileChildren(
+  CustumerRouteRouteChildren,
+)
 
 interface EmployeeRouteRouteChildren {
   EmployeeCreationRoute: typeof EmployeeCreationRoute
@@ -271,6 +383,7 @@ const EmployeeRouteRouteWithChildren = EmployeeRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CustumerRouteRoute: CustumerRouteRouteWithChildren,
   EmployeeRouteRoute: EmployeeRouteRouteWithChildren,
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
