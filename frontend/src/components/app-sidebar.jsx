@@ -18,6 +18,7 @@ import {
   Scroll,
   Archive,
 } from "lucide-react";
+import LogoutButton from "./logout";
 
 const employee_routes = [
   {
@@ -90,6 +91,17 @@ export function AppSidebar() {
               </SidebarMenuItem>
             );
           })}
+          {employee_routes.map((route) => (
+            <SidebarMenuItem key={route.name}>
+              <SidebarMenuButton asChild>
+                <Link to={route.url}>
+                  <span>{route.name}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+          
+        <LogoutButton />
         </SidebarMenu>
       </SidebarHeader>
     </Sidebar>

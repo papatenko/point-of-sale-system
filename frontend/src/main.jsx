@@ -4,6 +4,10 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
 
+// redux
+import { Provider } from 'react-redux'
+import { store } from './redux/store' 
+
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 

@@ -1,6 +1,8 @@
 import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
+import { handleEmployeeCreate } from "./auth/create_employ.js";
+import{handleCustomerCreate} from './auth/create_users.js'
 import { mySQLQuery } from "./mysql.js";
 
 // Grabs the built /dist/ directory built from Vite
@@ -95,7 +97,102 @@ const server = createServer(async (req, res) => {
   const fileMimeType = MIME_TYPES[file.extension] || MIME_TYPES.default;
   res.writeHead(200, { "Content-Type": fileMimeType });
   file.streamFile.pipe(res);
-});
+  // If frontend requests from MYSQL...
+  if (req.url.startsWith("/api")) {
+    let body = null;
+
+
+    if (req.method === "POST") {
+      body = await new Promise((resolve) => {
+        let data = "";
+        req.on("data", (chunk) => (data += chunk));
+        req.on("end", () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            resolve({});
+          }
+        });
+      });
+      
+      console.log("API Request:", req.url, body); //debugging
+    }
+    
+    res.writeHead(200, { "Content-Type": "application/json" });
+
+
+    try {
+          let result;
+          
+          // ===== RUTAS ESPECIALES =====
+          if (req.url === "/api/auth/login" && req.method === "POST") {
+            // LOGIN - pasar email y password como array
+            if (body && body.email && body.password) {
+              console.log("📨 BODY:", body);
+
+              const params = [body.email, body.password];
+              console.log("🚀 PARAMS SENT:", params);
+
+              result = await mySQLQuery("/api/auth/login", params);
+            } else {
+              result = { success: false, error: "Email and password required" };
+            }
+          }
+          else if (req.url === "/api/employee/create" && req.method === "POST") {
+            await handleEmployeeCreate(req, res, body);
+            return;
+          } else if (req.url === "/api/register-customer" && req.method === "POST") {
+            await handleCustomerCreate(req, res, body);
+            return;
+          }
+          else {
+        // Para otras rutas (GET generalmente)
+        // Convertir body a array si es necesario
+        
+        // Si es GET o no hay body, pasar array vacío
+        let queryParams = [];
+        
+        // Si hay body, convertir a array apropiadamente
+        if (body) {
+          if (Array.isArray(body)) {
+            // Si ya es array, usarlo directamente
+            queryParams = body;
+          } else if (typeof body === 'object') {
+            
+            if (req.url === "/api/register-user") {
+              // Para registro, espera [email, password]?
+              queryParams = [body.email, body.password];
+            } else {
+              // Por defecto, poner el objeto como único elemento del array
+              queryParams = [body];
+            }
+          } else {
+            // Si es string, number, etc.
+            queryParams = [body];
+          }
+        }
+        
+        // Para depuración
+        console.log(`Query params for ${req.url}:`, queryParams);
+        
+        // Ejecutar query con los parámetros convertidos
+        result = await mySQLQuery(req.url, queryParams);
+      }
+      
+      res.end(JSON.stringify(result));
+      
+    } catch (error) {
+      console.error("API Error:", error);
+      res.end(JSON.stringify({ error: error.message }));
+    }
+  } 
+      // ========== ARCHIVOS ESTÁTICOS ==========
+      else {
+        res.writeHead(200, { "Content-Type": fileMimeType });
+        file.streamFile.pipe(res);
+      }
+    });
+
 
 server.listen(PORT, () => {
   console.log("Listening on port 3000");

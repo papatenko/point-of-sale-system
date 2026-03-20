@@ -12,14 +12,20 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as OrderRouteImport } from './routes/order'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as EmployeeRouteRouteImport } from './routes/employee/route'
+import { Route as CustumerRouteRouteImport } from './routes/custumer/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmployeeIndexRouteImport } from './routes/employee/index'
+import { Route as CustumerIndexRouteImport } from './routes/custumer/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as EmployeeSearchRouteImport } from './routes/employee/search'
 import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
 import { Route as EmployeePosRouteImport } from './routes/employee/pos'
 import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
 import { Route as ConfirmationOrderIdRouteImport } from './routes/confirmation.$orderId'
+import { Route as EmployeeCreationRouteImport } from './routes/employee/creation'
+import { Route as CustumerRegisterRouteImport } from './routes/custumer/register'
+import { Route as CustumerLoginRouteImport } from './routes/custumer/login'
+import { Route as CustumerHomeRouteImport } from './routes/custumer/home'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as EmployeeDatabaseRouteRouteImport } from './routes/employee/database/route'
@@ -48,6 +54,11 @@ const EmployeeRouteRoute = EmployeeRouteRouteImport.update({
   path: '/employee',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustumerRouteRoute = CustumerRouteRouteImport.update({
+  id: '/custumer',
+  path: '/custumer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -57,6 +68,11 @@ const EmployeeIndexRoute = EmployeeIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => EmployeeRouteRoute,
+} as any)
+const CustumerIndexRoute = CustumerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CustumerRouteRoute,
 } as any)
 const AuthIndexRoute = AuthIndexRouteImport.update({
   id: '/auth/',
@@ -87,6 +103,21 @@ const ConfirmationOrderIdRoute = ConfirmationOrderIdRouteImport.update({
   id: '/confirmation/$orderId',
   path: '/confirmation/$orderId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CustumerRegisterRoute = CustumerRegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => CustumerRouteRoute,
+} as any)
+const CustumerLoginRoute = CustumerLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => CustumerRouteRoute,
+} as any)
+const CustumerHomeRoute = CustumerHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => CustumerRouteRoute,
 } as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/auth/signup',
@@ -157,6 +188,7 @@ const EmployeeCreateEmployeeRoute = EmployeeCreateEmployeeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/custumer': typeof CustumerRouteRouteWithChildren
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/order': typeof OrderRoute
@@ -165,11 +197,16 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
+  '/custumer/home': typeof CustumerHomeRoute
+  '/custumer/login': typeof CustumerLoginRoute
+  '/custumer/register': typeof CustumerRegisterRoute
+  '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
+  '/custumer/': typeof CustumerIndexRoute
   '/employee/': typeof EmployeeIndexRoute
   '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
   '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
@@ -189,11 +226,16 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
+  '/custumer/home': typeof CustumerHomeRoute
+  '/custumer/login': typeof CustumerLoginRoute
+  '/custumer/register': typeof CustumerRegisterRoute
+  '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
   '/auth': typeof AuthIndexRoute
+  '/custumer': typeof CustumerIndexRoute
   '/employee': typeof EmployeeIndexRoute
   '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
   '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
@@ -207,6 +249,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/custumer': typeof CustumerRouteRouteWithChildren
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/order': typeof OrderRoute
@@ -215,11 +258,16 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
+  '/custumer/home': typeof CustumerHomeRoute
+  '/custumer/login': typeof CustumerLoginRoute
+  '/custumer/register': typeof CustumerRegisterRoute
+  '/employee/creation': typeof EmployeeCreationRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
+  '/custumer/': typeof CustumerIndexRoute
   '/employee/': typeof EmployeeIndexRoute
   '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
   '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
@@ -234,6 +282,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/custumer'
     | '/employee'
     | '/checkout'
     | '/order'
@@ -242,11 +291,16 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
+    | '/custumer/home'
+    | '/custumer/login'
+    | '/custumer/register'
+    | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
     | '/auth/'
+    | '/custumer/'
     | '/employee/'
     | '/employee/create/employee'
     | '/employee/create/ingredient'
@@ -266,11 +320,16 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
+    | '/custumer/home'
+    | '/custumer/login'
+    | '/custumer/register'
+    | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
     | '/auth'
+    | '/custumer'
     | '/employee'
     | '/employee/create/employee'
     | '/employee/create/ingredient'
@@ -283,6 +342,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/custumer'
     | '/employee'
     | '/checkout'
     | '/order'
@@ -291,11 +351,16 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
+    | '/custumer/home'
+    | '/custumer/login'
+    | '/custumer/register'
+    | '/employee/creation'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
     | '/auth/'
+    | '/custumer/'
     | '/employee/'
     | '/employee/create/employee'
     | '/employee/create/ingredient'
@@ -309,6 +374,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CustumerRouteRoute: typeof CustumerRouteRouteWithChildren
   EmployeeRouteRoute: typeof EmployeeRouteRouteWithChildren
   CheckoutRoute: typeof CheckoutRoute
   OrderRoute: typeof OrderRoute
@@ -341,6 +407,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/custumer': {
+      id: '/custumer'
+      path: '/custumer'
+      fullPath: '/custumer'
+      preLoaderRoute: typeof CustumerRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -354,6 +427,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/employee/'
       preLoaderRoute: typeof EmployeeIndexRouteImport
       parentRoute: typeof EmployeeRouteRoute
+    }
+    '/custumer/': {
+      id: '/custumer/'
+      path: '/'
+      fullPath: '/custumer/'
+      preLoaderRoute: typeof CustumerIndexRouteImport
+      parentRoute: typeof CustumerRouteRoute
     }
     '/auth/': {
       id: '/auth/'
@@ -396,6 +476,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/confirmation/$orderId'
       preLoaderRoute: typeof ConfirmationOrderIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/custumer/register': {
+      id: '/custumer/register'
+      path: '/register'
+      fullPath: '/custumer/register'
+      preLoaderRoute: typeof CustumerRegisterRouteImport
+      parentRoute: typeof CustumerRouteRoute
+    }
+    '/custumer/login': {
+      id: '/custumer/login'
+      path: '/login'
+      fullPath: '/custumer/login'
+      preLoaderRoute: typeof CustumerLoginRouteImport
+      parentRoute: typeof CustumerRouteRoute
+    }
+    '/custumer/home': {
+      id: '/custumer/home'
+      path: '/home'
+      fullPath: '/custumer/home'
+      preLoaderRoute: typeof CustumerHomeRouteImport
+      parentRoute: typeof CustumerRouteRoute
     }
     '/auth/signup': {
       id: '/auth/signup'
@@ -519,6 +620,23 @@ const EmployeeDatabaseRouteRouteWithChildren =
   EmployeeDatabaseRouteRoute._addFileChildren(
     EmployeeDatabaseRouteRouteChildren,
   )
+interface CustumerRouteRouteChildren {
+  CustumerHomeRoute: typeof CustumerHomeRoute
+  CustumerLoginRoute: typeof CustumerLoginRoute
+  CustumerRegisterRoute: typeof CustumerRegisterRoute
+  CustumerIndexRoute: typeof CustumerIndexRoute
+}
+
+const CustumerRouteRouteChildren: CustumerRouteRouteChildren = {
+  CustumerHomeRoute: CustumerHomeRoute,
+  CustumerLoginRoute: CustumerLoginRoute,
+  CustumerRegisterRoute: CustumerRegisterRoute,
+  CustumerIndexRoute: CustumerIndexRoute,
+}
+
+const CustumerRouteRouteWithChildren = CustumerRouteRoute._addFileChildren(
+  CustumerRouteRouteChildren,
+)
 
 interface EmployeeRouteRouteChildren {
   EmployeeCreateRouteRoute: typeof EmployeeCreateRouteRouteWithChildren
@@ -546,6 +664,7 @@ const EmployeeRouteRouteWithChildren = EmployeeRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CustumerRouteRoute: CustumerRouteRouteWithChildren,
   EmployeeRouteRoute: EmployeeRouteRouteWithChildren,
   CheckoutRoute: CheckoutRoute,
   OrderRoute: OrderRoute,
