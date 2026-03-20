@@ -79,18 +79,18 @@ const server = createServer(async (req, res) => {
   }
 
   // API routes
-  if (req.url.startsWith("/api")) {
-    const body = req.method === "POST" ? await readBody(req) : null;
-    try {
-      const result = await mySQLQuery(req.url, body, req.method, req, res);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(result));
-    } catch (err) {
-      res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: err.message }));
-    }
-    return;
-  }
+  // if (req.url.startsWith("/api")) {
+  //   const body = req.method === "POST" ? await readBody(req) : null;
+  //   try {
+  //     const result = await mySQLQuery(req.url, body, req.method, req, res);
+  //     res.writeHead(200, { "Content-Type": "application/json" });
+  //     res.end(JSON.stringify(result));
+  //   } catch (err) {
+  //     res.writeHead(500, { "Content-Type": "application/json" });
+  //     res.end(JSON.stringify({ error: err.message }));
+  //   }
+  //   return;
+  // }
 
   // Frontend static files
   const file = await prepareFile(req.url);
@@ -118,7 +118,7 @@ const server = createServer(async (req, res) => {
       console.log("API Request:", req.url, body); //debugging
     }
     
-    res.writeHead(200, { "Content-Type": "application/json" });
+    // res.writeHead(200, { "Content-Type": "application/json" });
 
 
     try {
@@ -187,10 +187,10 @@ const server = createServer(async (req, res) => {
     }
   } 
       // ========== ARCHIVOS ESTÁTICOS ==========
-      else {
-        res.writeHead(200, { "Content-Type": fileMimeType });
-        file.streamFile.pipe(res);
-      }
+      // else {
+      //   res.writeHead(200, { "Content-Type": fileMimeType });
+      //   file.streamFile.pipe(res);
+      // }
     });
 
 
