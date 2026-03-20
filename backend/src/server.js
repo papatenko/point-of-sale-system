@@ -28,7 +28,7 @@ const MIME_TYPES = {
 async function prepareFile(url) {
   let filePath = FRONTEND_PATH + url;
   if (url === "/") filePath = FRONTEND_PATH + "/index.html";
- 
+
   // Checks to see if path exists in the filesystem
   const ifPathExists = await fs.promises.access(filePath).then(...toBool);
 
@@ -44,11 +44,59 @@ async function prepareFile(url) {
   return { streamFile, extension, ifPathExists };
 }
 
+// Read the full JSON body from a request
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", (chunk) => {
+      data += chunk;
+    });
+    req.on("end", () => {
+      try {
+        resolve(data ? JSON.parse(data) : null);
+      } catch {
+        resolve(null);
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
 const server = createServer(async (req, res) => {
-  // Frontend Connection
+  // CORS headers on every request
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS",
+  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  // handle preflight
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  // API routes
+  if (req.url.startsWith("/api")) {
+    const body = req.method === "POST" ? await readBody(req) : null;
+    try {
+      const result = await mySQLQuery(req.url, body, req.method, req, res);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(result));
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  // Frontend static files
   const file = await prepareFile(req.url);
   const fileMimeType = MIME_TYPES[file.extension] || MIME_TYPES.default;
-   console.log("🌐 URL:", req.url, "| METHOD:", req.method);
+  res.writeHead(200, { "Content-Type": fileMimeType });
+  file.streamFile.pipe(res);
   // If frontend requests from MYSQL...
   if (req.url.startsWith("/api")) {
     let body = null;
@@ -125,7 +173,7 @@ const server = createServer(async (req, res) => {
         }
         
         // Para depuración
-        console.log(`📦 Query params for ${req.url}:`, queryParams);
+        console.log(`Query params for ${req.url}:`, queryParams);
         
         // Ejecutar query con los parámetros convertidos
         result = await mySQLQuery(req.url, queryParams);
