@@ -1,8 +1,19 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+// Rehydrate from localStorage on app start so Redux is never
+// null after the user has already logged in.
+function loadUserFromStorage() {
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 const initialState = {
-  user: null,
-  token: null,  // Puede ser null
+  user: loadUserFromStorage(),
+  token: null,
   isLoading: false,
   error: null,
 };
@@ -13,7 +24,7 @@ const authSlice = createSlice({
   reducers: {
     setLogin: (state, action) => {
       state.user = action.payload.user;
-      state.token = action.payload.token || null; // Si no hay token, null
+      state.token = action.payload.token || null;
     },
     setLogout: (state) => {
       state.user = null;
@@ -27,7 +38,6 @@ const authSlice = createSlice({
     setError: (state, action) => {
       state.error = action.payload;
     },
-    
   },
 });
 
