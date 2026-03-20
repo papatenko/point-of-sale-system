@@ -3,7 +3,12 @@ import { getMenu } from "./routes/menu.js";
 import dotenv from "dotenv";
 import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
-import { getTrucks } from "./routes/truck.js";
+import {
+  getTrucks,
+  createTruck,
+  updateTruck,
+  deleteTruck,
+} from "./routes/truck.js";
 import { handleEmployeeCreate } from "./auth/create_employ.js";
 import {
   createIngredient,
@@ -29,6 +34,12 @@ import {
   getInventoryAlerts,
   getInventoryHistory,
 } from "./routes/Inventory.js";
+import {
+  getRecipes,
+  createRecipe,
+  deleteRecipe,
+  updateRecipe,
+} from "./routes/recipes.js";
 
 // Only load .env if not in production
 if (process.env.NODE_ENV !== "production") {
@@ -36,23 +47,28 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 let database = null;
+let pool = null;
 
-export async function getDatabase() {
-  if (!database) {
+export function getDatabase() {
+  if (!pool) {
     const missing = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"].filter(
       (k) => !process.env[k],
     );
     if (missing.length > 0) {
       throw new Error(`Missing env vars: ${missing.join(", ")}`);
     }
-    database = await mysql.createConnection({
+
+    pool = mysql.createPool({
       host: process.env.DB_HOST,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
     });
   }
-  return database;
+  return pool;
 }
 
 // Test DB ENV
@@ -94,6 +110,12 @@ export async function mySQLQuery(
     // ── GET /api/trucks ──────────────────────────────────────────────
   } else if (url === "/api/trucks" && method === "GET") {
     return await getTrucks(db);
+  } else if (url === "/api/trucks" && method === "POST") {
+    return await createTruck(body, db);
+  } else if (url === "/api/trucks" && method === "PUT") {
+    return await updateTruck(body, db);
+  } else if (url === "/api/trucks" && method === "DELETE") {
+    return await deleteTruck(body, db);
     // ── GET /api/menu ────────────────────────────────────────────────
   } else if (url === "/api/menu" && method === "GET") {
     return await getMenu();
@@ -128,6 +150,14 @@ export async function mySQLQuery(
     return await createSupplier(body, db);
   } else if (url === "/api/suppliers" && method === "DELETE") {
     return await deleteSupplier(body, db);
+  } else if (url === "/api/recipes" && method === "GET") {
+    return await getRecipes(db);
+  } else if (url === "/api/recipes" && method === "POST") {
+    return await createRecipe(body, db);
+  } else if (url === "/api/recipes" && method === "PUT") {
+    return await updateRecipe(body, db);
+  } else if (url === "/api/recipes" && method === "DELETE") {
+    return await deleteRecipe(body, db);
     // ── Inventory routes ─────────────────────────────────────────────
     // More-specific sub-paths are checked before the bare GET so they
     // are not swallowed by the /api/inventory branch.
