@@ -40,6 +40,13 @@ import {
   deleteRecipe,
   updateRecipe,
 } from "./routes/recipes.js";
+import {
+  getUsers,
+  updateUser,
+  deleteUser,
+  getGenderOptions,
+  getEthnicityOptions,
+} from "./routes/users.js";
 
 // Only load .env if not in production
 if (process.env.NODE_ENV !== "production") {
@@ -157,6 +164,16 @@ export async function mySQLQuery(
     return await updateRecipe(body, db);
   } else if (url === "/api/recipes" && method === "DELETE") {
     return await deleteRecipe(body, db);
+  } else if (url === "/api/users" && method === "GET") {
+    return await getUsers(db);
+  } else if (url === "/api/users" && method === "PUT") {
+    return await updateUser(body, db);
+  } else if (url === "/api/users" && method === "DELETE") {
+    return await deleteUser(body, db);
+  } else if (url === "/api/users/genders" && method === "GET") {
+    return await getGenderOptions(db);
+  } else if (url === "/api/users/ethnicities" && method === "GET") {
+    return await getEthnicityOptions(db);
     // ── Inventory routes ─────────────────────────────────────────────
     // More-specific sub-paths are checked before the bare GET so they
     // are not swallowed by the /api/inventory branch.

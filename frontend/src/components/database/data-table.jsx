@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search } from "lucide-react";
+import { Search, Pencil } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -18,6 +18,7 @@ export function DataTable({
   searchKeys,
   deleteIdKey,
   onDelete,
+  onEdit,
   loading = false,
   emptyMessage = "No items found",
 }) {
@@ -65,7 +66,7 @@ export function DataTable({
               {columns.map((col) => (
                 <TableHead key={col.key}>{col.label}</TableHead>
               ))}
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className={onEdit ? "w-[150px]" : "w-[100px]"}>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -96,13 +97,24 @@ export function DataTable({
                     </TableCell>
                   ))}
                   <TableCell>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(item[deleteIdKey])}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      {onEdit && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onEdit(item)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(item[deleteIdKey])}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

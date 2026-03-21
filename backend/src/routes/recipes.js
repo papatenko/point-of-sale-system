@@ -40,9 +40,9 @@ export async function createRecipe(body, db) {
   const { menu_item_id, ingredient_id, quantity_needed, instructions } = body;
 
   if (!menu_item_id || !ingredient_id || !quantity_needed) {
-    return JSON.stringify({
+    return {
       error: "Missing required fields: menu_item_id, ingredient_id, quantity_needed",
-    });
+    };
   }
 
   const [[menuItem]] = await db.query(
@@ -50,7 +50,7 @@ export async function createRecipe(body, db) {
     [menu_item_id]
   );
   if (!menuItem) {
-    return JSON.stringify({ error: "Menu item not found" });
+    return { error: "Menu item not found" };
   }
 
   const [[ingredient]] = await db.query(
@@ -58,7 +58,7 @@ export async function createRecipe(body, db) {
     [ingredient_id]
   );
   if (!ingredient) {
-    return JSON.stringify({ error: "Ingredient not found" });
+    return { error: "Ingredient not found" };
   }
 
   const [[existing]] = await db.query(
@@ -66,7 +66,7 @@ export async function createRecipe(body, db) {
     [menu_item_id, ingredient_id]
   );
   if (existing) {
-    return JSON.stringify({ error: "This ingredient is already in the recipe for this menu item" });
+    return { error: "This ingredient is already in the recipe for this menu item" };
   }
 
   const [result] = await db.query(
@@ -76,18 +76,18 @@ export async function createRecipe(body, db) {
     [menu_item_id, ingredient_id, parseFloat(quantity_needed), instructions || null]
   );
 
-  return JSON.stringify({
+  return {
     success: true,
     recipe_id: result.insertId,
     message: "Recipe ingredient added successfully",
-  });
+  };
 }
 
 export async function updateRecipe(body, db) {
   const { recipe_id, quantity_needed, instructions } = body;
 
   if (!recipe_id) {
-    return JSON.stringify({ error: "recipe_id is required" });
+    return { error: "recipe_id is required" };
   }
 
   const [[existing]] = await db.query(
@@ -95,7 +95,7 @@ export async function updateRecipe(body, db) {
     [recipe_id]
   );
   if (!existing) {
-    return JSON.stringify({ error: "Recipe not found" });
+    return { error: "Recipe not found" };
   }
 
   await db.query(
@@ -106,17 +106,17 @@ export async function updateRecipe(body, db) {
     [quantity_needed ? parseFloat(quantity_needed) : null, instructions, recipe_id]
   );
 
-  return JSON.stringify({
+  return {
     success: true,
     message: "Recipe updated successfully",
-  });
+  };
 }
 
 export async function deleteRecipe(body, db) {
   const { recipe_id } = body;
 
   if (!recipe_id) {
-    return JSON.stringify({ error: "recipe_id is required" });
+    return { error: "recipe_id is required" };
   }
 
   const [[existing]] = await db.query(
@@ -124,13 +124,13 @@ export async function deleteRecipe(body, db) {
     [recipe_id]
   );
   if (!existing) {
-    return JSON.stringify({ error: "Recipe not found" });
+    return { error: "Recipe not found" };
   }
 
   await db.query("DELETE FROM recipe_ingredient WHERE recipe_id = ?", [recipe_id]);
 
-  return JSON.stringify({
+  return {
     success: true,
     message: "Recipe ingredient removed successfully",
-  });
+  };
 }

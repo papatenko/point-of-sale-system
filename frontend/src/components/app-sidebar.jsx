@@ -17,6 +17,7 @@ import {
   Truck,
   Scroll,
   Archive,
+  UserCircle,
 } from "lucide-react";
 
 const employee_routes = [
@@ -53,6 +54,7 @@ const database_routes = [
   { name: "Suppliers", url: "/employee/database/suppliers", icon: Archive },
   { name: "Food Trucks", url: "/employee/database/food-trucks", icon: Truck },
   { name: "Recipes", url: "/employee/database/recipes", icon: Scroll },
+  { name: "Users", url: "/employee/database/users", icon: UserCircle },
 ];
 
 export function AppSidebar() {
