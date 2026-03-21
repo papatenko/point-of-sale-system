@@ -46,10 +46,9 @@ if (process.env.NODE_ENV !== "production") {
   dotenv.config(); // loads .env for local dev
 }
 
-let database = null;
 let pool = null;
 
-export function getDatabase() {
+export async function getDatabase() {
   if (!pool) {
     const missing = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"].filter(
       (k) => !process.env[k],
@@ -178,26 +177,26 @@ export async function mySQLQuery(
   }
 }
 export async function employeeCreateQuery(url, params = []) {
-  // rebeca routes for auth XD
+  const db = await getDatabase();
+  
   if (url === "/api/users") {
-    const [rows] = await database.query("SELECT * FROM users");
+    const [rows] = await db.query("SELECT * FROM users");
     return rows;
   } else if (url === "/api/register-user") {
-    const [result] = await database.query(
+    const [result] = await db.query(
       "INSERT INTO users(email, first_name, last_name, password, phone_number, user_type, gender, ethnicity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       params,
     );
     return result;
   } else if (url === "/api/register-manager") {
-    const [result] = await database.query(
+    const [result] = await db.query(
       `INSERT INTO managers(email, budget)
        VALUES (?, ?)`,
       params,
     );
     return result;
   } else if (url === "/api/employee/create") {
-    // Handle employee creation - insert into employees table
-    const [result] = await database.query(
+    const [result] = await db.query(
       `INSERT INTO employees 
        (email, license_plate, role, hire_date, hourly_rate) 
        VALUES (?, ?, ?, ?, ?)`,
@@ -206,6 +205,5 @@ export async function employeeCreateQuery(url, params = []) {
     return result;
   }
 
-  // Default return for unhandled routes
   return { insertId: null };
 }
