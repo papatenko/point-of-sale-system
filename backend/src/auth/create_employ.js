@@ -1,5 +1,5 @@
 import { employeeCreateQuery, getDatabase } from "../mysql.js";
-import { getTrucks } from "../routes/truck.js";
+import * as TruckService from "../services/trucks.service.js";
 
 export async function handleEmployeeCreate(req, res, body) {
   try {
@@ -67,7 +67,7 @@ export async function handleEmployeeCreate(req, res, body) {
     let finalLicensePlate = license_plate;
     if (!finalLicensePlate) {
       const db = await getDatabase();
-      const trucks = await getTrucks(db);
+      const trucks = await TruckService.getAllTrucks(db);
       finalLicensePlate = trucks[0]?.license_plate || "ABC-123";
     }
 
