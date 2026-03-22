@@ -1,7 +1,8 @@
 import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
-import { mySQLQuery } from "./mysql.js";
+import { getDatabase } from "./database.js";
+import { handleRoute } from "./routes/index.js";
 
 // Grabs the built /dist/ directory built from Vite
 const FRONTEND_PATH = path.resolve("..") + "/frontend/dist";
@@ -80,7 +81,8 @@ const server = createServer(async (req, res) => {
   if (req.url.startsWith("/api")) {
     const body = ["POST", "PUT", "DELETE"].includes(req.method) ? await readBody(req) : null;
     try {
-      const result = await mySQLQuery(req.url, body, req.method, req, res);
+      const db = await getDatabase();
+      const result = await handleRoute(req.url, body, req.method, req, res, db);
       if (res.headersSent) return;
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(result));

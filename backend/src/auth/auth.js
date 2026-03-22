@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { mySQLQuery, getDatabase } from "../mysql.js";
+import { getDatabase } from "../database.js";
 import dotenv from "dotenv";
 import { signEmployeeToken, verifyToken } from "./jwt.js";
 
@@ -38,12 +38,16 @@ export async function login(email, password) {
 
 // --- Register function ---
 export async function register(username, password) {
-  const users = await mySQLQuery("/api/users");
-  if (users.find(u => u.username === username)) throw new Error("User already exists");
+  const db = await getDatabase();
 
-  // Hash password before storing
+  const [users] = await db.query("SELECT email FROM users WHERE email = ?", [username]);
+  if (users.length > 0) throw new Error("User already exists");
+
   const hashedPassword = await bcrypt.hash(password, 10);
-  await mySQLQuery("/api/register-user", [username, hashedPassword]);
+  await db.query(
+    "INSERT INTO users (email, password, first_name, last_name) VALUES (?, ?, ?, ?)",
+    [username, hashedPassword, username.split("@")[0], ""]
+  );
 
   return { message: "User created successfully" };
 }

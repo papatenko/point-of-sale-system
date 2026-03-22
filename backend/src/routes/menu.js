@@ -1,4 +1,4 @@
-import { getDatabase } from "../mysql.js";
+import { getDatabase } from "../database.js";
 
 export async function getMenu() {
   const database = await getDatabase();

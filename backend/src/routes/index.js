@@ -1,23 +1,19 @@
-import mysql from "mysql2/promise";
-import { getMenu } from "./routes/menu.js";
-import dotenv from "dotenv";
-import { checkoutOrder } from "./routes/checkout.js";
-import { getOrders } from "./routes/orders.js";
-import {
-  getMyProfile,
-  updateMyProfile,
-} from "./routes/users.js";
-import { getReportStats } from "./routes/reports.js";
-import { login } from "./auth/auth.js";
-import { createRouter } from "./utils/router.js";
-import { registerUsersRoutes } from "./routes/users.route.js";
-import { registerRecipesRoutes } from "./routes/recipes.route.js";
-import { registerTrucksRoutes } from "./routes/trucks.route.js";
-import { registerSuppliersRoutes } from "./routes/suppliers.route.js";
-import { registerMenuItemsRoutes } from "./routes/menuItems.route.js";
-import { registerEmployeesRoutes } from "./routes/employees.route.js";
-import { registerIngredientsRoutes } from "./routes/ingredients.route.js";
-import { registerInventoryRoutes } from "./routes/inventory.route.js";
+import { createRouter } from "../utils/router.js";
+import { registerUsersRoutes } from "./users.route.js";
+import { registerRecipesRoutes } from "./recipes.route.js";
+import { registerTrucksRoutes } from "./trucks.route.js";
+import { registerSuppliersRoutes } from "./suppliers.route.js";
+import { registerMenuItemsRoutes } from "./menuItems.route.js";
+import { registerEmployeesRoutes } from "./employees.route.js";
+import { registerIngredientsRoutes } from "./ingredients.route.js";
+import { registerInventoryRoutes } from "./inventory.route.js";
+
+import { getMenu } from "./menu.js";
+import { checkoutOrder } from "./checkout.js";
+import { getOrders } from "./orders.js";
+import { getMyProfile, updateMyProfile } from "./users.js";
+import { getReportStats } from "./reports.js";
+import { login } from "../auth/auth.js";
 
 const usersRouter = createRouter();
 registerUsersRoutes(usersRouter);
@@ -43,44 +39,7 @@ registerIngredientsRoutes(ingredientsRouter);
 const inventoryRouter = createRouter();
 registerInventoryRoutes(inventoryRouter);
 
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config();
-}
-
-let pool = null;
-
-export async function getDatabase() {
-  if (!pool) {
-    const missing = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"].filter(
-      (k) => !process.env[k],
-    );
-    if (missing.length > 0) {
-      throw new Error(`Missing env vars: ${missing.join(", ")}`);
-    }
-
-    pool = mysql.createPool({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-    });
-  }
-  return pool;
-}
-
-console.log("DB_HOST:", process.env.DB_HOST);
-
-export async function mySQLQuery(
-  url,
-  body = null,
-  method = "GET",
-  req = null,
-  res = null,
-) {
-  const db = await getDatabase();
+export async function handleRoute(url, body, method, req, res, db) {
   const basePath = url.split("?")[0];
 
   if (url === "/api/employee") {
