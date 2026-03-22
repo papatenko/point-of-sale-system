@@ -1,101 +1,114 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useState, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
 
 export const Route = createFileRoute('/auth/login')({
+  validateSearch: (search) => ({
+    redirect: typeof search.redirect === 'string' ? search.redirect : '',
+  }),
   component: LoginComponent,
-})
+});
 
 function LoginComponent() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const navigate = useNavigate()
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
 
-  useEffect(() => {
-    console.log("Login component");
-  }, []);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-const handleLogin = async (e) => {
-  e.preventDefault();
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-  try {
-    const res = await fetch('http://localhost:3000/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: username, 
-        password: password,
-      }),
-    });
+      const data = await res.json();
 
-    const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || data.error || 'Login failed');
+      }
 
-    if (!res.ok) {
-      throw new Error(data.message || 'Login failed');
+      localStorage.setItem('token', data.token);
+      if (data.user?.email) {
+        localStorage.setItem('userEmail', data.user.email);
+      }
+
+      // If there's a redirect param (e.g. came from /checkout), go there
+      if (redirect) {
+        navigate({ to: redirect });
+      } else {
+        // Default: employees go to dashboard, everyone else to menu
+        navigate({ to: '/employee' });
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    // guardar token
-    localStorage.setItem('token', data.token);
-
-    // redirigir
-    navigate({ to: '/employee' });
-
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-  }
-};
+  };
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-center h-screen bg-gray-50">
       <form
         onSubmit={handleLogin}
-        className="p-8 bg-white shadow-md rounded w-96"
+        className="p-8 bg-white shadow-md rounded-xl w-96 space-y-4"
       >
-        <h2 className="text-xl font-bold mb-4">Login</h2>
-        
-        {/* Added id, name, and htmlFor for label */}
-        <div className="mb-3">
-          <label htmlFor="username" className="block mb-1 text-sm font-medium">
-            Usuario
+        <h2 className="text-2xl font-bold mb-2">Sign In</h2>
+
+        {error && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            {error}
+          </p>
+        )}
+
+        <div>
+          <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">
+            Email
           </label>
           <input
-            id="username"
-            name="username"
-            type="text"
-            placeholder="Usuario"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-2 border rounded"
-            autoComplete="username"
+            id="email"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            autoComplete="email"
+            required
           />
         </div>
 
-        <div className="mb-3">
-          <label htmlFor="password" className="block mb-1 text-sm font-medium">
-            Contraseña
+        <div>
+          <label htmlFor="password" className="block mb-1 text-sm font-medium text-gray-700">
+            Password
           </label>
           <input
             id="password"
             name="password"
             type="password"
-            placeholder="Contraseña"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded"
+            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             autoComplete="current-password"
+            required
           />
         </div>
 
         <button
           type="submit"
-          className="w-full p-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          disabled={loading}
+          className="w-full py-2.5 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition-colors disabled:opacity-60"
         >
-          Entrar
+          {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
     </div>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-export async function getOrders() {
+export async function getOrders(url, db) {
   const orderId = url.replace("/api/orders/", "");
 
   const [rows] = await db.query(

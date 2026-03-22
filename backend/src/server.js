@@ -81,9 +81,11 @@ const server = createServer(async (req, res) => {
     const body = ["POST", "PUT", "DELETE"].includes(req.method) ? await readBody(req) : null;
     try {
       const result = await mySQLQuery(req.url, body, req.method, req, res);
+      if (res.headersSent) return;
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(result));
     } catch (err) {
+      if (res.headersSent) return;
       res.writeHead(500, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: err.message }));
     }
