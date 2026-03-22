@@ -47,6 +47,7 @@ import {
   getGenderOptions,
   getEthnicityOptions,
 } from "./routes/users.js";
+import { getReportStats } from "./routes/reports.js";
 
 // Only load .env if not in production
 if (process.env.NODE_ENV !== "production") {
@@ -107,6 +108,8 @@ export async function mySQLQuery(
     return JSON.stringify(menuItems);
   } else if (url === "/api/employee/reports") {
     // TODO
+  } else if (basePath === "/api/reports/stats" && method === "GET") {
+    return await getReportStats(db);
   } else if (url === "/api/employee/inventory") {
     // TODO
   } else if (url === "/api/employee/creation") {
