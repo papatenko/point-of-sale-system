@@ -1,4 +1,5 @@
-import { employeeCreateQuery } from "../mysql.js";
+import { employeeCreateQuery, getDatabase } from "../mysql.js";
+import { getTrucks } from "../routes/truck.js";
 
 export async function handleEmployeeCreate(req, res, body) {
   try {
@@ -65,8 +66,8 @@ export async function handleEmployeeCreate(req, res, body) {
     // Verificar que license_plate existe en food_trucks o usar uno por defecto
     let finalLicensePlate = license_plate;
     if (!finalLicensePlate) {
-      // Buscar un food truck por defecto
-      const trucks = await employeeCreateQuery("/api/food-trucks", []);
+      const db = await getDatabase();
+      const trucks = await getTrucks(db);
       finalLicensePlate = trucks[0]?.license_plate || "ABC-123";
     }
 

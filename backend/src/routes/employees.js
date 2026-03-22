@@ -16,17 +16,21 @@ export async function deleteEmployee(body, db) {
     return { error: "email is required" };
   }
 
-  const [result] = await db.query(
-    "DELETE FROM employees WHERE email = ?",
+  const [[existing]] = await db.query(
+    "SELECT email FROM employees WHERE email = ?",
     [email]
   );
 
-  if (result.affectedRows === 0) {
+  if (!existing) {
     return { error: "Employee not found" };
   }
 
+  await db.query("DELETE FROM employees WHERE email = ?", [email]);
+
+  await db.query("DELETE FROM users WHERE email = ?", [email]);
+
   return {
     success: true,
-    message: "Employee deleted successfully",
+    message: "Employee and associated user deleted successfully",
   };
 }

@@ -40,16 +40,23 @@ import {
   deleteRecipe,
   updateRecipe,
 } from "./routes/recipes.js";
+import {
+  getUsers,
+  updateUser,
+  deleteUser,
+  getGenderOptions,
+  getEthnicityOptions,
+} from "./routes/users.js";
+import { getReportStats } from "./routes/reports.js";
 
 // Only load .env if not in production
 if (process.env.NODE_ENV !== "production") {
   dotenv.config(); // loads .env for local dev
 }
 
-let database = null;
 let pool = null;
 
-export function getDatabase() {
+export async function getDatabase() {
   if (!pool) {
     const missing = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"].filter(
       (k) => !process.env[k],
@@ -101,6 +108,8 @@ export async function mySQLQuery(
     return JSON.stringify(menuItems);
   } else if (url === "/api/employee/reports") {
     // TODO
+  } else if (basePath === "/api/reports/stats" && method === "GET") {
+    return await getReportStats(db);
   } else if (url === "/api/employee/inventory") {
     // TODO
   } else if (url === "/api/employee/creation") {
@@ -158,6 +167,16 @@ export async function mySQLQuery(
     return await updateRecipe(body, db);
   } else if (url === "/api/recipes" && method === "DELETE") {
     return await deleteRecipe(body, db);
+  } else if (url === "/api/users" && method === "GET") {
+    return await getUsers(db);
+  } else if (url === "/api/users" && method === "PUT") {
+    return await updateUser(body, db);
+  } else if (url === "/api/users" && method === "DELETE") {
+    return await deleteUser(body, db);
+  } else if (url === "/api/users/genders" && method === "GET") {
+    return await getGenderOptions(db);
+  } else if (url === "/api/users/ethnicities" && method === "GET") {
+    return await getEthnicityOptions(db);
     // ── Inventory routes ─────────────────────────────────────────────
     // More-specific sub-paths are checked before the bare GET so they
     // are not swallowed by the /api/inventory branch.
@@ -178,26 +197,26 @@ export async function mySQLQuery(
   }
 }
 export async function employeeCreateQuery(url, params = []) {
-  // rebeca routes for auth XD
+  const db = await getDatabase();
+  
   if (url === "/api/users") {
-    const [rows] = await database.query("SELECT * FROM users");
+    const [rows] = await db.query("SELECT * FROM users");
     return rows;
   } else if (url === "/api/register-user") {
-    const [result] = await database.query(
+    const [result] = await db.query(
       "INSERT INTO users(email, first_name, last_name, password, phone_number, user_type, gender, ethnicity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
       params,
     );
     return result;
   } else if (url === "/api/register-manager") {
-    const [result] = await database.query(
+    const [result] = await db.query(
       `INSERT INTO managers(email, budget)
        VALUES (?, ?)`,
       params,
     );
     return result;
   } else if (url === "/api/employee/create") {
-    // Handle employee creation - insert into employees table
-    const [result] = await database.query(
+    const [result] = await db.query(
       `INSERT INTO employees 
        (email, license_plate, role, hire_date, hourly_rate) 
        VALUES (?, ?, ?, ?, ?)`,
@@ -206,6 +225,5 @@ export async function employeeCreateQuery(url, params = []) {
     return result;
   }
 
-  // Default return for unhandled routes
   return { insertId: null };
 }

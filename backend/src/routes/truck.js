@@ -17,9 +17,9 @@ export async function createTruck(body, db) {
   } = body;
 
   if (!license_plate || !truck_name) {
-    return JSON.stringify({
+    return {
       error: "Missing required fields: license_plate, truck_name",
-    });
+    };
   }
 
   const [[existing]] = await db.query(
@@ -28,7 +28,7 @@ export async function createTruck(body, db) {
   );
 
   if (existing) {
-    return JSON.stringify({ error: "A truck with this license plate already exists" });
+    return { error: "A truck with this license plate already exists" };
   }
 
   const [result] = await db.query(
@@ -46,11 +46,11 @@ export async function createTruck(body, db) {
     ]
   );
 
-  return JSON.stringify({
+  return {
     success: true,
     license_plate: result.insertId,
     message: "Truck created successfully",
-  });
+  };
 }
 
 export async function updateTruck(body, db) {
@@ -65,7 +65,7 @@ export async function updateTruck(body, db) {
   } = body;
 
   if (!license_plate) {
-    return JSON.stringify({ error: "license_plate is required" });
+    return { error: "license_plate is required" };
   }
 
   const [[existing]] = await db.query(
@@ -74,7 +74,7 @@ export async function updateTruck(body, db) {
   );
 
   if (!existing) {
-    return JSON.stringify({ error: "Truck not found" });
+    return { error: "Truck not found" };
   }
 
   await db.query(
@@ -97,17 +97,17 @@ export async function updateTruck(body, db) {
     ]
   );
 
-  return JSON.stringify({
+  return {
     success: true,
     message: "Truck updated successfully",
-  });
+  };
 }
 
 export async function deleteTruck(body, db) {
   const { license_plate } = body;
 
   if (!license_plate) {
-    return JSON.stringify({ error: "license_plate is required" });
+    return { error: "license_plate is required" };
   }
 
   const [[existing]] = await db.query(
@@ -116,7 +116,7 @@ export async function deleteTruck(body, db) {
   );
 
   if (!existing) {
-    return JSON.stringify({ error: "Truck not found" });
+    return { error: "Truck not found" };
   }
 
   const [[employeeCount]] = await db.query(
@@ -125,15 +125,15 @@ export async function deleteTruck(body, db) {
   );
 
   if (employeeCount.count > 0) {
-    return JSON.stringify({
+    return {
       error: `Cannot delete truck: ${employeeCount.count} employee(s) are assigned to this truck`,
-    });
+    };
   }
 
   await db.query("DELETE FROM food_trucks WHERE license_plate = ?", [license_plate]);
 
-  return JSON.stringify({
+  return {
     success: true,
     message: "Truck deleted successfully",
-  });
+  };
 }
