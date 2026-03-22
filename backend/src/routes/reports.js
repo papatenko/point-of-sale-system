@@ -13,9 +13,12 @@ export async function getReportStats(db) {
       (SELECT COUNT(*) FROM checkout) AS totalOrders,
       (SELECT COALESCE(SUM(quantity), 0) FROM order_items) AS totalItemsSold,
       (
+        /* Revenue from each order only after it is placed (POST /api/checkout — "Place Order").
+           Rows are inserted with payment_status 'pending', so we must not require 'completed'. */
         SELECT COALESCE(SUM(total_price), 0)
         FROM checkout
-        WHERE payment_status = 'completed'
+        WHERE order_status <> 'cancelled'
+          AND payment_status <> 'refunded'
       ) AS grossIncome
   `);
 
