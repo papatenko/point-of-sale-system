@@ -5,6 +5,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import LogoutButton from "@/routes/auth/logout";
 import { Link } from "@tanstack/react-router";
 import {
   ShoppingCart,
@@ -48,7 +49,7 @@ const employee_routes = [
 ];
 
 const database_routes = [
-  { name: "Ingredients", url: "/employee/database/ingredients", icon: Beef },
+  { name: "Ingredient", url: "/employee/database/ingredients", icon: Beef },
   { name: "Employees", url: "/employee/database/employees", icon: Users },
   { name: "Menu Items", url: "/employee/database/menu_items", icon: Utensils },
   { name: "Suppliers", url: "/employee/database/suppliers", icon: Archive },
@@ -92,7 +93,10 @@ export function AppSidebar() {
               </SidebarMenuItem>
             );
           })}
+          
         </SidebarMenu>
+        <LogoutButton/>
+
       </SidebarHeader>
     </Sidebar>
   );

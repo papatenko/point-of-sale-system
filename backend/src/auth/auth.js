@@ -1,29 +1,44 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { mySQLQuery } from "../mysql.js";
+import { mySQLQuery, getDatabase } from "../mysql.js";
 import dotenv from "dotenv";
 
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // --- Login function ---
-export async function login(username, password) {
-  const users = await mySQLQuery("/api/users");
-  const user = users.find(u => u.username === username);
+export async function login(email, password) {
+  const db = await getDatabase();
 
-  if (!user) throw new Error("User not found");
+  const [rows] = await db.query(
+    `SELECT u.email, u.password
+     FROM users u
+     INNER JOIN employees e ON u.email = e.email
+     WHERE u.email = ?`,
+    [email]
+  );
 
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) throw new Error("Incorrect password");
+  const user = rows[0];
 
-  // Generate JWT token including the role
+  if (!user) throw new Error("Employee not found");
+
+  // sin bcrypt (temporal)
+  if (password !== user.password) {
+    throw new Error("Incorrect password");
+  }
+
   const token = jwt.sign(
-    { id: user.id, username: user.username, role: user.role }, // include role
+    { email: user.email },
     JWT_SECRET,
     { expiresIn: "2h" }
   );
 
-  return { token, user: { id: user.id, username: user.username, role: user.role } };
+  return {
+    token,
+    user: {
+      email: user.email
+    }
+  };
 }
 
 // --- Register function ---

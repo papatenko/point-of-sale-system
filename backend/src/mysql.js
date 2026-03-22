@@ -48,6 +48,7 @@ import {
   getEthnicityOptions,
 } from "./routes/users.js";
 import { getReportStats } from "./routes/reports.js";
+import { login } from "./auth/auth.js";
 
 // Only load .env if not in production
 if (process.env.NODE_ENV !== "production") {
@@ -192,6 +193,8 @@ export async function mySQLQuery(
     return await getInventoryHistory(url, db);
   } else if (basePath === "/api/inventory" && method === "GET") {
     return await getInventory(url, db);
+  } else if (url === "/api/login" && method === "POST") {
+    return await login(body.email, body.password);
   } else {
     return null;
   }

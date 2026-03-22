@@ -15,17 +15,38 @@ function LoginComponent() {
     console.log("Login component");
   }, []);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+const handleLogin = async (e) => {
+  e.preventDefault();
 
-    if (username === 'admin' && password === '1234') {
-      const fakeToken = JSON.stringify({ role: 'manager' });
-      localStorage.setItem('token', fakeToken);
-      navigate({ to: '/employee' });
-    } else {
-      alert('User or password incorrect');
+  try {
+    const res = await fetch('http://localhost:3000/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: username, 
+        password: password,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Login failed');
     }
-  };
+
+    // guardar token
+    localStorage.setItem('token', data.token);
+
+    // redirigir
+    navigate({ to: '/employee' });
+
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+};
 
   return (
     <div className="flex justify-center items-center h-screen">
