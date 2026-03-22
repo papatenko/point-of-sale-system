@@ -4,6 +4,10 @@ export async function handleGetMenuItems(db) {
   return await MenuItemService.getAllMenuItems(db);
 }
 
+export async function handleGetAvailableMenuItems(db) {
+  return await MenuItemService.getAvailableMenuItems(db);
+}
+
 export async function handleCreateMenuItem(body, db) {
   return await MenuItemService.createMenuItem(db, body);
 }
