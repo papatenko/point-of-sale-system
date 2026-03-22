@@ -13,7 +13,7 @@ import {
 } from "./routes/Inventory.js";
 import { getMyProfile, updateMyProfile } from "./routes/users.js";
 import { getReportStats } from "./routes/reports.js";
-import { login } from "./auth/auth.js";
+import { login, login_customer } from "./auth/auth.js";
 import { createRouter } from "./utils/router.js";
 import { registerUsersRoutes } from "./routes/users.route.js";
 import { registerRecipesRoutes } from "./routes/recipes.route.js";
@@ -132,7 +132,9 @@ export async function mySQLQuery(
     return await getInventory(url, db);
   } else if (url === "/api/login" && method === "POST") {
     return await login(body.email, body.password);
-  } else {
+  } else if (url === "/api/login_customer" && method === "POST") {
+    return await login_customer(body.email, body.password);
+  }else {
     return null;
   }
 }

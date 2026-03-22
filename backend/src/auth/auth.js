@@ -37,16 +37,16 @@ export async function login(email, password) {
 }
 
 // --- Register function ---
-export async function register(username, password) {
-  const users = await mySQLQuery("/api/users");
-  if (users.find(u => u.username === username)) throw new Error("User already exists");
+// export async function register(username, password) {
+//   const users = await mySQLQuery("/api/users");
+//   if (users.find(u => u.username === username)) throw new Error("User already exists");
 
-  // Hash password before storing
-  const hashedPassword = await bcrypt.hash(password, 10);
-  await mySQLQuery("/api/register-user", [username, hashedPassword]);
+//   // Hash password before storing
+//   const hashedPassword = await bcrypt.hash(password, 10);
+//   await mySQLQuery("/api/register-user", [username, hashedPassword]);
 
-  return { message: "User created successfully" };
-}
+//   return { message: "User created successfully" };
+// }
 
 export { verifyToken } from "./jwt.js";
 
@@ -60,4 +60,38 @@ export function verifyManager(token) {
   } catch (err) {
     throw new Error("Invalid token or unauthorized");
   }
+}
+
+export async function login_customer(email, password) {
+  const db = await getDatabase();
+
+  const [rows] = await db.query(
+    `SELECT u.email, u.password
+      FROM users u
+      INNER JOIN customers c ON u.email = c.email
+      WHERE u.email = ?`,
+    [email]
+  );
+
+  const user = rows[0];
+
+  if (!user) throw new Error("User not found");
+
+  // sin bcrypt (temporal)
+  if (password !== user.password) {
+    throw new Error("Incorrect password");
+  }
+
+  const token = jwt.sign(
+    { email: user.email },
+    JWT_SECRET,
+    { expiresIn: "2h" }
+  );
+
+  return {
+    token,
+    user: {
+      email: user.email
+    }
+  };
 }

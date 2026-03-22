@@ -22,6 +22,7 @@ import { Route as EmployeeInventoryRouteImport } from './routes/employee/invento
 import { Route as ConfirmationOrderIdRouteImport } from './routes/confirmation.$orderId'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthCustumer_loginRouteImport } from './routes/auth/custumer_login'
 import { Route as EmployeeDatabaseRouteRouteImport } from './routes/employee/database/route'
 import { Route as EmployeeCreateRouteRouteImport } from './routes/employee/create/route'
 import { Route as EmployeeDatabaseUsersRouteImport } from './routes/employee/database/users'
@@ -99,6 +100,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCustumer_loginRoute = AuthCustumer_loginRouteImport.update({
+  id: '/auth/custumer_login',
+  path: '/auth/custumer_login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EmployeeDatabaseRouteRoute = EmployeeDatabaseRouteRouteImport.update({
   id: '/database',
   path: '/database',
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/order': typeof OrderRoute
   '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
+  '/auth/custumer_login': typeof AuthCustumer_loginRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/order': typeof OrderRoute
   '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
+  '/auth/custumer_login': typeof AuthCustumer_loginRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/order': typeof OrderRoute
   '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
+  '/auth/custumer_login': typeof AuthCustumer_loginRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/order'
     | '/employee/create'
     | '/employee/database'
+    | '/auth/custumer_login'
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/order'
     | '/employee/create'
     | '/employee/database'
+    | '/auth/custumer_login'
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
@@ -299,6 +310,7 @@ export interface FileRouteTypes {
     | '/order'
     | '/employee/create'
     | '/employee/database'
+    | '/auth/custumer_login'
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
@@ -324,6 +336,7 @@ export interface RootRouteChildren {
   EmployeeRouteRoute: typeof EmployeeRouteRouteWithChildren
   CheckoutRoute: typeof CheckoutRoute
   OrderRoute: typeof OrderRoute
+  AuthCustumer_loginRoute: typeof AuthCustumer_loginRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
   ConfirmationOrderIdRoute: typeof ConfirmationOrderIdRoute
@@ -421,6 +434,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/login'
       fullPath: '/auth/login'
       preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/custumer_login': {
+      id: '/auth/custumer_login'
+      path: '/auth/custumer_login'
+      fullPath: '/auth/custumer_login'
+      preLoaderRoute: typeof AuthCustumer_loginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/employee/database': {
@@ -570,6 +590,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmployeeRouteRoute: EmployeeRouteRouteWithChildren,
   CheckoutRoute: CheckoutRoute,
   OrderRoute: OrderRoute,
+  AuthCustumer_loginRoute: AuthCustumer_loginRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
   ConfirmationOrderIdRoute: ConfirmationOrderIdRoute,
