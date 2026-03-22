@@ -12,21 +12,7 @@ import {
   getInventoryAlerts,
   getInventoryHistory,
 } from "./routes/Inventory.js";
-import {
-  getRecipes,
-  createRecipe,
-  deleteRecipe,
-  updateRecipe,
-} from "./routes/recipes.js";
-import {
-  getUsers,
-  updateUser,
-  deleteUser,
-  getGenderOptions,
-  getEthnicityOptions,
-  getMyProfile,
-  updateMyProfile,
-} from "./routes/users.js";
+import { getMyProfile, updateMyProfile } from "./routes/users.js";
 import { getReportStats } from "./routes/reports.js";
 import { login } from "./auth/auth.js";
 import { createRouter } from "./utils/router.js";
@@ -118,6 +104,10 @@ export async function mySQLQuery(
     return JSON.stringify(menuItems);
   } else if (basePath === "/api/reports/stats" && method === "GET") {
     return await getReportStats(db);
+  } else if (basePath === "/api/me" && method === "GET") {
+    return await getMyProfile(req, db);
+  } else if (basePath === "/api/me" && method === "PUT") {
+    return await updateMyProfile(req, body, db);
   } else if (url.startsWith("/api/trucks")) {
     return await trucksRouter.match(method, basePath, body, db);
     // ── GET /api/menu ────────────────────────────────────────────────

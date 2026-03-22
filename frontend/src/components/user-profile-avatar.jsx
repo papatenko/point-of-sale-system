@@ -33,6 +33,17 @@ function authHeaders() {
   };
 }
 
+/** Parse JSON body; empty or invalid responses become null (avoids null.error crashes). */
+async function parseJsonSafe(res) {
+  const text = await res.text();
+  if (!text?.trim()) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Same Avatar pattern as __root.jsx (Avatar + AvatarImage + AvatarFallback).
  * Logged out: link to login. Logged in: opens profile dialog.
@@ -65,8 +76,8 @@ export function UserProfileAvatar() {
       fetch(`${API}/api/users/genders`),
       fetch(`${API}/api/users/ethnicities`),
     ]);
-    const gData = await gRes.json();
-    const eData = await eRes.json();
+    const gData = await parseJsonSafe(gRes);
+    const eData = await parseJsonSafe(eRes);
     setGenders(Array.isArray(gData) ? gData : []);
     setEthnicities(Array.isArray(eData) ? eData : []);
   }, []);
@@ -77,9 +88,9 @@ export function UserProfileAvatar() {
       return;
     }
     fetch(`${API}/api/me`, { headers: authHeaders() })
-      .then((res) => res.json())
+      .then((res) => parseJsonSafe(res))
       .then((data) => {
-        if (data.error || !data.first_name) return;
+        if (!data || data.error || !data.first_name) return;
         const a = (data.first_name || "").trim().charAt(0);
         const b = (data.last_name || "").trim().charAt(0);
         setInitials(
@@ -95,7 +106,10 @@ export function UserProfileAvatar() {
     setError(null);
     try {
       const res = await fetch(`${API}/api/me`, { headers: authHeaders() });
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
+      if (!data) {
+        throw new Error("Invalid or empty response from server");
+      }
       if (!res.ok || data.error) {
         throw new Error(data.error || "Could not load profile");
       }
@@ -147,7 +161,10 @@ export function UserProfileAvatar() {
               : undefined,
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonSafe(res);
+      if (!data) {
+        throw new Error("Invalid or empty response from server");
+      }
       if (!res.ok || data.error) {
         throw new Error(data.error || "Could not save profile");
       }
