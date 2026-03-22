@@ -4,6 +4,7 @@ export async function getUsers(db) {
       u.email,
       u.first_name,
       u.last_name,
+      u.password,
       u.phone_number,
       u.user_type,
       g.gender AS gender_name,
@@ -17,8 +18,15 @@ export async function getUsers(db) {
 }
 
 export async function updateUser(body, db) {
-  const { email, first_name, last_name, phone_number, gender, ethnicity } =
-    body;
+  const {
+    email,
+    first_name,
+    last_name,
+    password,
+    phone_number,
+    gender,
+    ethnicity,
+  } = body;
 
   if (!email) {
     return { error: "email is required" };
@@ -37,6 +45,7 @@ export async function updateUser(body, db) {
     `UPDATE users SET
      first_name = COALESCE(?, first_name),
      last_name = COALESCE(?, last_name),
+     password = COALESCE(?, password),
      phone_number = ?,
      gender = ?,
      ethnicity = ?
@@ -44,6 +53,7 @@ export async function updateUser(body, db) {
     [
       first_name,
       last_name,
+      password,
       phone_number || null,
       gender ? parseInt(gender) : null,
       ethnicity ? parseInt(ethnicity) : null,

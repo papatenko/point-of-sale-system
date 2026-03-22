@@ -21,6 +21,7 @@ const COLUMNS = [
   { key: "email", label: "Email" },
   { key: "first_name", label: "First Name" },
   { key: "last_name", label: "Last Name" },
+  { key: "password", label: "Password" },
   { key: "phone_number", label: "Phone" },
   { key: "user_type", label: "Type" },
   { key: "gender_name", label: "Gender" },
@@ -38,6 +39,7 @@ function UsersDatabaseComponent() {
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
+    password: "",
     phone_number: "",
     gender: "",
     ethnicity: "",
@@ -89,6 +91,7 @@ function UsersDatabaseComponent() {
     setForm({
       first_name: user.first_name || "",
       last_name: user.last_name || "",
+      password: user.password || "",
       phone_number: user.phone_number || "",
       gender: user.gender || "",
       ethnicity: user.ethnicity || "",
@@ -100,6 +103,7 @@ function UsersDatabaseComponent() {
     setForm({
       first_name: "",
       last_name: "",
+      password: "",
       phone_number: "",
       gender: "",
       ethnicity: "",
@@ -132,6 +136,7 @@ function UsersDatabaseComponent() {
           email: editUser.email,
           first_name: form.first_name,
           last_name: form.last_name,
+          password: form.password || null,
           phone_number: form.phone_number || null,
           gender: form.gender || null,
           ethnicity: form.ethnicity || null,
@@ -290,7 +295,12 @@ function UsersDatabaseComponent() {
                 </div>
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
@@ -305,7 +315,15 @@ function UsersDatabaseComponent() {
       <DataTable
         columns={enrichedColumns}
         data={enrichedUsers}
-        searchKeys={["first_name", "last_name", "email", "user_type"]}
+        searchKeys={[
+          "first_name",
+          "last_name",
+          "password",
+          "email",
+          "user_type",
+          "gender_name",
+          "ethnicity_name",
+        ]}
         deleteIdKey="email"
         onDelete={handleDelete}
         loading={loading}
