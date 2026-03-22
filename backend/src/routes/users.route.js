@@ -1,10 +1,16 @@
-import * as UserController from "../controllers/users.controller.js";
+import * as UserService from "../services/users.service.js";
 
 export function registerUsersRoutes(router) {
-  router.get("/api/users", async (_, db) => UserController.handleGetUsers(db));
-  router.post("/api/users", async (body, db) => UserController.handleCreateUser(body, db));
-  router.put("/api/users", async (body, db) => UserController.handleUpdateUser(body, db));
-  router.delete("/api/users", async (body, db) => UserController.handleDeleteUser(body, db));
-  router.get("/api/users/genders", async (_, db) => UserController.handleGetGenders(db));
-  router.get("/api/users/ethnicities", async (_, db) => UserController.handleGetEthnicities(db));
+  router.get("/api/users", async (_, db) => UserService.getAllUsers(db));
+  router.post("/api/users", async (body, db) => UserService.createUser(db, body));
+  router.put("/api/users", async (body, db) => {
+    const { email, ...data } = body;
+    return UserService.updateUser(db, email, data);
+  });
+  router.delete("/api/users", async (body, db) => {
+    const { email } = body;
+    return UserService.deleteUser(db, email);
+  });
+  router.get("/api/users/genders", async (_, db) => UserService.getGenderOptions(db));
+  router.get("/api/users/ethnicities", async (_, db) => UserService.getEthnicityOptions(db));
 }

@@ -1,5 +1,5 @@
-import * as BackupController from "../controllers/backup.controller.js";
+import * as BackupService from "../services/backup.service.js";
 
 export function registerBackupRoutes(router) {
-  router.get("/api/backup", async (_, db) => BackupController.handleGetBackup(_, db));
+  router.get("/api/backup", async (_, db) => BackupService.createBackup());
 }

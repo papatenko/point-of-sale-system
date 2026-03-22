@@ -1,10 +1,10 @@
-import * as InventoryController from "../controllers/inventory.controller.js";
+import * as InventoryService from "../services/inventory.service.js";
 
 export function registerInventoryRoutes(router) {
-  router.get("/api/inventory", async (body, db, url) => InventoryController.handleGetInventory(body, db, url));
-  router.post("/api/inventory/use", async (body, db) => InventoryController.handleUseInventory(body, db));
-  router.post("/api/inventory/use-recipe", async (body, db) => InventoryController.handleUseRecipe(body, db));
-  router.post("/api/inventory/reorder", async (body, db) => InventoryController.handleReorderInventory(body, db));
-  router.get("/api/inventory/alerts", async (body, db, url) => InventoryController.handleGetAlerts(body, db, url));
-  router.get("/api/inventory/history", async (body, db, url) => InventoryController.handleGetHistory(body, db, url));
+  router.get("/api/inventory", async (body, db, url) => InventoryService.getInventory(db, url));
+  router.post("/api/inventory/use", async (body, db) => InventoryService.useInventory(db, body));
+  router.post("/api/inventory/use-recipe", async (body, db) => InventoryService.useRecipe(db, body));
+  router.post("/api/inventory/reorder", async (body, db) => InventoryService.reorderInventory(db, body));
+  router.get("/api/inventory/alerts", async (body, db, url) => InventoryService.getAlerts(db, url));
+  router.get("/api/inventory/history", async (body, db, url) => InventoryService.getHistory(db, url));
 }
