@@ -5,6 +5,18 @@ import { clearCart } from "@/redux/cartSlice";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin } from "lucide-react";
 
+// Decode JWT payload to get user info (no verification needed client-side)
+function getEmailFromToken(token) {
+  try {
+    const payload = JSON.parse(
+      atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    return payload.email ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const Route = createFileRoute("/checkout")({
   component: CheckoutPage,
 });
@@ -14,6 +26,18 @@ function CheckoutPage() {
   const dispatch = useDispatch();
   const cartItems = useSelector((s) => s.cart.items);
   const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+  // Auth guard — must be logged in to checkout
+  const token = localStorage.getItem("token");
+  useEffect(() => {
+    if (!token) {
+      navigate({ to: "/auth/login", search: { redirect: "/checkout" } });
+    }
+  }, [token]);
+
+  const customerEmail =
+    localStorage.getItem("userEmail") ||
+    (token ? getEmailFromToken(token) : null);
 
   const [paymentMethod, setPaymentMethod] = useState("credit");
   const [licensePlate, setLicensePlate] = useState("");
@@ -57,7 +81,7 @@ function CheckoutPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerEmail: null,
+          customerEmail,
           paymentMethod,
           licensePlate,
           items: cartItems.map((i) => ({

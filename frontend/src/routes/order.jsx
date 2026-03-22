@@ -23,7 +23,7 @@ function OrderPage() {
     fetch("/api/menu")
       .then((r) => r.json())
       .then((data) => {
-        setMenu(data);
+        setMenu(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
