@@ -21,6 +21,7 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
+    "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.20.0"
   }
 }

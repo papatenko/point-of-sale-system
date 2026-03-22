@@ -46,6 +46,8 @@ import {
   deleteUser,
   getGenderOptions,
   getEthnicityOptions,
+  getMyProfile,
+  updateMyProfile,
 } from "./routes/users.js";
 import { getReportStats } from "./routes/reports.js";
 import { login } from "./auth/auth.js";
@@ -168,6 +170,10 @@ export async function mySQLQuery(
     return await updateRecipe(body, db);
   } else if (url === "/api/recipes" && method === "DELETE") {
     return await deleteRecipe(body, db);
+  } else if (basePath === "/api/me" && method === "GET") {
+    return await getMyProfile(req, db);
+  } else if (basePath === "/api/me" && method === "PUT") {
+    return await updateMyProfile(req, body, db);
   } else if (url === "/api/users" && method === "GET") {
     return await getUsers(db);
   } else if (url === "/api/users" && method === "PUT") {

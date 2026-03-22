@@ -1,10 +1,9 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { mySQLQuery, getDatabase } from "../mysql.js";
 import dotenv from "dotenv";
+import { signEmployeeToken, verifyToken } from "./jwt.js";
 
 dotenv.config();
-const JWT_SECRET = process.env.JWT_SECRET;
 
 // --- Login function ---
 export async function login(email, password) {
@@ -27,11 +26,7 @@ export async function login(email, password) {
     throw new Error("Incorrect password");
   }
 
-  const token = jwt.sign(
-    { email: user.email },
-    JWT_SECRET,
-    { expiresIn: "2h" }
-  );
+  const token = signEmployeeToken(user.email);
 
   return {
     token,
@@ -53,19 +48,13 @@ export async function register(username, password) {
   return { message: "User created successfully" };
 }
 
-// --- Verify JWT token ---
-export function verifyToken(token) {
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch (err) {
-    return null;
-  }
-}
+export { verifyToken } from "./jwt.js";
 
 // verify manager role
 export function verifyManager(token) {
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
+    const payload = verifyToken(token);
+    if (!payload) throw new Error("Invalid token");
     if (payload.role !== "manager") throw new Error("Not authorized");
     return payload;
   } catch (err) {
