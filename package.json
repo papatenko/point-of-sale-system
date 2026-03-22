@@ -19,6 +19,7 @@
   },
   "packageManager": "npm@10.9.4",
   "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "jsonwebtoken": "^9.0.3",
