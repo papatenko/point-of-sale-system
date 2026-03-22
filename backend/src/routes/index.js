@@ -7,10 +7,9 @@ import { registerMenuItemsRoutes } from "./menuItems.route.js";
 import { registerEmployeesRoutes } from "./employees.route.js";
 import { registerIngredientsRoutes } from "./ingredients.route.js";
 import { registerInventoryRoutes } from "./inventory.route.js";
+import { registerOrdersRoutes } from "./orders.route.js";
 
-import { getMenu } from "./menu.js";
 import { checkoutOrder } from "./checkout.js";
-import { getOrders } from "./orders.js";
 import { getMyProfile, updateMyProfile } from "./users.js";
 import { getReportStats } from "./reports.js";
 import { login } from "../auth/auth.js";
@@ -39,6 +38,9 @@ registerIngredientsRoutes(ingredientsRouter);
 const inventoryRouter = createRouter();
 registerInventoryRoutes(inventoryRouter);
 
+const ordersRouter = createRouter();
+registerOrdersRoutes(ordersRouter);
+
 export async function handleRoute(url, body, method, req, res, db) {
   const basePath = url.split("?")[0];
 
@@ -58,16 +60,18 @@ export async function handleRoute(url, body, method, req, res, db) {
     return await updateMyProfile(req, body, db);
   } else if (url.startsWith("/api/trucks")) {
     return await trucksRouter.match(method, basePath, body, db);
-  } else if (url === "/api/menu" && method === "GET") {
-    return await getMenu();
   } else if (url === "/api/checkout" && method === "POST") {
     return checkoutOrder(body, db);
-  } else if (url.startsWith("/api/orders/") && method === "GET") {
-    return getOrders(url, db);
+    // Checks for available menu items
+  } else if (url.startsWith("/api/menu")) {
+    return await menuItemsRouter.match(method, basePath, body, db);
+  } else if (url.startsWith("/api/orders")) {
+    return await ordersRouter.match(method, basePath, body, db, url);
   } else if (url.startsWith("/api/ingredients")) {
     return await ingredientsRouter.match(method, basePath, body, db);
   } else if (url.startsWith("/api/employees")) {
     return await employeesRouter.match(method, basePath, body, db);
+    // Checks for all menu items
   } else if (url.startsWith("/api/menu-items")) {
     return await menuItemsRouter.match(method, basePath, body, db);
   } else if (url.startsWith("/api/suppliers")) {

@@ -4,6 +4,10 @@ export async function getAllMenuItems(db) {
   return await MenuItemModel.findAll(db);
 }
 
+export async function getAvailableMenuItems(db) {
+  return await MenuItemModel.findAvailable(db);
+}
+
 export async function createMenuItem(db, data) {
   const { item_name, category, description, price, image_url } = data;
 
