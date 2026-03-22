@@ -124,6 +124,23 @@ export async function getReportStats(db) {
     total: Number(r.total) || 0,
   }));
 
+  const [truckOrderRows] = await db.query(`
+    SELECT
+      ft.license_plate AS licensePlate,
+      ft.truck_name AS truckName,
+      COUNT(c.checkout_id) AS total
+    FROM food_trucks ft
+    LEFT JOIN checkout c ON c.license_plate = ft.license_plate
+    GROUP BY ft.license_plate, ft.truck_name
+    ORDER BY ft.license_plate
+  `);
+
+  const ordersByTruck = truckOrderRows.map((r) => ({
+    licensePlate: r.licensePlate,
+    truckName: r.truckName,
+    total: Number(r.total) || 0,
+  }));
+
   // MySQL may return DECIMAL as string; normalize for JSON consumers
   return {
     totalIngredients: Number(row.totalIngredients) || 0,
@@ -143,5 +160,6 @@ export async function getReportStats(db) {
     ordersByCategory,
     itemsSoldByCategory,
     itemsSoldUncategorized: Number(soldUncat?.total) || 0,
+    ordersByTruck,
   };
 }

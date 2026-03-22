@@ -62,9 +62,11 @@ function ReportBarChartCard({
   valueLabel,
   emptyMessage = "No data to display yet.",
   chartHeightClass = "h-[min(320px,55vh)] min-h-[200px]",
+  cardClassName = "",
+  yAxisWidth = 140,
 }) {
   return (
-    <Card className="mt-4">
+    <Card className={`mt-4 ${cardClassName}`.trim()}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base">{title}</CardTitle>
         <CardDescription>
@@ -193,6 +195,22 @@ function RouteComponent() {
       ]),
     [stats],
   );
+
+  /** All trucks (including 0 orders), label by name + plate when helpful */
+  const trucksChartData = useMemo(() => {
+    if (!stats?.ordersByTruck?.length) return [];
+    return [...stats.ordersByTruck]
+      .map((r) => {
+        const name = (r.truckName || "").trim();
+        const plate = r.licensePlate || "";
+        const label =
+          name && plate
+            ? `${name} (${plate})`
+            : name || plate || "Truck";
+        return { name: label, value: Number(r.total) || 0 };
+      })
+      .sort((a, b) => b.value - a.value);
+  }, [stats]);
 
   return (
     <div className="p-5 max-w-5xl">
@@ -328,11 +346,22 @@ function RouteComponent() {
             valueLabel="Units sold"
             emptyMessage="No order line items yet."
           />
+
+          <ReportBarChartCard
+            title="Total trucks (orders per truck)"
+            total={stats?.totalTrucks}
+            summary="Each bar is a registered food truck; length is how many checkout orders used that truck’s license plate."
+            chartData={trucksChartData}
+            valueLabel="Orders"
+            emptyMessage="No food trucks registered yet."
+            cardClassName="lg:col-span-2"
+            yAxisWidth={200}
+            chartHeightClass="h-[min(420px,65vh)] min-h-[220px]"
+          />
         </div>
 
         <div className="mt-4 space-y-2 border-t pt-4">
           <div>Total Suppliers: {stats?.totalSuppliers ?? "—"}</div>
-          <div>Total Trucks: {stats?.totalTrucks ?? "—"}</div>
           <div>
             Gross Income: ${stats != null ? money(stats.grossIncome) : "—"}
           </div>
