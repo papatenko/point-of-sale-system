@@ -12,6 +12,21 @@ import {
   getInventoryAlerts,
   getInventoryHistory,
 } from "./routes/Inventory.js";
+import {
+  getRecipes,
+  createRecipe,
+  deleteRecipe,
+  updateRecipe,
+} from "./routes/recipes.js";
+import {
+  getUsers,
+  updateUser,
+  deleteUser,
+  getGenderOptions,
+  getEthnicityOptions,
+  getMyProfile,
+  updateMyProfile,
+} from "./routes/users.js";
 import { getReportStats } from "./routes/reports.js";
 import { login } from "./auth/auth.js";
 import { createRouter } from "./utils/router.js";
