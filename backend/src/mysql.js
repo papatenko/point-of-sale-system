@@ -3,7 +3,6 @@ import { getMenu } from "./routes/menu.js";
 import dotenv from "dotenv";
 import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
-import { handleEmployeeCreate } from "./auth/create_employ.js";
 import {
   getInventory,
   useInventory,
@@ -44,9 +43,8 @@ registerEmployeesRoutes(employeesRouter);
 const ingredientsRouter = createRouter();
 registerIngredientsRoutes(ingredientsRouter);
 
-// Only load .env if not in production
 if (process.env.NODE_ENV !== "production") {
-  dotenv.config(); // loads .env for local dev
+  dotenv.config();
 }
 
 let pool = null;
@@ -73,7 +71,6 @@ export async function getDatabase() {
   return pool;
 }
 
-// Test DB ENV
 console.log("DB_HOST:", process.env.DB_HOST);
 
 export async function mySQLQuery(
@@ -84,18 +81,11 @@ export async function mySQLQuery(
   res = null,
 ) {
   const db = await getDatabase();
-  // basePath strips the query string so "/api/inventory?licensePlate=X"
-  // matches the inventory branches below without breaking existing routes.
   const basePath = url.split("?")[0];
-  // ── Employee routes ──────────────────────────────────────────────
+
   if (url === "/api/employee") {
     return "HI FROM MYSQL";
   } else if (url === "/api/employee/pos") {
-    // if (method === "POST" && body) {
-    //   const result = await insertTransation(body);
-    //   console.log("Transaction result:", result);
-    //   return JSON.stringify(result);
-    // }
     const [menuItems] = await db.query(
       "SELECT * FROM menu_items WHERE is_available = TRUE",
     );
@@ -105,18 +95,12 @@ export async function mySQLQuery(
     return await getReportStats(db);
   } else if (url.startsWith("/api/trucks")) {
     return await trucksRouter.match(method, basePath, body, db);
-    // ── GET /api/menu ────────────────────────────────────────────────
   } else if (url === "/api/menu" && method === "GET") {
     return await getMenu();
-    // ── POST /api/checkout ───────────────────────────────────────────
   } else if (url === "/api/checkout" && method === "POST") {
     return checkoutOrder(body, db);
-    // ── GET /api/orders/:orderId ─────────────────────────────────────
   } else if (url.startsWith("/api/orders/") && method === "GET") {
     return getOrders(url, db);
-  } else if (url.startsWith("/api/employee/create") && method === "POST") {
-    await handleEmployeeCreate(req, res, body);
-    return;
   } else if (url.startsWith("/api/ingredients")) {
     return await ingredientsRouter.match(method, basePath, body, db);
   } else if (url.startsWith("/api/employees")) {
@@ -129,9 +113,6 @@ export async function mySQLQuery(
     return await recipesRouter.match(method, basePath, body, db);
   } else if (url.startsWith("/api/users")) {
     return await usersRouter.match(method, basePath, body, db);
-    // ── Inventory routes ─────────────────────────────────────────────
-    // More-specific sub-paths are checked before the bare GET so they
-    // are not swallowed by the /api/inventory branch.
   } else if (basePath === "/api/inventory/use-recipe" && method === "POST") {
     return await useRecipe(body, db);
   } else if (basePath === "/api/inventory/use" && method === "POST") {
@@ -149,35 +130,4 @@ export async function mySQLQuery(
   } else {
     return null;
   }
-}
-export async function employeeCreateQuery(url, params = []) {
-  const db = await getDatabase();
-
-  if (url === "/api/users") {
-    const [rows] = await db.query("SELECT * FROM users");
-    return rows;
-  } else if (url === "/api/register-user") {
-    const [result] = await db.query(
-      "INSERT INTO users(email, first_name, last_name, password, phone_number, user_type, gender, ethnicity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      params,
-    );
-    return result;
-  } else if (url === "/api/register-manager") {
-    const [result] = await db.query(
-      `INSERT INTO managers(email, budget)
-       VALUES (?, ?)`,
-      params,
-    );
-    return result;
-  } else if (url === "/api/employee/create") {
-    const [result] = await db.query(
-      `INSERT INTO employees 
-       (email, license_plate, role, hire_date, hourly_rate) 
-       VALUES (?, ?, ?, ?, ?)`,
-      params,
-    );
-    return result;
-  }
-
-  return { insertId: null };
 }

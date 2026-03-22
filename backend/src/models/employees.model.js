@@ -16,6 +16,38 @@ export async function findByEmail(db, email) {
   return row;
 }
 
+export async function emailExistsAsUser(db, email) {
+  const [[row]] = await db.query(
+    "SELECT email FROM users WHERE email = ?",
+    [email]
+  );
+  return row;
+}
+
+export async function create(db, data) {
+  const [result] = await db.query(
+    `INSERT INTO employees 
+     (email, license_plate, role, hire_date, hourly_rate)
+     VALUES (?, ?, ?, ?, ?)`,
+    [
+      data.email,
+      data.license_plate,
+      data.role || "cashier",
+      data.hire_date || new Date().toISOString().split("T")[0],
+      data.hourly_rate || 15.0,
+    ]
+  );
+  return result;
+}
+
+export async function createManager(db, email) {
+  const [result] = await db.query(
+    "INSERT INTO managers (email, budget) VALUES (?, ?)",
+    [email, 0.0]
+  );
+  return result;
+}
+
 export async function remove(db, email) {
   await db.query("DELETE FROM employees WHERE email = ?", [email]);
 }

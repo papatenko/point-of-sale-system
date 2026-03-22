@@ -4,6 +4,10 @@ export async function handleGetUsers(db) {
   return await UserService.getAllUsers(db);
 }
 
+export async function handleCreateUser(body, db) {
+  return await UserService.createUser(db, body);
+}
+
 export async function handleUpdateUser(body, db) {
   const { email, ...data } = body;
   return await UserService.updateUser(db, email, data);

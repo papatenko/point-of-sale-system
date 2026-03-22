@@ -51,6 +51,25 @@ export async function remove(db, email) {
   await db.query("DELETE FROM users WHERE email = ?", [email]);
 }
 
+export async function create(db, data) {
+  const [result] = await db.query(
+    `INSERT INTO users 
+     (email, first_name, last_name, password, phone_number, user_type, gender, ethnicity)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      data.email,
+      data.first_name,
+      data.last_name,
+      data.password,
+      data.phone_number || null,
+      data.user_type || "employee",
+      data.gender || null,
+      data.ethnicity || null,
+    ]
+  );
+  return result;
+}
+
 export async function findAllGenders(db) {
   const [rows] = await db.query(`
     SELECT gender_id, gender FROM gender_lookup ORDER BY gender

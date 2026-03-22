@@ -60,7 +60,6 @@ function EmployeesDatabaseComponent() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [adminPassword, setAdminPassword] = useState("");
 
   const fetchEmployees = async () => {
     try {
@@ -98,47 +97,54 @@ function EmployeesDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch("http://localhost:3000/api/employee/create", {
+      const userResponse = await fetch("http://localhost:3000/api/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          adminPassword: adminPassword,
-          employeeData: {
-            email: formData.email,
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            password: formData.password,
-            phone_number: formData.phone_number || null,
-            role: formData.role,
-            gender: parseInt(formData.gender),
-            ethnicity: parseInt(formData.ethnicity),
-            license_plate: trucks[0]?.license_plate || null,
-            hire_date: new Date().toISOString().split("T")[0],
-            hourly_rate: null,
-          },
+          email: formData.email,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          password: formData.password,
+          phone_number: formData.phone_number || null,
+          gender: formData.gender ? parseInt(formData.gender) : null,
+          ethnicity: formData.ethnicity ? parseInt(formData.ethnicity) : null,
         }),
       });
 
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-        const data = await response.json();
-        if (response.ok) {
-          setShowCreateForm(false);
-          setAdminPassword("");
-          fetchEmployees();
-        } else {
-          setError(data.error || "Error creating employee");
-          throw new Error(data.error);
-        }
-      } else {
-        setError("Server error: Invalid response format");
-        throw new Error("Invalid response");
+      const userData = await userResponse.json();
+      if (!userResponse.ok) {
+        setError(userData.error || "Error creating user");
+        throw new Error(userData.error);
       }
+
+      const employeeResponse = await fetch("http://localhost:3000/api/employees", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          license_plate: trucks[0]?.license_plate || "ABC-123",
+          role: formData.role,
+          hire_date: new Date().toISOString().split("T")[0],
+          hourly_rate: null,
+        }),
+      });
+
+      const employeeData = await employeeResponse.json();
+      if (!employeeResponse.ok) {
+        setError(employeeData.error || "Error creating employee");
+        throw new Error(employeeData.error);
+      }
+
+      setShowCreateForm(false);
+      fetchEmployees();
     } catch (err) {
-      if (!err.message.includes("Error creating") && !err.message.includes("Invalid response")) {
+      if (!err.message.includes("Error creating")) {
         setError("Failed to create employee");
       }
     } finally {
@@ -191,21 +197,10 @@ function EmployeesDatabaseComponent() {
           onCancel={() => {
             setShowCreateForm(false);
             setError(null);
-            setAdminPassword("");
           }}
           isSubmitting={isSubmitting}
           error={error}
           submitLabel="Create Employee"
-          extraFields={[
-            {
-              name: "adminPassword",
-              label: "Admin Password",
-              type: "password",
-              required: true,
-              value: adminPassword,
-              onChange: (e) => setAdminPassword(e.target.value),
-            },
-          ]}
         />
       )}
 
