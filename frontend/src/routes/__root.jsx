@@ -7,7 +7,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserProfileAvatar } from "@/components/user-profile-avatar";
 
 const RootLayout = () => (
   <>
@@ -41,12 +41,7 @@ const RootLayout = () => (
           
         </NavigationMenuList>
       </NavigationMenu>
-      <Avatar>
-        <Link to="/auth/login">
-          <AvatarImage src="https://github.com/shadcn.png" />
-          <AvatarFallback>CN</AvatarFallback>
-        </Link>
-      </Avatar>
+      <UserProfileAvatar />
     </div>
     <Outlet />
     <TanStackRouterDevtools />
