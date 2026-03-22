@@ -3,12 +3,6 @@ import { getMenu } from "./routes/menu.js";
 import dotenv from "dotenv";
 import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
-import {
-  getTrucks,
-  createTruck,
-  updateTruck,
-  deleteTruck,
-} from "./routes/truck.js";
 import { handleEmployeeCreate } from "./auth/create_employ.js";
 import {
   createIngredient,
@@ -16,16 +10,8 @@ import {
   deleteIngredient,
 } from "./routes/ingredients.js";
 import { getEmployees, deleteEmployee } from "./routes/employees.js";
-import {
-  getMenuItems,
-  createMenuItem,
-  deleteMenuItem,
-} from "./routes/menu_items.js";
-import {
-  getSuppliers,
-  createSupplier,
-  deleteSupplier,
-} from "./routes/suppliers.js";
+
+
 import {
   getInventory,
   useInventory,
@@ -34,20 +20,28 @@ import {
   getInventoryAlerts,
   getInventoryHistory,
 } from "./routes/Inventory.js";
-import {
-  getRecipes,
-  createRecipe,
-  deleteRecipe,
-  updateRecipe,
-} from "./routes/recipes.js";
-import {
-  getUsers,
-  updateUser,
-  deleteUser,
-  getGenderOptions,
-  getEthnicityOptions,
-} from "./routes/users.js";
 import { getReportStats } from "./routes/reports.js";
+import { createRouter } from "./utils/router.js";
+import { registerUsersRoutes } from "./routes/users.route.js";
+import { registerRecipesRoutes } from "./routes/recipes.route.js";
+import { registerTrucksRoutes } from "./routes/trucks.route.js";
+import { registerSuppliersRoutes } from "./routes/suppliers.route.js";
+import { registerMenuItemsRoutes } from "./routes/menuItems.route.js";
+
+const usersRouter = createRouter();
+registerUsersRoutes(usersRouter);
+
+const recipesRouter = createRouter();
+registerRecipesRoutes(recipesRouter);
+
+const trucksRouter = createRouter();
+registerTrucksRoutes(trucksRouter);
+
+const suppliersRouter = createRouter();
+registerSuppliersRoutes(suppliersRouter);
+
+const menuItemsRouter = createRouter();
+registerMenuItemsRoutes(menuItemsRouter);
 
 // Only load .env if not in production
 if (process.env.NODE_ENV !== "production") {
@@ -116,15 +110,8 @@ export async function mySQLQuery(
     // TODO
   } else if (url === "/api/employee/jsearch") {
     // TODO
-    // ── GET /api/trucks ──────────────────────────────────────────────
-  } else if (url === "/api/trucks" && method === "GET") {
-    return await getTrucks(db);
-  } else if (url === "/api/trucks" && method === "POST") {
-    return await createTruck(body, db);
-  } else if (url === "/api/trucks" && method === "PUT") {
-    return await updateTruck(body, db);
-  } else if (url === "/api/trucks" && method === "DELETE") {
-    return await deleteTruck(body, db);
+  } else if (url.startsWith("/api/trucks")) {
+    return await trucksRouter.match(method, basePath, body, db);
     // ── GET /api/menu ────────────────────────────────────────────────
   } else if (url === "/api/menu" && method === "GET") {
     return await getMenu();
@@ -147,36 +134,14 @@ export async function mySQLQuery(
     return await getEmployees(db);
   } else if (url === "/api/employees" && method === "DELETE") {
     return await deleteEmployee(body, db);
-  } else if (url === "/api/menu-items" && method === "GET") {
-    return await getMenuItems(db);
-  } else if (url === "/api/menu-items" && method === "POST") {
-    return await createMenuItem(body, db);
-  } else if (url === "/api/menu-items" && method === "DELETE") {
-    return await deleteMenuItem(body, db);
-  } else if (url === "/api/suppliers" && method === "GET") {
-    return await getSuppliers(db);
-  } else if (url === "/api/suppliers" && method === "POST") {
-    return await createSupplier(body, db);
-  } else if (url === "/api/suppliers" && method === "DELETE") {
-    return await deleteSupplier(body, db);
-  } else if (url === "/api/recipes" && method === "GET") {
-    return await getRecipes(db);
-  } else if (url === "/api/recipes" && method === "POST") {
-    return await createRecipe(body, db);
-  } else if (url === "/api/recipes" && method === "PUT") {
-    return await updateRecipe(body, db);
-  } else if (url === "/api/recipes" && method === "DELETE") {
-    return await deleteRecipe(body, db);
-  } else if (url === "/api/users" && method === "GET") {
-    return await getUsers(db);
-  } else if (url === "/api/users" && method === "PUT") {
-    return await updateUser(body, db);
-  } else if (url === "/api/users" && method === "DELETE") {
-    return await deleteUser(body, db);
-  } else if (url === "/api/users/genders" && method === "GET") {
-    return await getGenderOptions(db);
-  } else if (url === "/api/users/ethnicities" && method === "GET") {
-    return await getEthnicityOptions(db);
+  } else if (url.startsWith("/api/menu-items")) {
+    return await menuItemsRouter.match(method, basePath, body, db);
+  } else if (url.startsWith("/api/suppliers")) {
+    return await suppliersRouter.match(method, basePath, body, db);
+  } else if (url.startsWith("/api/recipes")) {
+    return await recipesRouter.match(method, basePath, body, db);
+  } else if (url.startsWith("/api/users")) {
+    return await usersRouter.match(method, basePath, body, db);
     // ── Inventory routes ─────────────────────────────────────────────
     // More-specific sub-paths are checked before the bare GET so they
     // are not swallowed by the /api/inventory branch.
