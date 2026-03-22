@@ -8,6 +8,7 @@ import { registerEmployeesRoutes } from "./employees.route.js";
 import { registerIngredientsRoutes } from "./ingredients.route.js";
 import { registerInventoryRoutes } from "./inventory.route.js";
 import { registerOrdersRoutes } from "./orders.route.js";
+import { registerBackupRoutes } from "./backup.route.js";
 
 import { checkoutOrder } from "./checkout.js";
 import { getMyProfile, updateMyProfile } from "./users.js";
@@ -40,6 +41,9 @@ registerInventoryRoutes(inventoryRouter);
 
 const ordersRouter = createRouter();
 registerOrdersRoutes(ordersRouter);
+
+const backupRouter = createRouter();
+registerBackupRoutes(backupRouter);
 
 export async function handleRoute(url, body, method, req, res, db) {
   const basePath = url.split("?")[0];
@@ -84,6 +88,8 @@ export async function handleRoute(url, body, method, req, res, db) {
     return await inventoryRouter.match(method, basePath, body, db, url);
   } else if (url === "/api/login" && method === "POST") {
     return await login(body.email, body.password);
+  } else if (url === "/api/backup" && method === "GET") {
+    return await backupRouter.match(method, basePath, body, db);
   } else {
     return null;
   }
