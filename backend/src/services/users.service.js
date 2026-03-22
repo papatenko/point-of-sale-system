@@ -1,4 +1,4 @@
-import * as UserModel from "../database/models/users.model.js";
+import * as UserModel from "../models/users.model.js";
 
 export async function getAllUsers(db) {
   return await UserModel.findAll(db);

@@ -1,4 +1,4 @@
-import * as MenuItemModel from "../database/models/menuItems.model.js";
+import * as MenuItemModel from "../models/menuItems.model.js";
 
 export async function getAllMenuItems(db) {
   return await MenuItemModel.findAll(db);

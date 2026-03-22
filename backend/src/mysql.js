@@ -5,14 +5,6 @@ import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
 import { handleEmployeeCreate } from "./auth/create_employ.js";
 import {
-  createIngredient,
-  getIngredients,
-  deleteIngredient,
-} from "./routes/ingredients.js";
-import { getEmployees, deleteEmployee } from "./routes/employees.js";
-
-
-import {
   getInventory,
   useInventory,
   useRecipe,
@@ -22,6 +14,35 @@ import {
 } from "./routes/Inventory.js";
 import { getReportStats } from "./routes/reports.js";
 import { login } from "./auth/auth.js";
+import { createRouter } from "./utils/router.js";
+import { registerUsersRoutes } from "./routes/users.route.js";
+import { registerRecipesRoutes } from "./routes/recipes.route.js";
+import { registerTrucksRoutes } from "./routes/trucks.route.js";
+import { registerSuppliersRoutes } from "./routes/suppliers.route.js";
+import { registerMenuItemsRoutes } from "./routes/menuItems.route.js";
+import { registerEmployeesRoutes } from "./routes/employees.route.js";
+import { registerIngredientsRoutes } from "./routes/ingredients.route.js";
+
+const usersRouter = createRouter();
+registerUsersRoutes(usersRouter);
+
+const recipesRouter = createRouter();
+registerRecipesRoutes(recipesRouter);
+
+const trucksRouter = createRouter();
+registerTrucksRoutes(trucksRouter);
+
+const suppliersRouter = createRouter();
+registerSuppliersRoutes(suppliersRouter);
+
+const menuItemsRouter = createRouter();
+registerMenuItemsRoutes(menuItemsRouter);
+
+const employeesRouter = createRouter();
+registerEmployeesRoutes(employeesRouter);
+
+const ingredientsRouter = createRouter();
+registerIngredientsRoutes(ingredientsRouter);
 
 // Only load .env if not in production
 if (process.env.NODE_ENV !== "production") {
@@ -80,16 +101,8 @@ export async function mySQLQuery(
     );
     console.log("Fetching menu items:", menuItems.length);
     return JSON.stringify(menuItems);
-  } else if (url === "/api/employee/reports") {
-    // TODO
   } else if (basePath === "/api/reports/stats" && method === "GET") {
     return await getReportStats(db);
-  } else if (url === "/api/employee/inventory") {
-    // TODO
-  } else if (url === "/api/employee/creation") {
-    // TODO
-  } else if (url === "/api/employee/jsearch") {
-    // TODO
   } else if (url.startsWith("/api/trucks")) {
     return await trucksRouter.match(method, basePath, body, db);
     // ── GET /api/menu ────────────────────────────────────────────────
@@ -104,16 +117,10 @@ export async function mySQLQuery(
   } else if (url.startsWith("/api/employee/create") && method === "POST") {
     await handleEmployeeCreate(req, res, body);
     return;
-  } else if (url === "/api/ingredients" && method === "POST") {
-    return await createIngredient(body, db);
-  } else if (url === "/api/ingredients" && method === "GET") {
-    return await getIngredients(db);
-  } else if (url === "/api/ingredients" && method === "DELETE") {
-    return await deleteIngredient(body, db);
-  } else if (url === "/api/employees" && method === "GET") {
-    return await getEmployees(db);
-  } else if (url === "/api/employees" && method === "DELETE") {
-    return await deleteEmployee(body, db);
+  } else if (url.startsWith("/api/ingredients")) {
+    return await ingredientsRouter.match(method, basePath, body, db);
+  } else if (url.startsWith("/api/employees")) {
+    return await employeesRouter.match(method, basePath, body, db);
   } else if (url.startsWith("/api/menu-items")) {
     return await menuItemsRouter.match(method, basePath, body, db);
   } else if (url.startsWith("/api/suppliers")) {
@@ -145,7 +152,7 @@ export async function mySQLQuery(
 }
 export async function employeeCreateQuery(url, params = []) {
   const db = await getDatabase();
-  
+
   if (url === "/api/users") {
     const [rows] = await db.query("SELECT * FROM users");
     return rows;

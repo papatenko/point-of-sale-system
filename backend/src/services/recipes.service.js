@@ -1,4 +1,4 @@
-import * as RecipeModel from "../database/models/recipes.model.js";
+import * as RecipeModel from "../models/recipes.model.js";
 
 export async function getAllRecipes(db) {
   return await RecipeModel.findAll(db);

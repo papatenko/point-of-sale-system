@@ -1,4 +1,4 @@
-import * as TruckModel from "../database/models/trucks.model.js";
+import * as TruckModel from "../models/trucks.model.js";
 
 export async function getAllTrucks(db) {
   return await TruckModel.findAll(db);

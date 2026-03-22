@@ -1,4 +1,4 @@
-import * as SupplierModel from "../database/models/suppliers.model.js";
+import * as SupplierModel from "../models/suppliers.model.js";
 
 export async function getAllSuppliers(db) {
   return await SupplierModel.findAll(db);
