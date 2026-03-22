@@ -4,14 +4,9 @@ import dotenv from "dotenv";
 import { checkoutOrder } from "./routes/checkout.js";
 import { getOrders } from "./routes/orders.js";
 import {
-  getInventory,
-  useInventory,
-  useRecipe,
-  reorderInventory,
-  getInventoryAlerts,
-  getInventoryHistory,
-} from "./routes/Inventory.js";
-import { getMyProfile, updateMyProfile } from "./routes/users.js";
+  getMyProfile,
+  updateMyProfile,
+} from "./routes/users.js";
 import { getReportStats } from "./routes/reports.js";
 import { login } from "./auth/auth.js";
 import { createRouter } from "./utils/router.js";
@@ -22,6 +17,7 @@ import { registerSuppliersRoutes } from "./routes/suppliers.route.js";
 import { registerMenuItemsRoutes } from "./routes/menuItems.route.js";
 import { registerEmployeesRoutes } from "./routes/employees.route.js";
 import { registerIngredientsRoutes } from "./routes/ingredients.route.js";
+import { registerInventoryRoutes } from "./routes/inventory.route.js";
 
 const usersRouter = createRouter();
 registerUsersRoutes(usersRouter);
@@ -43,6 +39,9 @@ registerEmployeesRoutes(employeesRouter);
 
 const ingredientsRouter = createRouter();
 registerIngredientsRoutes(ingredientsRouter);
+
+const inventoryRouter = createRouter();
+registerInventoryRoutes(inventoryRouter);
 
 if (process.env.NODE_ENV !== "production") {
   dotenv.config();
@@ -118,18 +117,8 @@ export async function mySQLQuery(
     return await recipesRouter.match(method, basePath, body, db);
   } else if (url.startsWith("/api/users")) {
     return await usersRouter.match(method, basePath, body, db);
-  } else if (basePath === "/api/inventory/use-recipe" && method === "POST") {
-    return await useRecipe(body, db);
-  } else if (basePath === "/api/inventory/use" && method === "POST") {
-    return await useInventory(body, db);
-  } else if (basePath === "/api/inventory/reorder" && method === "POST") {
-    return await reorderInventory(body, db);
-  } else if (basePath === "/api/inventory/alerts" && method === "GET") {
-    return await getInventoryAlerts(url, db);
-  } else if (basePath === "/api/inventory/history" && method === "GET") {
-    return await getInventoryHistory(url, db);
-  } else if (basePath === "/api/inventory" && method === "GET") {
-    return await getInventory(url, db);
+  } else if (url.startsWith("/api/inventory")) {
+    return await inventoryRouter.match(method, basePath, body, db, url);
   } else if (url === "/api/login" && method === "POST") {
     return await login(body.email, body.password);
   } else {

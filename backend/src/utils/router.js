@@ -17,12 +17,12 @@ export function createRouter() {
     routes.push({ method: "DELETE", path, handler });
   }
 
-  async function match(method, path, body, db) {
+  async function match(method, path, body, db, ...args) {
     const route = routes.find(
       (r) => r.method === method && r.path === path,
     );
     if (route) {
-      return await route.handler(body, db);
+      return await route.handler(body, db, ...args);
     }
     return null;
   }
