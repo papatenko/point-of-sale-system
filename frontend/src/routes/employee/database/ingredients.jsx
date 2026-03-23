@@ -45,7 +45,7 @@ function IngredientsDatabaseComponent() {
   const fetchIngredients = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3000/api/ingredients", {
+      const res = await fetch("/api/ingredients", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -67,7 +67,7 @@ function IngredientsDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/ingredients", {
+      const res = await fetch("/api/ingredients", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -101,7 +101,7 @@ function IngredientsDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/ingredients", {
+      const res = await fetch("/api/ingredients", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

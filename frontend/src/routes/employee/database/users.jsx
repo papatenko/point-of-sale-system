@@ -48,7 +48,7 @@ function UsersDatabaseComponent() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3000/api/users", {
+      const res = await fetch("/api/users", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -62,7 +62,7 @@ function UsersDatabaseComponent() {
 
   const fetchGenders = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/users/genders");
+      const res = await fetch("/api/users/genders");
       const data = await res.json();
       setGenders(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -72,7 +72,7 @@ function UsersDatabaseComponent() {
 
   const fetchEthnicities = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/users/ethnicities");
+      const res = await fetch("/api/users/ethnicities");
       const data = await res.json();
       setEthnicities(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -126,7 +126,7 @@ function UsersDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/users", {
+      const res = await fetch("/api/users", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -161,7 +161,7 @@ function UsersDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/users", {
+      const res = await fetch("/api/users", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

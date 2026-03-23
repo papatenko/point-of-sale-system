@@ -86,7 +86,7 @@ function CreationComponent() {
 
     try {
       const response = await fetch(
-        "http://localhost:3000/api/employee/create",
+        "/api/employee/create",
         {
           method: "POST",
           headers: {

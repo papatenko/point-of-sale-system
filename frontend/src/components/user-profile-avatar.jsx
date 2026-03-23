@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { LogOut, User } from "lucide-react";
 
-const API = "http://localhost:3000";
+const API = "";
 const AVATAR_IMG = "https://github.com/shadcn.png";
 
 function authHeaders() {

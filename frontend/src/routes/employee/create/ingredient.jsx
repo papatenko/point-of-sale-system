@@ -84,7 +84,7 @@ function CreateIngredientComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch("http://localhost:3000/api/ingredients", {
+      const response = await fetch("/api/ingredients", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -117,7 +117,7 @@ function CreateIngredientComponent() {
   };
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/suppliers")
+    fetch("/api/suppliers")
       .then((r) => r.json())
       .then((data) => {
         setSuppliers(data);
