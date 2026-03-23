@@ -1,5 +1,3 @@
-import "dotenv/config";
-
 import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
