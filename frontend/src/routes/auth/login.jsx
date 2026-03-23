@@ -1,5 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { setLogin } from '@/redux/authSlice';
 
 export const Route = createFileRoute('/auth/login')({
   validateSearch: (search) => ({
@@ -14,6 +16,7 @@ function LoginComponent() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { redirect } = Route.useSearch();
 
   const handleLogin = async (e) => {
@@ -35,16 +38,15 @@ function LoginComponent() {
       }
 
       localStorage.setItem('token', data.token);
-      if (data.user?.email) {
-        localStorage.setItem('userEmail', data.user.email);
-      }
+      localStorage.setItem('user', JSON.stringify(data.user));
+      dispatch(setLogin({ token: data.token, user: data.user }));
 
-      // If there's a redirect param (e.g. came from /checkout), go there
       if (redirect) {
         navigate({ to: redirect });
-      } else {
-        // Default: employees go to dashboard, everyone else to menu
+      } else if (data.user?.user_type === 'employee') {
         navigate({ to: '/employee' });
+      } else {
+        navigate({ to: '/order' });
       }
     } catch (err) {
       setError(err.message);

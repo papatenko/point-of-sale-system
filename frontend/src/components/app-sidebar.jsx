@@ -20,25 +20,33 @@ import {
   Archive,
   UserCircle,
   Database,
+  ClipboardList,
 } from "lucide-react";
+import { useSelector } from "react-redux";
 
 const employee_routes = [
   {
     name: "POS Screen",
     url: "/employee/pos",
-    roles: ["cashier", "cook", "manager"],
+    roles: ["cashier", "manager", "admin"],
     icon: ShoppingCart,
+  },
+  {
+    name: "Current Orders",
+    url: "/employee/orders",
+    roles: ["cashier", "cook", "manager", "admin"],
+    icon: ClipboardList,
   },
   {
     name: "Stats Screen",
     url: "/employee/reports",
-    roles: ["manager"],
+    roles: ["manager", "admin"],
     icon: BarChart3,
   },
   {
     name: "Inventory Screen",
     url: "/employee/inventory",
-    roles: ["manager"],
+    roles: ["manager", "admin"],
     icon: Package,
   },
   {
@@ -61,12 +69,18 @@ const database_management_routes = [
 ];
 
 export function AppSidebar() {
+  const user = useSelector((s) => s.auth.user);
+  const role = user?.role ?? null;
+
+  const visibleRoutes = employee_routes.filter((r) => r.roles.includes(role));
+  const showDatabase = role === "admin" || role === "manager";
+
   return (
     <Sidebar variant="floating" className="absolute h-full">
       <SidebarHeader>
         <SidebarMenu>
           <div className="px-2 py-1.5 text-sm font-semibold">Main</div>
-          {employee_routes.map((route) => {
+          {visibleRoutes.map((route) => {
             const Icon = route.icon;
             return (
               <SidebarMenuItem key={route.name}>
@@ -79,26 +93,29 @@ export function AppSidebar() {
               </SidebarMenuItem>
             );
           })}
-          <div className="px-2 py-1.5 mt-4 text-sm font-semibold">
-            Database Management
-          </div>
-          {database_management_routes.map((route) => {
-            const Icon = route.icon;
-            return (
-              <SidebarMenuItem key={route.name}>
-                <SidebarMenuButton asChild>
-                  <Link to={route.url}>
-                    <Icon />
-                    <span>{route.name}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-          
-        </SidebarMenu>
-        <LogoutButton/>
 
+          {showDatabase && (
+            <>
+              <div className="px-2 py-1.5 mt-4 text-sm font-semibold">
+                Database Management
+              </div>
+              {database_management_routes.map((route) => {
+                const Icon = route.icon;
+                return (
+                  <SidebarMenuItem key={route.name}>
+                    <SidebarMenuButton asChild>
+                      <Link to={route.url}>
+                        <Icon />
+                        <span>{route.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </>
+          )}
+        </SidebarMenu>
+        <LogoutButton />
       </SidebarHeader>
     </Sidebar>
   );
