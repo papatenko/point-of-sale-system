@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { getDatabase } from "../database.js";
 import dotenv from "dotenv";
-import { signEmployeeToken, verifyToken } from "./jwt.js";
+import { signUserToken, verifyToken } from "./jwt.js";
 
 dotenv.config();
 
@@ -10,29 +10,32 @@ export async function login(email, password) {
   const db = await getDatabase();
 
   const [rows] = await db.query(
-    `SELECT u.email, u.password
+    `SELECT u.email, u.password, u.first_name, u.user_type, e.role
      FROM users u
-     INNER JOIN employees e ON u.email = e.email
+     LEFT JOIN employees e ON u.email = e.email
      WHERE u.email = ?`,
     [email]
   );
 
   const user = rows[0];
 
-  if (!user) throw new Error("Employee not found");
+  if (!user) throw new Error("User not found");
 
   // sin bcrypt (temporal)
   if (password !== user.password) {
     throw new Error("Incorrect password");
   }
 
-  const token = signEmployeeToken(user.email);
+  const token = signUserToken(user.email, user.user_type, user.role ?? null);
 
   return {
     token,
     user: {
-      email: user.email
-    }
+      email: user.email,
+      first_name: user.first_name,
+      user_type: user.user_type,
+      role: user.role ?? null,
+    },
   };
 }
 

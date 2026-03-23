@@ -8,6 +8,7 @@ import { registerEmployeesRoutes } from "./employees.route.js";
 import { registerIngredientsRoutes } from "./ingredients.route.js";
 import { registerInventoryRoutes } from "./inventory.route.js";
 import { registerOrdersRoutes } from "./orders.route.js";
+import * as OrdersService from "../services/orders.service.js";
 import { registerBackupRoutes } from "./backup.route.js";
 
 import { checkoutOrder } from "./checkout.js";
@@ -69,8 +70,10 @@ export async function handleRoute(url, body, method, req, res, db) {
     // Checks for available menu items
   } else if (url.startsWith("/api/menu")) {
     return await menuItemsRouter.match(method, basePath, body, db);
-  } else if (url.startsWith("/api/orders")) {
+  } else if (basePath === "/api/orders" && method === "GET") {
     return await ordersRouter.match(method, basePath, body, db, url);
+  } else if (basePath.startsWith("/api/orders/") && method === "GET") {
+    return await OrdersService.getOrderById(db, basePath);
   } else if (url.startsWith("/api/ingredients")) {
     return await ingredientsRouter.match(method, basePath, body, db);
   } else if (url.startsWith("/api/employees")) {

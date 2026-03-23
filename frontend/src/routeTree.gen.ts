@@ -18,6 +18,7 @@ import { Route as AuthIndexRouteImport } from './routes/auth/index'
 import { Route as EmployeeSearchRouteImport } from './routes/employee/search'
 import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
 import { Route as EmployeePosRouteImport } from './routes/employee/pos'
+import { Route as EmployeeOrdersRouteImport } from './routes/employee/orders'
 import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
 import { Route as CustomerCreate_customerRouteImport } from './routes/customer/create_customer'
 import { Route as ConfirmationOrderIdRouteImport } from './routes/confirmation.$orderId'
@@ -79,6 +80,11 @@ const EmployeeReportsRoute = EmployeeReportsRouteImport.update({
 const EmployeePosRoute = EmployeePosRouteImport.update({
   id: '/pos',
   path: '/pos',
+  getParentRoute: () => EmployeeRouteRoute,
+} as any)
+const EmployeeOrdersRoute = EmployeeOrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
   getParentRoute: () => EmployeeRouteRoute,
 } as any)
 const EmployeeInventoryRoute = EmployeeInventoryRouteImport.update({
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
   '/customer/create_customer': typeof CustomerCreate_customerRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
+  '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
@@ -212,6 +219,7 @@ export interface FileRoutesByTo {
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
   '/customer/create_customer': typeof CustomerCreate_customerRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
+  '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
@@ -241,6 +249,7 @@ export interface FileRoutesById {
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
   '/customer/create_customer': typeof CustomerCreate_customerRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
+  '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
   '/employee/search': typeof EmployeeSearchRoute
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/confirmation/$orderId'
     | '/customer/create_customer'
     | '/employee/inventory'
+    | '/employee/orders'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/confirmation/$orderId'
     | '/customer/create_customer'
     | '/employee/inventory'
+    | '/employee/orders'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
@@ -326,6 +337,7 @@ export interface FileRouteTypes {
     | '/confirmation/$orderId'
     | '/customer/create_customer'
     | '/employee/inventory'
+    | '/employee/orders'
     | '/employee/pos'
     | '/employee/reports'
     | '/employee/search'
@@ -418,6 +430,13 @@ declare module '@tanstack/react-router' {
       path: '/pos'
       fullPath: '/employee/pos'
       preLoaderRoute: typeof EmployeePosRouteImport
+      parentRoute: typeof EmployeeRouteRoute
+    }
+    '/employee/orders': {
+      id: '/employee/orders'
+      path: '/orders'
+      fullPath: '/employee/orders'
+      preLoaderRoute: typeof EmployeeOrdersRouteImport
       parentRoute: typeof EmployeeRouteRoute
     }
     '/employee/inventory': {
@@ -586,6 +605,7 @@ interface EmployeeRouteRouteChildren {
   EmployeeCreateRouteRoute: typeof EmployeeCreateRouteRouteWithChildren
   EmployeeDatabaseRouteRoute: typeof EmployeeDatabaseRouteRouteWithChildren
   EmployeeInventoryRoute: typeof EmployeeInventoryRoute
+  EmployeeOrdersRoute: typeof EmployeeOrdersRoute
   EmployeePosRoute: typeof EmployeePosRoute
   EmployeeReportsRoute: typeof EmployeeReportsRoute
   EmployeeSearchRoute: typeof EmployeeSearchRoute
@@ -596,6 +616,7 @@ const EmployeeRouteRouteChildren: EmployeeRouteRouteChildren = {
   EmployeeCreateRouteRoute: EmployeeCreateRouteRouteWithChildren,
   EmployeeDatabaseRouteRoute: EmployeeDatabaseRouteRouteWithChildren,
   EmployeeInventoryRoute: EmployeeInventoryRoute,
+  EmployeeOrdersRoute: EmployeeOrdersRoute,
   EmployeePosRoute: EmployeePosRoute,
   EmployeeReportsRoute: EmployeeReportsRoute,
   EmployeeSearchRoute: EmployeeSearchRoute,
