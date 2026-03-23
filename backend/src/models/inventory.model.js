@@ -201,3 +201,77 @@ export async function findRecipeByMenuItem(db, menuItemId) {
   );
   return rows;
 }
+
+// ── NEW: Expiry helpers ────────────────────────────────────────────────────────
+
+/**
+ * Find all truck_inventory rows for a given truck where the item has expired
+ * (expiration_date < NOW()) and still has stock (quantity_on_hand > 0).
+ */
+export async function findExpiredItems(db, licensePlate) {
+  const [rows] = await db.query(
+    `SELECT
+       ti.inventory_id,
+       ti.license_plate,
+       ti.ingredient_id,
+       i.ingredient_name,
+       i.unit_of_measure,
+       ti.quantity_on_hand,
+       ti.expiration_date
+     FROM truck_inventory ti
+     JOIN ingredients i ON ti.ingredient_id = i.ingredient_id
+     WHERE ti.license_plate = ?
+       AND ti.expiration_date IS NOT NULL
+       AND ti.expiration_date < NOW()
+       AND ti.quantity_on_hand > 0`,
+    [licensePlate],
+  );
+  return rows.map((r) => ({
+    inventoryId: r.inventory_id,
+    licensePlate: r.license_plate,
+    ingredientId: r.ingredient_id,
+    ingredientName: r.ingredient_name,
+    unitOfMeasure: r.unit_of_measure,
+    quantityOnHand: parseFloat(r.quantity_on_hand),
+    expirationDate: r.expiration_date,
+  }));
+}
+
+/**
+ * Zero out a single inventory item's quantity in place.
+ */
+export async function zeroQuantity(db, licensePlate, ingredientId) {
+  await db.query(
+    `UPDATE truck_inventory SET quantity_on_hand = 0
+     WHERE license_plate = ? AND ingredient_id = ?`,
+    [licensePlate, ingredientId],
+  );
+}
+
+/**
+ * Find sales by menu item for today (completed/ready orders only, excluding pending/cancelled)
+ * for a given truck. Returns aggregated quantities of each menu item sold.
+ */
+export async function findTodaysSalesByMenuItem(db, licensePlate) {
+  const [rows] = await db.query(
+    `SELECT
+       oi.menu_item_id,
+       m.item_name,
+       SUM(oi.quantity) AS total_quantity
+     FROM checkout c
+     JOIN order_items oi ON c.checkout_id = oi.order_id
+     JOIN menu_items m ON oi.menu_item_id = m.menu_item_id
+     WHERE c.license_plate = ?
+       AND DATE(c.scheduled_time) = CURDATE()
+       AND c.order_status NOT IN ('pending', 'cancelled')
+     GROUP BY oi.menu_item_id, m.item_name
+     ORDER BY m.item_name`,
+    [licensePlate],
+  );
+
+  return rows.map((r) => ({
+    menuItemId: r.menu_item_id,
+    itemName: r.item_name,
+    totalQuantity: parseInt(r.total_quantity),
+  }));
+}
