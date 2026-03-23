@@ -19,6 +19,7 @@ import { Route as EmployeeSearchRouteImport } from './routes/employee/search'
 import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
 import { Route as EmployeePosRouteImport } from './routes/employee/pos'
 import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
+import { Route as CustomerCreate_customerRouteImport } from './routes/customer/create_customer'
 import { Route as ConfirmationOrderIdRouteImport } from './routes/confirmation.$orderId'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
@@ -84,6 +85,11 @@ const EmployeeInventoryRoute = EmployeeInventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
   getParentRoute: () => EmployeeRouteRoute,
+} as any)
+const CustomerCreate_customerRoute = CustomerCreate_customerRouteImport.update({
+  id: '/customer/create_customer',
+  path: '/customer/create_customer',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ConfirmationOrderIdRoute = ConfirmationOrderIdRouteImport.update({
   id: '/confirmation/$orderId',
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
+  '/customer/create_customer': typeof CustomerCreate_customerRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
+  '/customer/create_customer': typeof CustomerCreate_customerRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
+  '/customer/create_customer': typeof CustomerCreate_customerRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
+    | '/customer/create_customer'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
+    | '/customer/create_customer'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
+    | '/customer/create_customer'
     | '/employee/inventory'
     | '/employee/pos'
     | '/employee/reports'
@@ -339,6 +351,7 @@ export interface RootRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
   ConfirmationOrderIdRoute: typeof ConfirmationOrderIdRoute
+  CustomerCreate_customerRoute: typeof CustomerCreate_customerRoute
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
@@ -413,6 +426,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/employee/inventory'
       preLoaderRoute: typeof EmployeeInventoryRouteImport
       parentRoute: typeof EmployeeRouteRoute
+    }
+    '/customer/create_customer': {
+      id: '/customer/create_customer'
+      path: '/customer/create_customer'
+      fullPath: '/customer/create_customer'
+      preLoaderRoute: typeof CustomerCreate_customerRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/confirmation/$orderId': {
       id: '/confirmation/$orderId'
@@ -594,6 +614,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
   ConfirmationOrderIdRoute: ConfirmationOrderIdRoute,
+  CustomerCreate_customerRoute: CustomerCreate_customerRoute,
   AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport
