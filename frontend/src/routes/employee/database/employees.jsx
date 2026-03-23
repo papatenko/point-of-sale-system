@@ -64,7 +64,7 @@ function EmployeesDatabaseComponent() {
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3000/api/employees", {
+      const res = await fetch("/api/employees", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -78,7 +78,7 @@ function EmployeesDatabaseComponent() {
 
   const fetchTrucks = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/trucks");
+      const res = await fetch("/api/trucks");
       const data = await res.json();
       setTrucks(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -97,7 +97,7 @@ function EmployeesDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const userResponse = await fetch("http://localhost:3000/api/users", {
+      const userResponse = await fetch("/api/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -120,7 +120,7 @@ function EmployeesDatabaseComponent() {
         throw new Error(userData.error);
       }
 
-      const employeeResponse = await fetch("http://localhost:3000/api/employees", {
+      const employeeResponse = await fetch("/api/employees", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -156,7 +156,7 @@ function EmployeesDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/employees", {
+      const res = await fetch("/api/employees", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

@@ -38,7 +38,7 @@ function FoodTrucksDatabaseComponent() {
   const fetchTrucks = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3000/api/trucks", {
+      const res = await fetch("/api/trucks", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -60,7 +60,7 @@ function FoodTrucksDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/trucks", {
+      const res = await fetch("/api/trucks", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -98,7 +98,7 @@ function FoodTrucksDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/trucks", {
+      const res = await fetch("/api/trucks", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

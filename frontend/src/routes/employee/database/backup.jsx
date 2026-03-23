@@ -18,7 +18,7 @@ function BackupPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3000/api/backup", {
+      const res = await fetch("/api/backup", {
         headers: {
           Authorization: `Bearer ${token}`,
         },

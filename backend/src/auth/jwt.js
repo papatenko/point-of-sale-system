@@ -19,3 +19,9 @@ export function signEmployeeToken(email) {
   if (!JWT_SECRET) throw new Error("JWT_SECRET not configured");
   return jwt.sign({ email }, JWT_SECRET, { expiresIn: "2h" });
 }
+
+/** Full user token including user_type and role */
+export function signUserToken(email, user_type, role) {
+  if (!JWT_SECRET) throw new Error("JWT_SECRET not configured");
+  return jwt.sign({ email, user_type, role: role ?? null }, JWT_SECRET, { expiresIn: "2h" });
+}

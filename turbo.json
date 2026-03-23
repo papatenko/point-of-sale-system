@@ -10,6 +10,18 @@
     "lint": {
       "dependsOn": ["^lint"]
     },
+    "start": {
+      "dependsOn": ["^build"],
+      "passThroughEnv": [
+        "DB_HOST",
+        "DB_USER",
+        "DB_PASSWORD",
+        "DB_NAME",
+        "JWT_SECRET"
+      ],
+      "cache": false,
+      "persistent": true
+    },
     "dev": {
       "cache": false,
       "persistent": true

@@ -39,16 +39,16 @@ function RouteComponent() {
         token ? { Authorization: `Bearer ${token}` } : undefined;
 
       const [menuRes, ingRes, empRes, supRes] = await Promise.all([
-        fetch("http://localhost:3000/api/menu-items", {
+        fetch("/api/menu-items", {
           headers: makeAuthHeaders(),
         }),
-        fetch("http://localhost:3000/api/ingredients", {
+        fetch("/api/ingredients", {
           headers: makeAuthHeaders(),
         }),
-        fetch("http://localhost:3000/api/employees", {
+        fetch("/api/employees", {
           headers: makeAuthHeaders(),
         }),
-        fetch("http://localhost:3000/api/suppliers", {
+        fetch("/api/suppliers", {
           headers: makeAuthHeaders(),
         }),
       ]);

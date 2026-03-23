@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCart } from "@/redux/cartSlice";
 import { addItem, updateQuantity } from "@/redux/cartSlice";
+import { X } from "lucide-react";
 import { MenuCard } from "@/components/order/menu-card";
 import { CartPanel } from "@/components/order/cart-panel";
 

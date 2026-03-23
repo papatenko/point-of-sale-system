@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { addItem, updateQuantity } from "@/redux/cartSlice";
 import { MenuCard } from "@/components/order/menu-card";
 import { CartPanel } from "@/components/order/cart-panel";
+import { X } from "lucide-react";
 
 export const Route = createFileRoute("/order")({
   component: OrderPage,

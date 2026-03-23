@@ -51,7 +51,7 @@ function RecipesDatabaseComponent() {
   const fetchRecipes = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3000/api/recipes", {
+      const res = await fetch("/api/recipes", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -66,7 +66,7 @@ function RecipesDatabaseComponent() {
   const fetchMenuItems = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3000/api/menu-items", {
+      const res = await fetch("/api/menu-items", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -79,7 +79,7 @@ function RecipesDatabaseComponent() {
   const fetchIngredients = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3000/api/ingredients", {
+      const res = await fetch("/api/ingredients", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -110,7 +110,7 @@ function RecipesDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/recipes", {
+      const res = await fetch("/api/recipes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -143,7 +143,7 @@ function RecipesDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/recipes", {
+      const res = await fetch("/api/recipes", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
