@@ -24,13 +24,14 @@ RUN --mount=type=secret,id=DB_HOST \
     if [ -f /run/secrets/DB_NAME ]; then \
         echo "DB_NAME=$(cat /run/secrets/DB_NAME)" >> ./backend/.env; \
     fi && \
+    if [ -f /run/secrets/JWT_SECRET ]; then \
+        echo "JWT_SECRET=$(cat /run/secrets/JWT_SECRET)" >> ./backend/.env; \
+    fi && \
     echo "PORT=3000" >> ./backend/.env
 
 
 RUN npm install
 
-RUN turbo run build --filter=frontend  # only builds frontend at build time
-
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"] 
+CMD ["npm", "run", "build"] 

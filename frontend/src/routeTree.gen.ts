@@ -31,6 +31,7 @@ import { Route as EmployeeDatabaseMenu_itemsRouteImport } from './routes/employe
 import { Route as EmployeeDatabaseIngredientsRouteImport } from './routes/employee/database/ingredients'
 import { Route as EmployeeDatabaseFoodTrucksRouteImport } from './routes/employee/database/food-trucks'
 import { Route as EmployeeDatabaseEmployeesRouteImport } from './routes/employee/database/employees'
+import { Route as EmployeeDatabaseBackupRouteImport } from './routes/employee/database/backup'
 import { Route as EmployeeCreateIngredientRouteImport } from './routes/employee/create/ingredient'
 import { Route as EmployeeCreateEmployeeRouteImport } from './routes/employee/create/employee'
 
@@ -149,6 +150,11 @@ const EmployeeDatabaseEmployeesRoute =
     path: '/employees',
     getParentRoute: () => EmployeeDatabaseRouteRoute,
   } as any)
+const EmployeeDatabaseBackupRoute = EmployeeDatabaseBackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
+  getParentRoute: () => EmployeeDatabaseRouteRoute,
+} as any)
 const EmployeeCreateIngredientRoute =
   EmployeeCreateIngredientRouteImport.update({
     id: '/ingredient',
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/employee/': typeof EmployeeIndexRoute
   '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
   '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
+  '/employee/database/backup': typeof EmployeeDatabaseBackupRoute
   '/employee/database/employees': typeof EmployeeDatabaseEmployeesRoute
   '/employee/database/food-trucks': typeof EmployeeDatabaseFoodTrucksRoute
   '/employee/database/ingredients': typeof EmployeeDatabaseIngredientsRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/employee': typeof EmployeeIndexRoute
   '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
   '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
+  '/employee/database/backup': typeof EmployeeDatabaseBackupRoute
   '/employee/database/employees': typeof EmployeeDatabaseEmployeesRoute
   '/employee/database/food-trucks': typeof EmployeeDatabaseFoodTrucksRoute
   '/employee/database/ingredients': typeof EmployeeDatabaseIngredientsRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/employee/': typeof EmployeeIndexRoute
   '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
   '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
+  '/employee/database/backup': typeof EmployeeDatabaseBackupRoute
   '/employee/database/employees': typeof EmployeeDatabaseEmployeesRoute
   '/employee/database/food-trucks': typeof EmployeeDatabaseFoodTrucksRoute
   '/employee/database/ingredients': typeof EmployeeDatabaseIngredientsRoute
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/employee/'
     | '/employee/create/employee'
     | '/employee/create/ingredient'
+    | '/employee/database/backup'
     | '/employee/database/employees'
     | '/employee/database/food-trucks'
     | '/employee/database/ingredients'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/employee'
     | '/employee/create/employee'
     | '/employee/create/ingredient'
+    | '/employee/database/backup'
     | '/employee/database/employees'
     | '/employee/database/food-trucks'
     | '/employee/database/ingredients'
@@ -310,6 +321,7 @@ export interface FileRouteTypes {
     | '/employee/'
     | '/employee/create/employee'
     | '/employee/create/ingredient'
+    | '/employee/database/backup'
     | '/employee/database/employees'
     | '/employee/database/food-trucks'
     | '/employee/database/ingredients'
@@ -486,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeDatabaseEmployeesRouteImport
       parentRoute: typeof EmployeeDatabaseRouteRoute
     }
+    '/employee/database/backup': {
+      id: '/employee/database/backup'
+      path: '/backup'
+      fullPath: '/employee/database/backup'
+      preLoaderRoute: typeof EmployeeDatabaseBackupRouteImport
+      parentRoute: typeof EmployeeDatabaseRouteRoute
+    }
     '/employee/create/ingredient': {
       id: '/employee/create/ingredient'
       path: '/ingredient'
@@ -517,6 +536,7 @@ const EmployeeCreateRouteRouteWithChildren =
   EmployeeCreateRouteRoute._addFileChildren(EmployeeCreateRouteRouteChildren)
 
 interface EmployeeDatabaseRouteRouteChildren {
+  EmployeeDatabaseBackupRoute: typeof EmployeeDatabaseBackupRoute
   EmployeeDatabaseEmployeesRoute: typeof EmployeeDatabaseEmployeesRoute
   EmployeeDatabaseFoodTrucksRoute: typeof EmployeeDatabaseFoodTrucksRoute
   EmployeeDatabaseIngredientsRoute: typeof EmployeeDatabaseIngredientsRoute
@@ -527,6 +547,7 @@ interface EmployeeDatabaseRouteRouteChildren {
 }
 
 const EmployeeDatabaseRouteRouteChildren: EmployeeDatabaseRouteRouteChildren = {
+  EmployeeDatabaseBackupRoute: EmployeeDatabaseBackupRoute,
   EmployeeDatabaseEmployeesRoute: EmployeeDatabaseEmployeesRoute,
   EmployeeDatabaseFoodTrucksRoute: EmployeeDatabaseFoodTrucksRoute,
   EmployeeDatabaseIngredientsRoute: EmployeeDatabaseIngredientsRoute,

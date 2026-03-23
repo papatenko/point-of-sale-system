@@ -1,25 +1,23 @@
-export async function getOrders() {
-  const orderId = url.replace("/api/orders/", "");
-
+export async function findById(db, orderId) {
   const [rows] = await db.query(
     `SELECT
-         c.checkout_id,
-         c.order_number,
-         c.order_type,
-         c.order_status,
-         c.total_price,
-         c.payment_method,
-         c.payment_status,
-         c.customer_email,
-         oi.order_item_id,
-         oi.menu_item_id,
-         oi.quantity,
-         oi.line_total_price,
-         m.item_name
-       FROM checkout c
-       JOIN order_items oi ON c.checkout_id = oi.order_id
-       JOIN menu_items  m  ON oi.menu_item_id = m.menu_item_id
-       WHERE c.checkout_id = ?`,
+       c.checkout_id,
+       c.order_number,
+       c.order_type,
+       c.order_status,
+       c.total_price,
+       c.payment_method,
+       c.payment_status,
+       c.customer_email,
+       oi.order_item_id,
+       oi.menu_item_id,
+       oi.quantity,
+       oi.line_total_price,
+       m.item_name
+     FROM checkout c
+     JOIN order_items oi ON c.checkout_id = oi.order_id
+     JOIN menu_items  m  ON oi.menu_item_id = m.menu_item_id
+     WHERE c.checkout_id = ?`,
     [orderId],
   );
 

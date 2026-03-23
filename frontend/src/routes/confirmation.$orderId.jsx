@@ -34,7 +34,7 @@ function ConfirmationPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Order not found.</p>
+          <p className="text-gray-500 mb-4">Get scammed bozo.</p>
           <Link to="/order">
             <Button className="bg-amber-600 hover:bg-amber-700 text-white">
               Browse Menu

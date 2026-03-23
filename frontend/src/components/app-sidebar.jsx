@@ -5,6 +5,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import LogoutButton from "@/routes/auth/logout";
 import { Link } from "@tanstack/react-router";
 import {
   ShoppingCart,
@@ -18,6 +19,7 @@ import {
   Scroll,
   Archive,
   UserCircle,
+  Database,
 } from "lucide-react";
 
 const employee_routes = [
@@ -47,7 +49,7 @@ const employee_routes = [
   },
 ];
 
-const database_routes = [
+const database_management_routes = [
   { name: "Ingredients", url: "/employee/database/ingredients", icon: Beef },
   { name: "Employees", url: "/employee/database/employees", icon: Users },
   { name: "Menu Items", url: "/employee/database/menu_items", icon: Utensils },
@@ -55,6 +57,7 @@ const database_routes = [
   { name: "Food Trucks", url: "/employee/database/food-trucks", icon: Truck },
   { name: "Recipes", url: "/employee/database/recipes", icon: Scroll },
   { name: "Users", url: "/employee/database/users", icon: UserCircle },
+  { name: "Backup", url: "/employee/database/backup", icon: Database },
 ];
 
 export function AppSidebar() {
@@ -77,9 +80,9 @@ export function AppSidebar() {
             );
           })}
           <div className="px-2 py-1.5 mt-4 text-sm font-semibold">
-            Database Entries
+            Database Management
           </div>
-          {database_routes.map((route) => {
+          {database_management_routes.map((route) => {
             const Icon = route.icon;
             return (
               <SidebarMenuItem key={route.name}>
@@ -92,7 +95,10 @@ export function AppSidebar() {
               </SidebarMenuItem>
             );
           })}
+          
         </SidebarMenu>
+        <LogoutButton/>
+
       </SidebarHeader>
     </Sidebar>
   );
