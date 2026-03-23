@@ -1,9 +1,4 @@
 import mysql from "mysql2/promise";
-import dotenv from "dotenv";
-
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config();
-}
 
 let pool = null;
 
@@ -28,5 +23,3 @@ export async function getDatabase() {
   }
   return pool;
 }
-
-console.log("DB_HOST:", process.env.DB_HOST);

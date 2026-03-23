@@ -1,9 +1,6 @@
 import bcrypt from "bcrypt";
 import { getDatabase } from "../database.js";
-import dotenv from "dotenv";
 import { signUserToken, verifyToken } from "./jwt.js";
-
-dotenv.config();
 
 // --- Login function ---
 export async function login(email, password) {

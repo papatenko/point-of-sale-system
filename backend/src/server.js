@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
@@ -79,7 +81,9 @@ const server = createServer(async (req, res) => {
 
   // API routes
   if (req.url.startsWith("/api")) {
-    const body = ["POST", "PUT", "DELETE"].includes(req.method) ? await readBody(req) : null;
+    const body = ["POST", "PUT", "DELETE"].includes(req.method)
+      ? await readBody(req)
+      : null;
     try {
       const db = await getDatabase();
       const result = await handleRoute(req.url, body, req.method, req, res, db);
