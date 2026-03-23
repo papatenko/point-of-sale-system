@@ -26,6 +26,9 @@ export async function login(email, password) {
     throw new Error("Incorrect password");
   }
 
+  // const match = await bcrypt.compare(password, user.password);
+  // if (!match) throw new Error("Incorrect password");
+
   const token = signUserToken(user.email, user.user_type, user.role ?? null);
 
   return {
@@ -67,4 +70,15 @@ export function verifyManager(token) {
   } catch (err) {
     throw new Error("Invalid token or unauthorized");
   }
+}
+
+
+// employee roles 
+export function verifyRole(roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    next();
+  };
 }

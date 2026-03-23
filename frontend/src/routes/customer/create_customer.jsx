@@ -63,41 +63,44 @@ function CreateCustomerComponent() {
     setForm({ ...form, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
 
-    try {
-      const response = await fetch(
-        "http://localhost:3000/api/customers",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...form,
-            gender: parseInt(form.gender),
-            ethnicity: parseInt(form.ethnicity),
-          }),
-        }
-      );
+  try {
+    const res = await fetch("http://localhost:3000/api/customers", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: form.email,
+        first_name: form.first_name,
+        last_name: form.last_name,
+        password: form.password,
+        phone_number: form.phone_number || null,
+        gender: parseInt(form.gender),
+        ethnicity: parseInt(form.ethnicity),
+        default_address: form.default_address || null,
+      }),
+    });
 
-      const data = await response.json();
+    const data = await res.json();
 
-      if (response.ok) {
-        alert("Customer created successfully 🎉");
-        navigate({ to: "/customer" });
-      } else {
-        alert(data.error || "Error creating customer");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Something broke 💥 check console");
-    } finally {
-      setIsSubmitting(false);
+    if (!res.ok) {
+      throw new Error(data.error || "Error creating customer");
     }
-  };
+
+    alert("Customer created successfully 🎉");
+    navigate({ to: "/customer" });
+
+  } catch (error) {
+    console.error(error);
+    alert(error.message || "Something broke 💥");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="flex justify-center items-center min-h-screen w-full p-4">

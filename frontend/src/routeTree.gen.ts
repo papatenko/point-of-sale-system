@@ -36,6 +36,7 @@ import { Route as EmployeeDatabaseEmployeesRouteImport } from './routes/employee
 import { Route as EmployeeDatabaseBackupRouteImport } from './routes/employee/database/backup'
 import { Route as EmployeeCreateIngredientRouteImport } from './routes/employee/create/ingredient'
 import { Route as EmployeeCreateEmployeeRouteImport } from './routes/employee/create/employee'
+import { Route as CustomerDatabaseCustomeRouteImport } from './routes/customer/database/custome'
 
 const OrderRoute = OrderRouteImport.update({
   id: '/order',
@@ -178,6 +179,11 @@ const EmployeeCreateEmployeeRoute = EmployeeCreateEmployeeRouteImport.update({
   path: '/employee',
   getParentRoute: () => EmployeeCreateRouteRoute,
 } as any)
+const CustomerDatabaseCustomeRoute = CustomerDatabaseCustomeRouteImport.update({
+  id: '/customer/database/custome',
+  path: '/customer/database/custome',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
   '/employee/': typeof EmployeeIndexRoute
+  '/customer/database/custome': typeof CustomerDatabaseCustomeRoute
   '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
   '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
   '/employee/database/backup': typeof EmployeeDatabaseBackupRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/employee/search': typeof EmployeeSearchRoute
   '/auth': typeof AuthIndexRoute
   '/employee': typeof EmployeeIndexRoute
+  '/customer/database/custome': typeof CustomerDatabaseCustomeRoute
   '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
   '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
   '/employee/database/backup': typeof EmployeeDatabaseBackupRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
   '/employee/': typeof EmployeeIndexRoute
+  '/customer/database/custome': typeof CustomerDatabaseCustomeRoute
   '/employee/create/employee': typeof EmployeeCreateEmployeeRoute
   '/employee/create/ingredient': typeof EmployeeCreateIngredientRoute
   '/employee/database/backup': typeof EmployeeDatabaseBackupRoute
@@ -286,6 +295,7 @@ export interface FileRouteTypes {
     | '/employee/search'
     | '/auth/'
     | '/employee/'
+    | '/customer/database/custome'
     | '/employee/create/employee'
     | '/employee/create/ingredient'
     | '/employee/database/backup'
@@ -314,6 +324,7 @@ export interface FileRouteTypes {
     | '/employee/search'
     | '/auth'
     | '/employee'
+    | '/customer/database/custome'
     | '/employee/create/employee'
     | '/employee/create/ingredient'
     | '/employee/database/backup'
@@ -343,6 +354,7 @@ export interface FileRouteTypes {
     | '/employee/search'
     | '/auth/'
     | '/employee/'
+    | '/customer/database/custome'
     | '/employee/create/employee'
     | '/employee/create/ingredient'
     | '/employee/database/backup'
@@ -365,6 +377,7 @@ export interface RootRouteChildren {
   ConfirmationOrderIdRoute: typeof ConfirmationOrderIdRoute
   CustomerCreate_customerRoute: typeof CustomerCreate_customerRoute
   AuthIndexRoute: typeof AuthIndexRoute
+  CustomerDatabaseCustomeRoute: typeof CustomerDatabaseCustomeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -558,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeCreateEmployeeRouteImport
       parentRoute: typeof EmployeeCreateRouteRoute
     }
+    '/customer/database/custome': {
+      id: '/customer/database/custome'
+      path: '/customer/database/custome'
+      fullPath: '/customer/database/custome'
+      preLoaderRoute: typeof CustomerDatabaseCustomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -637,6 +657,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConfirmationOrderIdRoute: ConfirmationOrderIdRoute,
   CustomerCreate_customerRoute: CustomerCreate_customerRoute,
   AuthIndexRoute: AuthIndexRoute,
+  CustomerDatabaseCustomeRoute: CustomerDatabaseCustomeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

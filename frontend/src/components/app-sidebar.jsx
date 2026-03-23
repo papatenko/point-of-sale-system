@@ -72,6 +72,11 @@ export function AppSidebar() {
   const user = useSelector((s) => s.auth.user);
   const role = user?.role ?? null;
 
+  // customer cannot see anything
+  if (user?.user_type === "customer") {
+    return null; // 
+  }
+
   const visibleRoutes = employee_routes.filter((r) => r.roles.includes(role));
   const showDatabase = role === "admin" || role === "manager";
 
@@ -115,7 +120,7 @@ export function AppSidebar() {
             </>
           )}
         </SidebarMenu>
-        <LogoutButton />
+        {/* <LogoutButton /> */}
       </SidebarHeader>
     </Sidebar>
   );
