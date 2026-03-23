@@ -1,13 +1,83 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ChevronRight, Truck } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
+  const [featured, setFeatured] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/menu")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setFeatured(data.slice(0, 4));
+      })
+      .catch(() => {});
+  }, []);
+
   return (
-    <div className="p-2">
-      <h3>Hello? Hello hello? Uh, I wanted to record a message for you, to help you get settled in on your first night. Um, I actually worked in that office before you, I’m finishing up my last week now as a matter of fact. So, I know it can be a bit overwhelming, but I’m here to tell you there’s nothing to worry about, Uh, you’ll do fine. So, let’s just focus on getting you through your first week, okay? Uh, let’s see, first there’s an introductory greeting from the company, that I’m supposed to read. Uh, it’s kind of a legal thing, you know. Um, “Welcome to Freddy Fazbear’s Pizza, a magical place for kids and grown-ups alike, where fantasy and fun come to life. Fazbear Entertainment is not responsible for damage to property or person. Upon discovering that damage or death has occurred, a missing person report will be filed within 90 days, or as soon property and premises have been thoroughly cleaned and bleached, and the carpets have been replaced.” Blah blah blah. Now that might sound bad, I know. But, there’s really nothing to worry about. Uh, the animatronic characters here, do get a bit quirky at night, but do I blame them? No. If I were forced to sing those same stupid songs for twenty years and I never got a bath? I’d probably be a bit irritable at night too. So, remember, these characters hold a special place in the hearts of children and we need to show them a little respect, right? Okay. So, just be aware, the characters do tend to wander a bit. Uh, they’re left in some kind of free roaming mode at night, uh, something about their servos locking up if they get turned off for too long? Uh, they used to be allowed to walk around during the day too, but then there was The Bite of ’87. Yeah. I-It’s amazing that the human body can live without the frontal lobe, you know? Uh, now concerning your safety. The only real risk to you as a night watchman here, if any, is the fact that these characters, uh, if they happen to see you after hours probably won’t recognize you as a person. They’ll pr-They’ll most likely see you as a metal endoskeleton without its costume on. Now, since that’s against the rules here at Freddy Fazbear’s Pizza, they’ll probably try to…forcefully stuff you inside a Freddy Fazbear suit. Um, now, that wouldn’t be so bad, if the suits themselves weren’t filled with crossbeams, wires, and animatronic devices. Especially around the facial area. So you could imagine how having your head forcefully pressed inside one of those could cause a bit of discomfort, and death. Uh, the only parts of you that would likely see the light of day again would be your eyeballs and teeth when they pop out the front of the mask. Heh. Yeah, they don’t tell you these things when you sign up. But hey, first day should be a breeze. I’ll chat with you tomorrow. Uh, check those cameras, and remember to close the doors only if absolutely necessary. Gotta conserve power. Alright, good night.</h3>
+    <div className="min-h-screen bg-amber-50">
+      {/* Hero */}
+      <section className="bg-amber-600 text-white py-24 px-4 text-center">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <Truck size={40} />
+          <h1 className="text-5xl font-extrabold tracking-tight">
+            Shako Kabob
+          </h1>
+        </div>
+        <p className="text-amber-100 text-xl mt-2 mb-8 max-w-md mx-auto">
+          Fresh street food, made to order. Find us around the city.
+        </p>
+        <Link to="/order">
+          <Button
+            size="lg"
+            className="bg-white text-amber-700 hover:bg-amber-50 font-bold px-8 text-base"
+          >
+            Order Now <ChevronRight size={18} className="ml-1" />
+          </Button>
+        </Link>
+      </section>
+
+      {/* Featured items */}
+      {featured.length > 0 && (
+        <section className="max-w-5xl mx-auto px-4 py-16">
+          <h2 className="text-2xl font-bold mb-8 text-gray-800">
+            Customer Favorites
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {featured.map((item) => (
+              <Card
+                key={item.menu_item_id}
+                className="shadow-sm hover:shadow-md transition-shadow"
+              >
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-gray-900">{item.item_name}</h3>
+                  {item.description && (
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                      {item.description}
+                    </p>
+                  )}
+                  <p className="mt-3 font-bold text-amber-600">
+                    ${parseFloat(item.price).toFixed(2)}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="text-center mt-10">
+            <Link to="/order">
+              <Button className="bg-amber-600 hover:bg-amber-700 text-white px-8">
+                View Full Menu
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
