@@ -121,15 +121,15 @@ router.delete("/api/recipes", async (body, db) => {
 });
 
 // Orders
-router.get("/api/orders", async (_, db, url) =>
+router.get("/api/orders", async (_, db, _req, url) =>
   OrderService.listOrders(db, url),
 );
-router.get("/api/orders/:id", async (_, db, url) =>
+router.get("/api/orders/:id", async (_, db, _req, url) =>
   OrderService.getOrderById(db, url),
 );
 
 // Inventory
-router.get("/api/inventory", async (_, db, url) =>
+router.get("/api/inventory", async (_, db, _req, url) =>
   InventoryService.getInventory(db, url),
 );
 router.post("/api/inventory/use", async (body, db) =>
@@ -141,10 +141,10 @@ router.post("/api/inventory/use-recipe", async (body, db) =>
 router.post("/api/inventory/reorder", async (body, db) =>
   InventoryService.reorderInventory(db, body),
 );
-router.get("/api/inventory/alerts", async (_, db, url) =>
+router.get("/api/inventory/alerts", async (_, db, _req, url) =>
   InventoryService.getAlerts(db, url),
 );
-router.get("/api/inventory/history", async (_, db, url) =>
+router.get("/api/inventory/history", async (_, db, _req, url) =>
   InventoryService.getHistory(db, url),
 );
 
