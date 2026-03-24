@@ -52,7 +52,7 @@ export async function register(username, password) {
   return { message: "User created successfully" };
 }
 
-export { verifyToken } from "./jwt.js";
+export { verifyToken, signEmployeeToken } from "./jwt.js";
 
 // verify manager role
 export function verifyManager(token) {

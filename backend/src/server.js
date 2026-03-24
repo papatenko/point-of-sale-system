@@ -2,7 +2,7 @@ import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
 import { getDatabase } from "./database.js";
-import { handleRoute } from "./routes/index.js";
+import { handleRoute } from "./routes.js";
 
 // Grabs the built /dist/ directory built from Vite
 const FRONTEND_PATH = path.resolve("..") + "/frontend/dist";

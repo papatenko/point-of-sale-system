@@ -1,7 +1,3 @@
-/**
- * Aggregate dashboard stats for the reports screen.
- * Returns plain objects (server.js JSON.stringify's once).
- */
 export async function getReportStats(db) {
   const [[row]] = await db.query(`
     SELECT
@@ -13,21 +9,11 @@ export async function getReportStats(db) {
       (SELECT COUNT(*) FROM food_trucks) AS totalTrucks,
       (SELECT COUNT(*) FROM checkout) AS totalOrders,
       (SELECT COALESCE(SUM(quantity), 0) FROM order_items) AS totalItemsSold,
-      (
-        /* Revenue from each order only after it is placed (POST /api/checkout — "Place Order").
-           Rows are inserted with payment_status 'pending', so we must not require 'completed'. */
-        SELECT COALESCE(SUM(total_price), 0)
-        FROM checkout
-        WHERE order_status <> 'cancelled'
-          AND payment_status <> 'refunded'
-      ) AS grossIncome
+      (SELECT COALESCE(SUM(total_price), 0) FROM checkout WHERE order_status <> 'cancelled' AND payment_status <> 'refunded') AS grossIncome
   `);
 
   const [ethnicityRows] = await db.query(`
-    SELECT
-      rl.race_id AS raceId,
-      rl.race AS race,
-      COUNT(u.email) AS total
+    SELECT rl.race_id AS raceId, rl.race AS race, COUNT(u.email) AS total
     FROM race_lookup rl
     LEFT JOIN users u ON u.ethnicity = rl.race_id
     GROUP BY rl.race_id, rl.race
@@ -35,22 +21,11 @@ export async function getReportStats(db) {
   `);
 
   const [[{ unspecified }]] = await db.query(`
-    SELECT COUNT(*) AS unspecified
-    FROM users
-    WHERE ethnicity IS NULL
+    SELECT COUNT(*) AS unspecified FROM users WHERE ethnicity IS NULL
   `);
 
-  const ethnicityByRace = ethnicityRows.map((r) => ({
-    raceId: Number(r.raceId),
-    race: r.race,
-    total: Number(r.total) || 0,
-  }));
-
   const [menuByCatRows] = await db.query(`
-    SELECT
-      c.category_id AS categoryId,
-      c.category_name AS categoryName,
-      COUNT(m.menu_item_id) AS total
+    SELECT c.category_id AS categoryId, c.category_name AS categoryName, COUNT(m.menu_item_id) AS total
     FROM menu_category_lookup c
     LEFT JOIN menu_items m ON m.category = c.category_id
     GROUP BY c.category_id, c.category_name
@@ -62,9 +37,7 @@ export async function getReportStats(db) {
   `);
 
   const [ingredientCatRows] = await db.query(`
-    SELECT
-      COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized') AS categoryName,
-      COUNT(*) AS total
+    SELECT COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized') AS categoryName, COUNT(*) AS total
     FROM ingredients
     GROUP BY COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized')
     ORDER BY categoryName
@@ -78,10 +51,7 @@ export async function getReportStats(db) {
   `);
 
   const [soldByCatRows] = await db.query(`
-    SELECT
-      c.category_id AS categoryId,
-      c.category_name AS categoryName,
-      COALESCE(SUM(oi.quantity), 0) AS total
+    SELECT c.category_id AS categoryId, c.category_name AS categoryName, COALESCE(SUM(oi.quantity), 0) AS total
     FROM menu_category_lookup c
     LEFT JOIN menu_items m ON m.category = c.category_id
     LEFT JOIN order_items oi ON oi.menu_item_id = m.menu_item_id
@@ -96,52 +66,14 @@ export async function getReportStats(db) {
     WHERE m.category IS NULL
   `);
 
-  const menuItemsByCategory = menuByCatRows.map((r) => ({
-    categoryId: Number(r.categoryId),
-    categoryName: r.categoryName,
-    total: Number(r.total) || 0,
-  }));
-
-  const ingredientsByCategory = ingredientCatRows.map((r) => ({
-    categoryName: r.categoryName,
-    total: Number(r.total) || 0,
-  }));
-
-  const ordersByCategory = orderTypeRows.map((r) => {
-    const raw = String(r.categoryName || "");
-    const label =
-      raw === "walk-in"
-        ? "Walk-in"
-        : raw === "online-pickup"
-          ? "Online pickup"
-          : raw;
-    return { categoryName: label, total: Number(r.total) || 0 };
-  });
-
-  const itemsSoldByCategory = soldByCatRows.map((r) => ({
-    categoryId: Number(r.categoryId),
-    categoryName: r.categoryName,
-    total: Number(r.total) || 0,
-  }));
-
   const [truckOrderRows] = await db.query(`
-    SELECT
-      ft.license_plate AS licensePlate,
-      ft.truck_name AS truckName,
-      COUNT(c.checkout_id) AS total
+    SELECT ft.license_plate AS licensePlate, ft.truck_name AS truckName, COUNT(c.checkout_id) AS total
     FROM food_trucks ft
     LEFT JOIN checkout c ON c.license_plate = ft.license_plate
     GROUP BY ft.license_plate, ft.truck_name
     ORDER BY ft.license_plate
   `);
 
-  const ordersByTruck = truckOrderRows.map((r) => ({
-    licensePlate: r.licensePlate,
-    truckName: r.truckName,
-    total: Number(r.total) || 0,
-  }));
-
-  // MySQL may return DECIMAL as string; normalize for JSON consumers
   return {
     totalIngredients: Number(row.totalIngredients) || 0,
     totalEmployees: Number(row.totalEmployees) || 0,
@@ -152,14 +84,37 @@ export async function getReportStats(db) {
     totalOrders: Number(row.totalOrders) || 0,
     totalItemsSold: Number(row.totalItemsSold) || 0,
     grossIncome: Number(row.grossIncome) || 0,
-    ethnicityByRace,
+    ethnicityByRace: ethnicityRows.map((r) => ({
+      raceId: Number(r.raceId),
+      race: r.race,
+      total: Number(r.total) || 0,
+    })),
     ethnicityUnspecified: Number(unspecified) || 0,
-    menuItemsByCategory,
+    menuItemsByCategory: menuByCatRows.map((r) => ({
+      categoryId: Number(r.categoryId),
+      categoryName: r.categoryName,
+      total: Number(r.total) || 0,
+    })),
     menuItemsUncategorized: Number(menuUncat?.total) || 0,
-    ingredientsByCategory,
-    ordersByCategory,
-    itemsSoldByCategory,
+    ingredientsByCategory: ingredientCatRows.map((r) => ({
+      categoryName: r.categoryName,
+      total: Number(r.total) || 0,
+    })),
+    ordersByCategory: orderTypeRows.map((r) => {
+      const raw = String(r.categoryName || "");
+      const label = raw === "walk-in" ? "Walk-in" : raw === "online-pickup" ? "Online pickup" : raw;
+      return { categoryName: label, total: Number(r.total) || 0 };
+    }),
+    itemsSoldByCategory: soldByCatRows.map((r) => ({
+      categoryId: Number(r.categoryId),
+      categoryName: r.categoryName,
+      total: Number(r.total) || 0,
+    })),
     itemsSoldUncategorized: Number(soldUncat?.total) || 0,
-    ordersByTruck,
+    ordersByTruck: truckOrderRows.map((r) => ({
+      licensePlate: r.licensePlate,
+      truckName: r.truckName,
+      total: Number(r.total) || 0,
+    })),
   };
 }
