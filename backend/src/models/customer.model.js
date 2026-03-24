@@ -1,6 +1,6 @@
 export async function findAll(db) {
   const [rows] = await db.query(`
-    SELECT c.*, u.first_name, u.last_name, u.email, u.phone_number
+    SELECT c.*, u.first_name, u.last_name, u.email as user_email
     FROM customers c
     JOIN users u ON c.email = u.email
     ORDER BY u.last_name, u.first_name
@@ -10,10 +10,15 @@ export async function findAll(db) {
 
 export async function findByEmail(db, email) {
   const [[row]] = await db.query(
-    `SELECT c.*, u.first_name, u.last_name, u.email
-     FROM customers c
-     JOIN users u ON c.email = u.email
-     WHERE c.email = ?`,
+    "SELECT email FROM customers WHERE email = ?",
+    [email]
+  );
+  return row;
+}
+
+export async function emailExistsAsUser(db, email) {
+  const [[row]] = await db.query(
+    "SELECT email FROM users WHERE email = ?",
     [email]
   );
   return row;
@@ -21,11 +26,12 @@ export async function findByEmail(db, email) {
 
 export async function create(db, data) {
   const [result] = await db.query(
-    `INSERT INTO customers (email, default_address)
+    `INSERT INTO customers 
+     (email, default_address)
      VALUES (?, ?)`,
     [
       data.email,
-      data.default_address || null
+      data.default_address || null,
     ]
   );
   return result;

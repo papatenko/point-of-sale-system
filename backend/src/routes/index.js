@@ -15,6 +15,7 @@ import { checkoutOrder } from "./checkout.js";
 import { getMyProfile, updateMyProfile } from "./users.js";
 import { getReportStats } from "./reports.js";
 import { login } from "../auth/auth.js";
+import { registerCustomersRoutes } from "./customer.route.js";
 
 const usersRouter = createRouter();
 registerUsersRoutes(usersRouter);
@@ -33,6 +34,9 @@ registerMenuItemsRoutes(menuItemsRouter);
 
 const employeesRouter = createRouter();
 registerEmployeesRoutes(employeesRouter);
+
+const customersRouter = createRouter();
+registerCustomersRoutes(customersRouter);
 
 const ingredientsRouter = createRouter();
 registerIngredientsRoutes(ingredientsRouter);
@@ -93,7 +97,10 @@ export async function handleRoute(url, body, method, req, res, db) {
     return await login(body.email, body.password);
   } else if (url === "/api/backup" && method === "GET") {
     return await backupRouter.match(method, basePath, body, db);
-  } else {
+  } else if (url.startsWith("/api/customers")) {
+    return await customersRouter.match(method, basePath, body, db);
+  }
+    else {
     return null;
   }
 }

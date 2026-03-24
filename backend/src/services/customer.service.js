@@ -1,48 +1,27 @@
-import * as CustomerModel from "../models/customers.model.js";
-import * as UserModel from "../models/users.model.js";
+import * as CustomerModel from "../models/customer.model.js";
+// import * as UserService from "./users.service.js";
 
 export async function getAllCustomers(db) {
   return await CustomerModel.findAll(db);
 }
 
 export async function createCustomer(db, data) {
-  const {
-    email,
-    first_name,
-    last_name,
-    password,
-    phone_number,
-    gender,
-    ethnicity,
-    default_address,
-  } = data;
+  const { email, default_address } = data;
 
-  //  Validación básica
-  if (!email || !first_name || !last_name || !password) {
-    return {
-      error: "email, first_name, last_name, and password are required",
-    };
+  if (!email) {
+    return { error: "email is required" };
   }
 
-  //  Verificar si ya existe usuario
-  const existingUser = await UserModel.findByEmail(db, email);
-  if (existingUser) {
-    return { error: "User with this email already exists" };
+  const userExists = await CustomerModel.emailExistsAsUser(db, email);
+  if (!userExists) {
+    return { error: "User must exist in users table before creating customer" };
   }
 
-  // Crear en users primero
-  await UserModel.create(db, {
-    email,
-    first_name,
-    last_name,
-    password,
-    phone_number,
-    gender,
-    ethnicity,
-    user_type: "customer",
-  });
+  const existingCustomer = await CustomerModel.findByEmail(db, email);
+  if (existingCustomer) {
+    return { error: "Customer already exists" };
+  }
 
-  //crear en customers
   const result = await CustomerModel.create(db, {
     email,
     default_address,
@@ -67,7 +46,7 @@ export async function deleteCustomer(db, data) {
     return { error: "Customer not found" };
   }
 
-  // Solo borras user → cascade elimina customer
+  await CustomerModel.remove(db, email);
   await CustomerModel.removeUser(db, email);
 
   return {

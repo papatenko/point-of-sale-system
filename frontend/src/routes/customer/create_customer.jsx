@@ -19,9 +19,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export const Route = createFileRoute('/customer/create_customer')({
-  component: CreateCustomerComponent,
-})
+export const Route = createFileRoute("/customer/create_customer")({
+  component: CustomerCreationComponent,
+});
+
 const GENDER_OPTIONS = [
   { id: 1, label: "Male" },
   { id: 2, label: "Female" },
@@ -40,19 +41,18 @@ const ETHNICITY_OPTIONS = [
   { id: 8, label: "Prefer not to say" },
 ];
 
-function CreateCustomerComponent() {
+function CustomerCreationComponent() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [form, setForm] = useState({
     email: "",
     first_name: "",
     last_name: "",
     password: "",
     phone_number: "",
+    default_address: "",
     gender: "1",
     ethnicity: "1",
-    default_address: "",
   });
 
   const handleChange = (e) => {
@@ -66,34 +66,56 @@ function CreateCustomerComponent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch(
-        "http://localhost:3000/api/customers",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...form,
-            gender: parseInt(form.gender),
-            ethnicity: parseInt(form.ethnicity),
-          }),
-        }
-      );
+      const userResponse = await fetch("http://localhost:3000/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          email: form.email,
+          first_name: form.first_name,
+          last_name: form.last_name,
+          password: form.password,
+          phone_number: form.phone_number || null,
+          gender: parseInt(form.gender),
+          ethnicity: parseInt(form.ethnicity),
+          user_type: "customer",
+        }),
+      });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Customer created successfully 🎉");
-        navigate({ to: "/customer" });
-      } else {
-        alert(data.error || "Error creating customer");
+      const userData = await userResponse.json();
+      if (!userResponse.ok) {
+        alert(userData.error || "Error creating user");
+        throw new Error(userData.error);
       }
+
+      const customerResponse = await fetch("http://localhost:3000/api/customers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          email: form.email,
+          default_address: form.default_address || null,
+        }),
+      });
+
+      const customerData = await customerResponse.json();
+      if (!customerResponse.ok) {
+        alert(customerData.error || "Error creating customer");
+        throw new Error(customerData.error);
+      }
+
+      alert("Customer created successfully!");
+      navigate({ to: "/employee" });
     } catch (error) {
-      console.error(error);
-      alert("Something broke 💥 check console");
+      console.error("Error:", error);
+      alert("Failed to create customer. Check the console for details.");
     } finally {
       setIsSubmitting(false);
     }
@@ -108,74 +130,94 @@ function CreateCustomerComponent() {
             Add a new customer to the system.
           </CardDescription>
         </CardHeader>
-
         <CardContent>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-4">
-
-              {/* Email */}
+              {/* Email - full width */}
               <div className="space-y-1 md:col-span-2">
-                <Label>Email</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
+                  id="email"
                   name="email"
                   type="email"
+                  placeholder="customer@example.com"
                   value={form.email}
                   onChange={handleChange}
+                  autoComplete="email"
                   required
                 />
               </div>
 
               {/* First Name */}
               <div className="space-y-1">
-                <Label>First Name</Label>
+                <Label htmlFor="first_name">First Name</Label>
                 <Input
+                  id="first_name"
                   name="first_name"
+                  type="text"
+                  placeholder="First name"
                   value={form.first_name}
                   onChange={handleChange}
+                  autoComplete="given-name"
                   required
                 />
               </div>
 
               {/* Last Name */}
               <div className="space-y-1">
-                <Label>Last Name</Label>
+                <Label htmlFor="last_name">Last Name</Label>
                 <Input
+                  id="last_name"
                   name="last_name"
+                  type="text"
+                  placeholder="Last name"
                   value={form.last_name}
                   onChange={handleChange}
+                  autoComplete="family-name"
                   required
                 />
               </div>
 
               {/* Password */}
               <div className="space-y-1">
-                <Label>Password</Label>
+                <Label htmlFor="password">Customer Password</Label>
                 <Input
+                  id="password"
                   name="password"
                   type="password"
+                  placeholder="Set a password"
                   value={form.password}
                   onChange={handleChange}
+                  autoComplete="new-password"
                   required
                 />
               </div>
 
               {/* Phone */}
               <div className="space-y-1">
-                <Label>Phone</Label>
+                <Label htmlFor="phone_number">Phone Number</Label>
                 <Input
+                  id="phone_number"
                   name="phone_number"
+                  type="tel"
+                  placeholder="(optional)"
                   value={form.phone_number}
                   onChange={handleChange}
+                  autoComplete="tel"
                 />
               </div>
 
-              {/* Address */}
+              {/* Default Address */}
               <div className="space-y-1 md:col-span-2">
-                <Label>Default Address</Label>
+                <Label htmlFor="default_address">Default Address</Label>
                 <Input
+                  id="default_address"
                   name="default_address"
+                  type="text"
+                  placeholder="123 Main St, City, State"
                   value={form.default_address}
                   onChange={handleChange}
+                  autoComplete="street-address"
                 />
               </div>
 
@@ -187,7 +229,7 @@ function CreateCustomerComponent() {
                   onValueChange={(v) => handleSelectChange("gender", v)}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
                     {GENDER_OPTIONS.map((g) => (
@@ -207,7 +249,7 @@ function CreateCustomerComponent() {
                   onValueChange={(v) => handleSelectChange("ethnicity", v)}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="Select ethnicity" />
                   </SelectTrigger>
                   <SelectContent>
                     {ETHNICITY_OPTIONS.map((e) => (
@@ -222,8 +264,8 @@ function CreateCustomerComponent() {
 
             <Button
               type="submit"
-              className="w-full mt-4"
               disabled={isSubmitting}
+              className="w-full mt-6"
             >
               {isSubmitting ? "Creating..." : "Create Customer"}
             </Button>

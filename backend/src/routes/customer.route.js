@@ -1,15 +1,7 @@
-import * as CustomerService from "../services/customers.service.js";
+import * as CustomerService from "../services/customer.service.js";
 
 export function registerCustomersRoutes(router) {
-  router.get("/api/customers", async (_, db) =>
-    CustomerService.getAllCustomers(db)
-  );
-
-  router.post("/api/customers", async (body, db) =>
-    CustomerService.createCustomer(db, body)
-  );
-
-  router.delete("/api/customers", async (body, db) =>
-    CustomerService.deleteCustomer(db, body)
-  );
+  router.get("/api/customers", async (_, db) => CustomerService.getAllCustomers(db));
+  router.post("/api/customers", async (body, db) => CustomerService.createCustomer(db, body));
+  router.delete("/api/customers", async (body, db) => CustomerService.deleteCustomer(db, body));
 }
