@@ -1,4 +1,10 @@
-import { createRootRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import {
+  createRootRoute,
+  Link,
+  Outlet,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import {
   NavigationMenu,
@@ -10,7 +16,14 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { setLogout } from "@/redux/authSlice";
 import { useState, useRef, useEffect } from "react";
-import { LogOut, User, LayoutDashboard, ShoppingBag } from "lucide-react";
+import {
+  LogOut,
+  User,
+  LayoutDashboard,
+  ShoppingBag,
+  Truck,
+  Home,
+} from "lucide-react";
 
 function ProfileDropdown({ user, onLogout }) {
   const [open, setOpen] = useState(false);
@@ -41,10 +54,12 @@ function ProfileDropdown({ user, onLogout }) {
         <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
           {/* User info header */}
           <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-semibold text-gray-900">{user.first_name}</p>
+            <p className="text-sm font-semibold text-gray-900">
+              {user.first_name}
+            </p>
             <p className="text-xs text-gray-400 truncate">{user.email}</p>
             {user.role && (
-              <span className="inline-block mt-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full capitalize">
+              <span className="inline-block mt-1 text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full capitalize">
                 {user.role}
               </span>
             )}
@@ -82,7 +97,10 @@ function ProfileDropdown({ user, onLogout }) {
           </Link>
 
           <button
-            onClick={() => { setOpen(false); onLogout(); }}
+            onClick={() => {
+              setOpen(false);
+              onLogout();
+            }}
             className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
           >
             <LogOut size={15} />
@@ -112,23 +130,35 @@ function RootLayout() {
     <>
       {/* Only show public navbar outside the employee dashboard */}
       {!isEmployeeRoute && (
-        <div className="w-full px-4 py-2 flex justify-between items-center border-b border-gray-100">
-          <NavigationMenu>
-            <NavigationMenuList>
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link to="/">Home</Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link to="/order">Order Online</Link>
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
+        <div className="w-full p-2 flex justify-between items-center border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <Truck className="size-6 text-amber-600" />
+            <span className="text-xl font-bold text-amber-600">
+              Shako Kabob
+            </span>
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuLink
+                    asChild
+                    className={navigationMenuTriggerStyle()}
+                  >
+                    <Link to="/">Home</Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <NavigationMenuLink
+                    asChild
+                    className={navigationMenuTriggerStyle()}
+                  >
+                    <Link to="/order">Order Online</Link>
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             {user ? (
               <ProfileDropdown user={user} onLogout={handleLogout} />
             ) : (

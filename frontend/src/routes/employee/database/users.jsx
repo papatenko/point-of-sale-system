@@ -189,7 +189,7 @@ function UsersDatabaseComponent() {
   const enrichedColumns = [
     ...COLUMNS.slice(0, 6),
     { key: "race_name", label: "Ethnicity" },
-    ...COLUMNS.slice(7),
+    ...COLUMNS.slice(8),
   ];
 
   const genderOptions = genders.map((g) => ({

@@ -5,7 +5,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import LogoutButton from "@/routes/auth/logout";
 import { Link } from "@tanstack/react-router";
 import {
   ShoppingCart,
@@ -115,7 +114,6 @@ export function AppSidebar() {
             </>
           )}
         </SidebarMenu>
-        <LogoutButton />
       </SidebarHeader>
     </Sidebar>
   );

@@ -59,9 +59,7 @@ function ConfirmationPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mb-4">
             <CheckCircle size={44} className="text-green-500" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Order Confirmed!
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">Order Confirmed!</h1>
           <p className="text-gray-500 mt-2">
             Order{" "}
             <span className="font-semibold text-gray-700">
