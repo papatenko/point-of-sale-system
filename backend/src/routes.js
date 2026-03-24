@@ -12,12 +12,20 @@ import * as BackupService from "./services/backup.service.js";
 import * as CustomerService from "./services/customer.service.js";
 import * as CheckoutService from "./services/checkout.service.js";
 import * as ReportModel from "./models/report.model.js";
-import { login } from "./auth/auth.js";
+import { login, register } from "./auth/auth.js";
 
 const router = createRouter();
 
 // Auth
 router.post("/api/login", async (body) => login(body.email, body.password));
+router.post("/api/register", async (body) => {
+  const { email, password, first_name, last_name } = body;
+  if (!email || !password || !first_name || !last_name) {
+    return { error: "All fields are required" };
+  }
+  await register(email, password, first_name, last_name);
+  return await login(email, password);
+});
 
 // User Profile
 router.get("/api/me", async (_, db, req) => UserService.getMyProfile(req, db));

@@ -11,7 +11,7 @@ export async function login(email, password) {
      FROM users u
      LEFT JOIN employees e ON u.email = e.email
      WHERE u.email = ?`,
-    [email]
+    [email],
   );
 
   const user = rows[0];
@@ -37,16 +37,17 @@ export async function login(email, password) {
 }
 
 // --- Register function ---
-export async function register(username, password) {
+export async function register(email, password, first_name, last_name) {
   const db = await getDatabase();
 
-  const [users] = await db.query("SELECT email FROM users WHERE email = ?", [username]);
+  const [users] = await db.query("SELECT email FROM users WHERE email = ?", [
+    email,
+  ]);
   if (users.length > 0) throw new Error("User already exists");
 
-  const hashedPassword = await bcrypt.hash(password, 10);
   await db.query(
-    "INSERT INTO users (email, password, first_name, last_name) VALUES (?, ?, ?, ?)",
-    [username, hashedPassword, username.split("@")[0], ""]
+    "INSERT INTO users (email, password, first_name, last_name, user_type) VALUES (?, ?, ?, ?, 'customer')",
+    [email, password, first_name, last_name],
   );
 
   return { message: "User created successfully" };
