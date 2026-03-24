@@ -264,53 +264,6 @@ function RouteComponent() {
     <div className="p-5 max-w-5xl">
       <h1 className="text-lg font-semibold">Reports Dashboard</h1>
 
-      <Card className="mt-4 border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Order date range</CardTitle>
-          <CardDescription>
-            Limit <strong>orders</strong>, <strong>revenue</strong>,{" "}
-            <strong>items sold</strong>, <strong>order type</strong>, and{" "}
-            <strong>truck order counts</strong> to orders placed in this range
-            (uses each order&apos;s scheduled / placed time). Catalog-style
-            totals (users, menu items, ingredients, suppliers) stay all-time.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-end gap-3">
-          <div className="grid gap-1.5">
-            <Label htmlFor="report-start">Start</Label>
-            <Input
-              id="report-start"
-              type="date"
-              value={pendingStart}
-              onChange={(e) => setPendingStart(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="report-end">End</Label>
-            <Input
-              id="report-end"
-              type="date"
-              value={pendingEnd}
-              onChange={(e) => setPendingEnd(e.target.value)}
-            />
-          </div>
-          <Button type="button" onClick={handleApplyFilter}>
-            Apply
-          </Button>
-          <Button type="button" variant="outline" onClick={handleClearFilter}>
-            Clear
-          </Button>
-        </CardContent>
-        {orderFilterActive && stats?.filters?.startDate && stats?.filters?.endDate && (
-          <CardContent className="pt-0 text-sm text-muted-foreground">
-            Active:{" "}
-            <span className="font-medium text-foreground">
-              {stats.filters.startDate} – {stats.filters.endDate}
-            </span>
-          </CardContent>
-        )}
-      </Card>
-
       {error && (
         <p className="mt-3 text-sm text-destructive">{error}</p>
       )}
@@ -423,6 +376,56 @@ function RouteComponent() {
             valueLabel="Ingredients"
             emptyMessage="No ingredients in the database yet."
           />
+
+          <Card className="mt-4 border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25 lg:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Order date range</CardTitle>
+              <CardDescription>
+                Limit <strong>orders</strong>, <strong>revenue</strong>,{" "}
+                <strong>items sold</strong>, <strong>order type</strong>, and{" "}
+                <strong>truck order counts</strong> to orders placed in this
+                range (uses each order&apos;s scheduled / placed time).
+                Catalog-style totals (users, menu items, ingredients,
+                suppliers) stay all-time.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-end gap-3">
+              <div className="grid gap-1.5">
+                <Label htmlFor="report-start">Start</Label>
+                <Input
+                  id="report-start"
+                  type="date"
+                  value={pendingStart}
+                  onChange={(e) => setPendingStart(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="report-end">End</Label>
+                <Input
+                  id="report-end"
+                  type="date"
+                  value={pendingEnd}
+                  onChange={(e) => setPendingEnd(e.target.value)}
+                />
+              </div>
+              <Button type="button" onClick={handleApplyFilter}>
+                Apply
+              </Button>
+              <Button type="button" variant="outline" onClick={handleClearFilter}>
+                Clear
+              </Button>
+            </CardContent>
+            {orderFilterActive &&
+              stats?.filters?.startDate &&
+              stats?.filters?.endDate && (
+                <CardContent className="pt-0 text-sm text-muted-foreground">
+                  Active:{" "}
+                  <span className="font-medium text-foreground">
+                    {stats.filters.startDate} – {stats.filters.endDate}
+                  </span>
+                </CardContent>
+              )}
+          </Card>
 
           <ReportBarChartCard
             title="Total orders (by order type)"
