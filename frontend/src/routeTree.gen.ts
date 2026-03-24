@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as OrderRouteImport } from './routes/order'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as EmployeeRouteRouteImport } from './routes/employee/route'
@@ -38,6 +39,11 @@ import { Route as EmployeeCreateIngredientRouteImport } from './routes/employee/
 import { Route as EmployeeCreateEmployeeRouteImport } from './routes/employee/create/employee'
 import { Route as CustomerDatabaseCustomerRouteImport } from './routes/customer/database/customer'
 
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrderRoute = OrderRouteImport.update({
   id: '/order',
   path: '/order',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/order': typeof OrderRoute
+  '/profile': typeof ProfileRoute
   '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/checkout': typeof CheckoutRoute
   '/order': typeof OrderRoute
+  '/profile': typeof ProfileRoute
   '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
@@ -251,6 +259,7 @@ export interface FileRoutesById {
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/order': typeof OrderRoute
+  '/profile': typeof ProfileRoute
   '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
@@ -283,6 +292,7 @@ export interface FileRouteTypes {
     | '/employee'
     | '/checkout'
     | '/order'
+    | '/profile'
     | '/employee/create'
     | '/employee/database'
     | '/auth/login'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/'
     | '/checkout'
     | '/order'
+    | '/profile'
     | '/employee/create'
     | '/employee/database'
     | '/auth/login'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/employee'
     | '/checkout'
     | '/order'
+    | '/profile'
     | '/employee/create'
     | '/employee/database'
     | '/auth/login'
@@ -373,6 +385,7 @@ export interface RootRouteChildren {
   EmployeeRouteRoute: typeof EmployeeRouteRouteWithChildren
   CheckoutRoute: typeof CheckoutRoute
   OrderRoute: typeof OrderRoute
+  ProfileRoute: typeof ProfileRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
   ConfirmationOrderIdRoute: typeof ConfirmationOrderIdRoute
@@ -383,6 +396,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/order': {
       id: '/order'
       path: '/order'
@@ -653,6 +673,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmployeeRouteRoute: EmployeeRouteRouteWithChildren,
   CheckoutRoute: CheckoutRoute,
   OrderRoute: OrderRoute,
+  ProfileRoute: ProfileRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
   ConfirmationOrderIdRoute: ConfirmationOrderIdRoute,

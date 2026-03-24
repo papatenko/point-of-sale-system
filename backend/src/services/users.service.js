@@ -29,7 +29,7 @@ export async function updateMyProfile(req, body, db) {
   const email = getAuthEmail(req);
   if (!email) return { error: "Unauthorized" };
 
-  const { first_name, last_name, phone_number, gender, ethnicity, new_email } = body || {};
+  const { first_name, last_name, phone_number, gender, ethnicity, password } = body || {};
   if (!first_name || !last_name) return { error: "first_name and last_name are required" };
 
   const [[existing]] = await db.query("SELECT email FROM users WHERE email = ?", [email]);
@@ -38,18 +38,16 @@ export async function updateMyProfile(req, body, db) {
   const g = gender != null && gender !== "" ? parseInt(String(gender), 10) : null;
   const e = ethnicity != null && ethnicity !== "" ? parseInt(String(ethnicity), 10) : null;
 
-  await db.query(
-    `UPDATE users SET first_name = ?, last_name = ?, phone_number = ?, gender = ?, ethnicity = ? WHERE email = ?`,
-    [first_name, last_name, phone_number || null, Number.isNaN(g) ? null : g, Number.isNaN(e) ? null : e, email]
-  );
-
-  if (new_email && String(new_email).trim() && String(new_email).trim() !== email) {
-    const next = String(new_email).trim();
-    const [[taken]] = await db.query("SELECT email FROM users WHERE email = ?", [next]);
-    if (taken) return { error: "That email is already in use" };
-    await db.query("UPDATE users SET email = ? WHERE email = ?", [next, email]);
-    const token = signEmployeeToken(next);
-    return { success: true, message: "Profile updated", email: next, token };
+  if (password) {
+    await db.query(
+      `UPDATE users SET first_name = ?, last_name = ?, phone_number = ?, gender = ?, ethnicity = ?, password = ? WHERE email = ?`,
+      [first_name, last_name, phone_number || null, Number.isNaN(g) ? null : g, Number.isNaN(e) ? null : e, password, email]
+    );
+  } else {
+    await db.query(
+      `UPDATE users SET first_name = ?, last_name = ?, phone_number = ?, gender = ?, ethnicity = ? WHERE email = ?`,
+      [first_name, last_name, phone_number || null, Number.isNaN(g) ? null : g, Number.isNaN(e) ? null : e, email]
+    );
   }
 
   return { success: true, message: "Profile updated", email };
