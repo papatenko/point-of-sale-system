@@ -177,8 +177,8 @@ router.post("/api/checkout", async (body, db) =>
 );
 
 // Reports
-router.get("/api/reports/stats", async (_, db) =>
-  ReportModel.getReportStats(db),
+router.get("/api/reports/stats", async (_, db, _req, url) =>
+  ReportModel.getReportStats(db, url),
 );
 
 // POS

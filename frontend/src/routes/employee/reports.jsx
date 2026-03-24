@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -17,6 +17,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/employee/reports")({
   component: RouteComponent,
@@ -124,19 +127,62 @@ function RouteComponent() {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [appliedFilter, setAppliedFilter] = useState(null);
+  const [pendingStart, setPendingStart] = useState("");
+  const [pendingEnd, setPendingEnd] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/reports/stats", {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    })
-      .then(async (res) => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError(null);
+      try {
+        const params = new URLSearchParams();
+        if (appliedFilter) {
+          params.set("start", appliedFilter.start);
+          params.set("end", appliedFilter.end);
+        }
+        const qs = params.toString();
+        const token = localStorage.getItem("token");
+        const res = await fetch(`/api/reports/stats${qs ? `?${qs}` : ""}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to load stats");
+        if (!res.ok || data.error) {
+          throw new Error(data.error || "Failed to load stats");
+        }
+        if (cancelled) return;
         setStats(data);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+      } catch (e) {
+        if (!cancelled) setError(e.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [appliedFilter]);
+
+  const handleApplyFilter = useCallback(() => {
+    if (!pendingStart || !pendingEnd) {
+      setError("Select both start and end dates.");
+      return;
+    }
+    if (pendingStart > pendingEnd) {
+      setError("Start date must be on or before end date.");
+      return;
+    }
+    setError(null);
+    setAppliedFilter({ start: pendingStart, end: pendingEnd });
+  }, [pendingStart, pendingEnd]);
+
+  const handleClearFilter = useCallback(() => {
+    setPendingStart("");
+    setPendingEnd("");
+    setAppliedFilter(null);
+    setError(null);
   }, []);
 
   const money = (n) =>
@@ -212,9 +258,58 @@ function RouteComponent() {
       .sort((a, b) => b.value - a.value);
   }, [stats]);
 
+  const orderFilterActive = Boolean(stats?.filters?.orderMetricsFiltered);
+
   return (
     <div className="p-5 max-w-5xl">
       <h1 className="text-lg font-semibold">Reports Dashboard</h1>
+
+      <Card className="mt-4 border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Order date range</CardTitle>
+          <CardDescription>
+            Limit <strong>orders</strong>, <strong>revenue</strong>,{" "}
+            <strong>items sold</strong>, <strong>order type</strong>, and{" "}
+            <strong>truck order counts</strong> to orders placed in this range
+            (uses each order&apos;s scheduled / placed time). Catalog-style
+            totals (users, menu items, ingredients, suppliers) stay all-time.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-end gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="report-start">Start</Label>
+            <Input
+              id="report-start"
+              type="date"
+              value={pendingStart}
+              onChange={(e) => setPendingStart(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="report-end">End</Label>
+            <Input
+              id="report-end"
+              type="date"
+              value={pendingEnd}
+              onChange={(e) => setPendingEnd(e.target.value)}
+            />
+          </div>
+          <Button type="button" onClick={handleApplyFilter}>
+            Apply
+          </Button>
+          <Button type="button" variant="outline" onClick={handleClearFilter}>
+            Clear
+          </Button>
+        </CardContent>
+        {orderFilterActive && stats?.filters?.startDate && stats?.filters?.endDate && (
+          <CardContent className="pt-0 text-sm text-muted-foreground">
+            Active:{" "}
+            <span className="font-medium text-foreground">
+              {stats.filters.startDate} – {stats.filters.endDate}
+            </span>
+          </CardContent>
+        )}
+      </Card>
 
       {error && (
         <p className="mt-3 text-sm text-destructive">{error}</p>
@@ -332,7 +427,7 @@ function RouteComponent() {
           <ReportBarChartCard
             title="Total orders (by order type)"
             total={stats?.totalOrders}
-            summary="Orders grouped by how they were placed: walk-in vs online pickup."
+            summary={`Orders grouped by how they were placed: walk-in vs online pickup.${orderFilterActive ? " Counts only orders in the selected date range." : ""}`}
             chartData={ordersChartData}
             valueLabel="Orders"
             emptyMessage="No orders placed yet."
@@ -341,7 +436,7 @@ function RouteComponent() {
           <ReportBarChartCard
             title="Total items sold (by menu category)"
             total={stats?.totalItemsSold}
-            summary="Sum of line-item quantities sold, grouped by the menu item’s category (drinks, desserts, etc.)."
+            summary={`Sum of line-item quantities sold, grouped by the menu item’s category (drinks, desserts, etc.).${orderFilterActive ? " Quantities only from orders in the selected date range." : ""}`}
             chartData={soldChartData}
             valueLabel="Units sold"
             emptyMessage="No order line items yet."
@@ -350,7 +445,7 @@ function RouteComponent() {
           <ReportBarChartCard
             title="Total trucks (orders per truck)"
             total={stats?.totalTrucks}
-            summary="Each bar is a registered food truck; length is how many checkout orders used that truck’s license plate."
+            summary={`Each bar is a registered food truck; length is how many checkout orders used that truck’s license plate.${orderFilterActive ? " Order counts only include the selected date range." : ""}`}
             chartData={trucksChartData}
             valueLabel="Orders"
             emptyMessage="No food trucks registered yet."
@@ -364,6 +459,13 @@ function RouteComponent() {
           <div>Total Suppliers: {stats?.totalSuppliers ?? "—"}</div>
           <div>
             Gross Income: ${stats != null ? money(stats.grossIncome) : "—"}
+            {orderFilterActive && (
+              <span className="text-muted-foreground">
+                {" "}
+                (from orders in selected range, excluding cancelled / refunded
+                payments)
+              </span>
+            )}
           </div>
         </div>
       </div>
