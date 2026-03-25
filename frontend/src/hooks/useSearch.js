@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { SEARCH_TABLES } from "@/data/search";
 
 const normalizeArrayResponse = (data) => {
   if (Array.isArray(data)) return data;
@@ -12,6 +13,67 @@ const normalizeArrayResponse = (data) => {
   }
   return [];
 };
+
+async function fetchAllSearchData(tables) {
+  const token = localStorage.getItem("token");
+  const makeAuthHeaders = () =>
+    token ? { Authorization: `Bearer ${token}` } : undefined;
+
+  const fetchPromises = tables.map(async (table) => {
+    const res = await fetch(table.endpoint, { headers: makeAuthHeaders() });
+    const data = await res.json();
+    return { table, res, data };
+  });
+
+  const results = await Promise.all(fetchPromises);
+
+  const data = {};
+  const errors = [];
+
+  for (const { table, res, data: tableData } of results) {
+    if (!res.ok) {
+      errors.push(`${table.type}: ${tableData?.error || "Failed to load"}`);
+    } else {
+      data[table.type] = normalizeArrayResponse(tableData);
+    }
+  }
+
+  return { data, errors };
+}
+
+function searchData(data, tables, term, limit = 50) {
+  const searchTermLower = term.trim().toLowerCase();
+  const matches = (...fields) =>
+    fields.some((f) =>
+      String(f ?? "")
+        .toLowerCase()
+        .includes(searchTermLower),
+    );
+
+  const out = [];
+
+  for (const table of tables) {
+    if (out.length >= limit) break;
+
+    const items = data[table.type] || [];
+
+    for (const item of items) {
+      if (out.length >= limit) break;
+
+      const searchValues = table.searchFields.map((field) => item[field]);
+      if (!matches(...searchValues)) continue;
+
+      out.push({
+        type: table.type,
+        id: item[table.idField],
+        title: table.getTitle ? table.getTitle(item) : item[table.titleField],
+        details: table.getDetails(item),
+      });
+    }
+  }
+
+  return out;
+}
 
 export function useSearch() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,29 +90,7 @@ export function useSearch() {
     setHasSearched(true);
 
     try {
-      const token = localStorage.getItem("token");
-      const makeAuthHeaders = () =>
-        token ? { Authorization: `Bearer ${token}` } : undefined;
-
-      const [menuRes, ingRes, empRes, supRes] = await Promise.all([
-        fetch("/api/menu-items", { headers: makeAuthHeaders() }),
-        fetch("/api/ingredients", { headers: makeAuthHeaders() }),
-        fetch("/api/employees", { headers: makeAuthHeaders() }),
-        fetch("/api/suppliers", { headers: makeAuthHeaders() }),
-      ]);
-
-      const [menuData, ingData, empData, supData] = await Promise.all([
-        menuRes.json(),
-        ingRes.json(),
-        empRes.json(),
-        supRes.json(),
-      ]);
-
-      const errors = [];
-      if (!menuRes.ok) errors.push(menuData?.error || "Failed to load menu items");
-      if (!ingRes.ok) errors.push(ingData?.error || "Failed to load ingredients");
-      if (!empRes.ok) errors.push(empData?.error || "Failed to load employees");
-      if (!supRes.ok) errors.push(supData?.error || "Failed to load suppliers");
+      const { data, errors } = await fetchAllSearchData(SEARCH_TABLES);
 
       if (errors.length > 0) {
         setFetchError(errors.join(" | "));
@@ -59,67 +99,8 @@ export function useSearch() {
         return;
       }
 
-      const menuItems = normalizeArrayResponse(menuData);
-      const ingredients = normalizeArrayResponse(ingData);
-      const employees = normalizeArrayResponse(empData);
-      const suppliers = normalizeArrayResponse(supData);
-
-      const searchTermLower = term.trim().toLowerCase();
-      const matches = (...fields) =>
-        fields.some((f) =>
-          String(f ?? "")
-            .toLowerCase()
-            .includes(searchTermLower),
-        );
-
-      const out = [];
-      const limit = 50;
-
-      for (const m of menuItems) {
-        if (out.length >= limit) break;
-        if (!matches(m.item_name, m.description, m.category_name, m.price)) continue;
-        out.push({
-          type: "Menu Item",
-          id: m.menu_item_id,
-          title: m.item_name,
-          details: [m.category_name, m.price != null ? `$${m.price}` : null].filter(Boolean).join(" - "),
-        });
-      }
-
-      for (const i of ingredients) {
-        if (out.length >= limit) break;
-        if (!matches(i.ingredient_name, i.category, i.unit_of_measure, i.preferred_supplier_name)) continue;
-        out.push({
-          type: "Ingredient",
-          id: i.ingredient_id,
-          title: i.ingredient_name,
-          details: [i.category, i.unit_of_measure, i.preferred_supplier_name].filter(Boolean).join(" - "),
-        });
-      }
-
-      for (const e of employees) {
-        if (out.length >= limit) break;
-        if (!matches(e.first_name, e.last_name, e.email, e.role, e.license_plate)) continue;
-        out.push({
-          type: "Employee",
-          id: e.email,
-          title: `${e.first_name || ""} ${e.last_name || ""}`.trim(),
-          details: [e.role, e.email, e.license_plate].filter(Boolean).join(" - "),
-        });
-      }
-
-      for (const s of suppliers) {
-        if (out.length >= limit) break;
-        if (!matches(s.supplier_name, s.contact_person, s.email, s.phone_number, s.address)) continue;
-        out.push({
-          type: "Supplier",
-          id: s.supplier_id,
-          title: s.supplier_name,
-          details: [s.contact_person, s.email, s.phone_number].filter(Boolean).join(" - "),
-        });
-      }
-
-      setSearchResults(out);
+      const results = searchData(data, SEARCH_TABLES, term, 50);
+      setSearchResults(results);
     } catch (err) {
       setFetchError("Failed to search database");
       setSearchResults([]);
