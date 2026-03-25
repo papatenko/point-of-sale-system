@@ -18,14 +18,36 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { GENDER_OPTIONS } from "@/data/gender";
-import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
 
 export const Route = createFileRoute("/customer/create_customer")({
   component: CustomerCreationComponent,
 });
 
+const GENDER_OPTIONS = [
+  { id: 1, label: "Male" },
+  { id: 2, label: "Female" },
+  { id: 3, label: "Non-binary" },
+  { id: 4, label: "Prefer not to say" },
+];
+
+
+
+const ETHNICITY_OPTIONS = [
+  { id: 1, label: "Arab" },
+  { id: 2, label: "Asian" },
+  { id: 3, label: "Black or African American" },
+  { id: 4, label: "Hispanic or Latino" },
+  { id: 5, label: "Native American" },
+  { id: 6, label: "Pacific Islander" },
+  { id: 7, label: "White" },
+  { id: 8, label: "Prefer not to say" },
+];
+
 function CustomerCreationComponent() {
+
+  const [phoneError, setPhoneError] = useState(""); 
+  const [nameError, setNameError] = useState(""); 
+  const [LnameError, setLNameError] = useState(""); 
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -40,7 +62,47 @@ function CustomerCreationComponent() {
   });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+      if (name === "phone_number") {
+        //todo lo q no sea numero no se escribe
+        const numericValue = value.replace(/\D/g, "");
+      // Detectar si hay algo que no sea número
+        if (value !== numericValue) {
+          setPhoneError("Only numbers are allowed");
+        }  else {
+          setPhoneError("");
+      }
+        setForm({ ...form, [name]: numericValue });
+        return;
+      }
+
+
+      if (name === "first_name") {
+        const nameValue = value.replace(/[^a-zA-Z]/g, "");
+        if (value !== nameValue) {
+          setNameError("Only letters are allowed");
+        } else {
+          setNameError("");
+        }
+        setForm({ ...form, [name]: nameValue });
+        return;
+      }
+
+      if (name === "last_name") {
+        const lNameValue = value.replace(/[^a-zA-Z]/g, "");
+        if (value !== lNameValue) {
+          setLNameError("Only letters are allowed");
+        } else {
+          setLNameError("");
+        }
+        setForm({ ...form, [name]: lNameValue });
+        return;
+      }
+
+     
+
+    setForm({ ...form, [e.target.name]: value });
   };
 
   const handleSelectChange = (name, value) => {
@@ -51,6 +113,24 @@ function CustomerCreationComponent() {
     e.preventDefault();
     setIsSubmitting(true);
     const token = localStorage.getItem("token");
+
+    if (
+      form.phone_number &&
+      (form.phone_number.length < 10 || form.phone_number.length > 11)
+    ) {
+      alert("Phone number must be 10 or 11 digits");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (
+      form.password &&
+      (form.password.length < 8 )
+    ) {
+      alert("password must be at least 8 characters");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const userResponse = await fetch("http://localhost:3000/api/users", {
@@ -96,7 +176,7 @@ function CustomerCreationComponent() {
       }
 
       alert("Customer created successfully!");
-      navigate({ to: "/employee" });
+      navigate({ to: "/order" });
     } catch (error) {
       console.error("Error:", error);
       alert("Failed to create customer. Check the console for details.");
@@ -217,7 +297,7 @@ function CustomerCreationComponent() {
                   </SelectTrigger>
                   <SelectContent>
                     {GENDER_OPTIONS.map((g) => (
-                      <SelectItem key={g.value} value={g.value}>
+                      <SelectItem key={g.id} value={String(g.id)}>
                         {g.label}
                       </SelectItem>
                     ))}
@@ -237,7 +317,7 @@ function CustomerCreationComponent() {
                   </SelectTrigger>
                   <SelectContent>
                     {ETHNICITY_OPTIONS.map((e) => (
-                      <SelectItem key={e.value} value={e.value}>
+                      <SelectItem key={e.id} value={String(e.id)}>
                         {e.label}
                       </SelectItem>
                     ))}
