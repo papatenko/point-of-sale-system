@@ -1,7 +1,4 @@
 import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -23,5 +20,7 @@ export function signEmployeeToken(email) {
 /** Full user token including user_type and role */
 export function signUserToken(email, user_type, role) {
   if (!JWT_SECRET) throw new Error("JWT_SECRET not configured");
-  return jwt.sign({ email, user_type, role: role ?? null }, JWT_SECRET, { expiresIn: "2h" });
+  return jwt.sign({ email, user_type, role: role ?? null }, JWT_SECRET, {
+    expiresIn: "2h",
+  });
 }
