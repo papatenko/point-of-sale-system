@@ -2,28 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setLogin } from "@/redux/authSlice";
+import { GENDER_OPTIONS } from "@/data/gender";
+import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
 });
-
-const GENDER_OPTIONS = [
-  { value: "1", label: "Male" },
-  { value: "2", label: "Female" },
-  { value: "3", label: "Non-binary" },
-  { value: "4", label: "Prefer not to say" },
-];
-
-const ETHNICITY_OPTIONS = [
-  { value: "1", label: "Arab" },
-  { value: "2", label: "Asian" },
-  { value: "3", label: "Black or African American" },
-  { value: "4", label: "Hispanic or Latino" },
-  { value: "5", label: "Native American" },
-  { value: "6", label: "Pacific Islander" },
-  { value: "7", label: "White" },
-  { value: "8", label: "Prefer not to say" },
-];
 
 function ProfilePage() {
   const [formData, setFormData] = useState({

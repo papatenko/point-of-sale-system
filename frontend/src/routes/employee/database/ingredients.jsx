@@ -4,23 +4,11 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
 import { CreateForm } from "@/components/database/create-form";
 import { Plus } from "lucide-react";
+import { UNIT_OPTIONS } from "@/data/units";
 
 export const Route = createFileRoute("/employee/database/ingredients")({
   component: IngredientsDatabaseComponent,
 });
-
-const UNIT_OPTIONS = [
-  { value: "g", label: "Grams (g)" },
-  { value: "kg", label: "Kilograms (kg)" },
-  { value: "ml", label: "Milliliters (ml)" },
-  { value: "l", label: "Liters (l)" },
-  { value: "tsp", label: "Teaspoons (tsp)" },
-  { value: "tbsp", label: "Tablespoons (tbsp)" },
-  { value: "cup", label: "Cups (cup)" },
-  { value: "oz", label: "Ounces (oz)" },
-  { value: "lb", label: "Pounds (lb)" },
-  { value: "pcs", label: "Pieces (pcs)" },
-];
 
 const COLUMNS = [
   { key: "ingredient_id", label: "ID" },

@@ -4,28 +4,12 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
 import { CreateForm } from "@/components/database/create-form";
 import { Plus } from "lucide-react";
+import { GENDER_OPTIONS } from "@/data/gender";
+import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
 
 export const Route = createFileRoute("/customer/database/customer")({
   component: CustomersDatabaseComponent,
 });
-
-const GENDER_OPTIONS = [
-  { value: "1", label: "Male" },
-  { value: "2", label: "Female" },
-  { value: "3", label: "Non-binary" },
-  { value: "4", label: "Prefer not to say" },
-];
-
-const ETHNICITY_OPTIONS = [
-  { value: "1", label: "Arab" },
-  { value: "2", label: "Asian" },
-  { value: "3", label: "Black or African American" },
-  { value: "4", label: "Hispanic or Latino" },
-  { value: "5", label: "Native American" },
-  { value: "6", label: "Pacific Islander" },
-  { value: "7", label: "White" },
-  { value: "8", label: "Prefer not to say" },
-];
 
 const COLUMNS = [
   { key: "email", label: "Email" },

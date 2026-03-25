@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY . .
 RUN npm install turbo@latest -g && \
-    npm i --omit=dev && \
+    npm i && \
     turbo run build --filter=frontend && \
     npm cache clean --force && \
     rm -rf /root/.npm

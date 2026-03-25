@@ -26,28 +26,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { GENDER_OPTIONS } from "@/data/gender";
+import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
 
 export const Route = createFileRoute("/employee/create/employee")({
   component: CreationComponent,
 });
-
-const GENDER_OPTIONS = [
-  { id: 1, label: "Male" },
-  { id: 2, label: "Female" },
-  { id: 3, label: "Non-binary" },
-  { id: 4, label: "Prefer not to say" },
-];
-
-const ETHNICITY_OPTIONS = [
-  { id: 1, label: "Arab" },
-  { id: 2, label: "Asian" },
-  { id: 3, label: "Black or African American" },
-  { id: 4, label: "Hispanic or Latino" },
-  { id: 5, label: "Native American" },
-  { id: 6, label: "Pacific Islander" },
-  { id: 7, label: "White" },
-  { id: 8, label: "Prefer not to say" },
-];
 
 function CreationComponent() {
   const navigate = useNavigate();
@@ -308,7 +292,7 @@ function CreationComponent() {
                     </SelectTrigger>
                     <SelectContent>
                       {GENDER_OPTIONS.map((g) => (
-                        <SelectItem key={g.id} value={String(g.id)}>
+                        <SelectItem key={g.value} value={g.value}>
                           {g.label}
                         </SelectItem>
                       ))}
@@ -328,7 +312,7 @@ function CreationComponent() {
                     </SelectTrigger>
                     <SelectContent>
                       {ETHNICITY_OPTIONS.map((e) => (
-                        <SelectItem key={e.id} value={String(e.id)}>
+                        <SelectItem key={e.value} value={e.value}>
                           {e.label}
                         </SelectItem>
                       ))}
