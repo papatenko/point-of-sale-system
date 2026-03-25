@@ -149,6 +149,7 @@ function FoodTrucksDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={trucks}
+        limit={5}
         searchKeys={["truck_name", "license_plate", "current_location"]}
         deleteIdKey="license_plate"
         onDelete={handleDelete}

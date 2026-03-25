@@ -315,6 +315,7 @@ function UsersDatabaseComponent() {
       <DataTable
         columns={enrichedColumns}
         data={enrichedUsers}
+        limit={5}
         searchKeys={[
           "first_name",
           "last_name",

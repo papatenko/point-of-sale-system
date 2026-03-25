@@ -142,6 +142,7 @@ function IngredientsDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={ingredients}
+        limit={5}
         searchKeys={["ingredient_name"]}
         deleteIdKey="ingredient_id"
         onDelete={handleDelete}

@@ -144,6 +144,7 @@ function SuppliersDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={suppliers}
+        limit={5}
         searchKeys={["supplier_name", "contact_person", "email"]}
         deleteIdKey="supplier_id"
         onDelete={handleDelete}

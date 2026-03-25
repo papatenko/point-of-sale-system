@@ -311,6 +311,7 @@ function RecipesDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={enrichedRecipes}
+        limit={5}
         searchKeys={["menu_item_name", "ingredient_name", "instructions"]}
         deleteIdKey="recipe_id"
         onDelete={handleDelete}

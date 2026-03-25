@@ -15,6 +15,7 @@ import { Trash2 } from "lucide-react";
 export function DataTable({
   columns,
   data,
+  limit,
   searchKeys,
   deleteIdKey,
   onDelete,
@@ -25,16 +26,17 @@ export function DataTable({
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredData = useMemo(() => {
-    if (!searchTerm.trim()) return data;
+    const dataToFilter = limit ? data.slice(0, limit) : data;
+    if (!searchTerm.trim()) return dataToFilter;
 
     const term = searchTerm.toLowerCase();
-    return data.filter((item) =>
+    return dataToFilter.filter((item) =>
       searchKeys.some((key) => {
         const value = item[key];
         return value?.toString().toLowerCase().includes(term);
       }),
     );
-  }, [data, searchTerm, searchKeys]);
+  }, [data, searchTerm, searchKeys, limit]);
 
   const handleDelete = (id) => {
     if (confirm("Are you sure you want to delete this item?")) {
@@ -122,6 +124,12 @@ export function DataTable({
           </TableBody>
         </Table>
       </div>
+
+      {limit && data.length > limit && (
+        <p className="text-sm text-muted-foreground">
+          Showing {filteredData.length} of {data.length} total items
+        </p>
+      )}
     </div>
   );
 }

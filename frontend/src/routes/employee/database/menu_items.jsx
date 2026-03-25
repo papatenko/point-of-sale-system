@@ -139,6 +139,7 @@ function MenuItemsDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={menuItems}
+        limit={5}
         searchKeys={["item_name", "category_name"]}
         deleteIdKey="menu_item_id"
         onDelete={handleDelete}
