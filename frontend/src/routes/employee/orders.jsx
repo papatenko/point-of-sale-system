@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useCallback } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, RefreshCw } from "lucide-react";
+import { useOrders } from "@/hooks/useOrders";
 
 export const Route = createFileRoute("/employee/orders")({
   component: OrdersPage,
@@ -19,51 +19,7 @@ const STATUS_COLORS = {
 };
 
 function OrdersPage() {
-  const [currentOrders, setCurrentOrders] = useState([]);
-  const [pastOrders, setPastOrders] = useState([]);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  const fetchCurrentOrders = useCallback(async () => {
-    try {
-      const res = await fetch("/api/orders?status=pending,preparing,ready");
-      const data = await res.json();
-      setCurrentOrders(Array.isArray(data) ? data : []);
-    } catch {
-      setCurrentOrders([]);
-    }
-  }, []);
-
-  const fetchPastOrders = useCallback(async (q = "") => {
-    try {
-      const params = new URLSearchParams({ status: "completed,cancelled" });
-      if (q) params.set("search", q);
-      const res = await fetch(`/api/orders?${params.toString()}`);
-      const data = await res.json();
-      setPastOrders(Array.isArray(data) ? data : []);
-    } catch {
-      setPastOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCurrentOrders();
-    fetchPastOrders();
-  }, [fetchCurrentOrders, fetchPastOrders]);
-
-  // Auto-refresh current orders every 10s
-  useEffect(() => {
-    const id = setInterval(fetchCurrentOrders, 10_000);
-    return () => clearInterval(id);
-  }, [fetchCurrentOrders]);
-
-  // Re-fetch past orders when search changes (debounced 300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => fetchPastOrders(search), 300);
-    return () => clearTimeout(timer);
-  }, [search, fetchPastOrders]);
+  const { currentOrders, pastOrders, search, setSearch, loading } = useOrders();
 
   return (
     <div className="p-6 max-w-4xl">
