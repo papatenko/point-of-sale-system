@@ -7,7 +7,7 @@ export async function login(email, password) {
   const db = await getDatabase();
 
   const [rows] = await db.query(
-    `SELECT u.email, u.password, u.first_name, u.user_type, e.role
+    `SELECT u.email, u.password, u.first_name, u.user_type, e.role, e.license_plate
      FROM users u
      LEFT JOIN employees e ON u.email = e.email
      WHERE u.email = ?`,
@@ -23,7 +23,7 @@ export async function login(email, password) {
     throw new Error("Incorrect password");
   }
 
-  const token = signUserToken(user.email, user.user_type, user.role ?? null);
+  const token = signUserToken(user.email, user.user_type, user.role ?? null, user.license_plate ?? null);
 
   return {
     token,
@@ -32,6 +32,7 @@ export async function login(email, password) {
       first_name: user.first_name,
       user_type: user.user_type,
       role: user.role ?? null,
+      license_plate: user.license_plate ?? null,
     },
   };
 }

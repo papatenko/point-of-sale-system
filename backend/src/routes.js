@@ -171,9 +171,14 @@ router.delete("/api/customers", async (body, db) => {
   return CustomerService.deleteCustomer(db, email);
 });
 
-// Checkout
-router.post("/api/checkout", async (body, db) =>
-  CheckoutService.createCheckout(db, body),
+// Checkout — customer online orders
+router.post("/api/checkout", async (body, db, req) =>
+  CheckoutService.createCheckout(db, { ...body, orderType: "online-pickup" }, req),
+);
+
+// POS checkout — walk-in orders, truck auto-assigned from JWT
+router.post("/api/pos/checkout", async (body, db, req) =>
+  CheckoutService.createCheckout(db, { ...body, orderType: "walk-in" }, req),
 );
 
 // Reports

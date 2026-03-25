@@ -17,10 +17,12 @@ export function signEmployeeToken(email) {
   return jwt.sign({ email }, JWT_SECRET, { expiresIn: "2h" });
 }
 
-/** Full user token including user_type and role */
-export function signUserToken(email, user_type, role) {
+/** Full user token including user_type, role, and license_plate */
+export function signUserToken(email, user_type, role, license_plate) {
   if (!JWT_SECRET) throw new Error("JWT_SECRET not configured");
-  return jwt.sign({ email, user_type, role: role ?? null }, JWT_SECRET, {
-    expiresIn: "2h",
-  });
+  return jwt.sign(
+    { email, user_type, role: role ?? null, license_plate: license_plate ?? null },
+    JWT_SECRET,
+    { expiresIn: "2h" },
+  );
 }
