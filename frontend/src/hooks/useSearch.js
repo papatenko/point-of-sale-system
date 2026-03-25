@@ -77,42 +77,75 @@ function searchData(data, tables, term, limit = 50) {
 
 export function useSearch() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTables, setSelectedTables] = useState(SEARCH_TABLES.map((t) => t.type));
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [fetchError, setFetchError] = useState(null);
 
-  const search = useCallback(async (term) => {
-    if (!term.trim()) return;
+  const toggleTable = useCallback((type) => {
+    setSelectedTables((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  }, []);
 
-    setLoading(true);
-    setFetchError(null);
-    setHasSearched(true);
+  const selectAll = useCallback(() => {
+    setSelectedTables(SEARCH_TABLES.map((t) => t.type));
+  }, []);
 
-    try {
-      const { data, errors } = await fetchAllSearchData(SEARCH_TABLES);
+  const deselectAll = useCallback(() => {
+    setSelectedTables([]);
+  }, []);
 
-      if (errors.length > 0) {
-        setFetchError(errors.join(" | "));
+  const search = useCallback(
+    async (term) => {
+      if (!term.trim()) return;
+
+      if (selectedTables.length === 0) {
+        setFetchError("Please select at least one table to search.");
         setSearchResults([]);
-        setLoading(false);
+        setHasSearched(true);
         return;
       }
 
-      const results = searchData(data, SEARCH_TABLES, term, 50);
-      setSearchResults(results);
-    } catch (err) {
-      setFetchError("Failed to search database");
-      setSearchResults([]);
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      setLoading(true);
+      setFetchError(null);
+      setHasSearched(true);
+
+      try {
+        const tablesToSearch = SEARCH_TABLES.filter((t) =>
+          selectedTables.includes(t.type)
+        );
+        const { data, errors } = await fetchAllSearchData(tablesToSearch);
+
+        if (errors.length > 0) {
+          setFetchError(errors.join(" | "));
+          setSearchResults([]);
+          setLoading(false);
+          return;
+        }
+
+        const results = searchData(data, tablesToSearch, term, 50);
+        setSearchResults(results);
+      } catch (err) {
+        setFetchError("Failed to search database");
+        setSearchResults([]);
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectedTables]
+  );
 
   return {
     searchTerm,
     setSearchTerm,
+    selectedTables,
+    setSelectedTables,
+    toggleTable,
+    selectAll,
+    deselectAll,
     loading,
     hasSearched,
     searchResults,

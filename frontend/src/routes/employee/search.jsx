@@ -3,8 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search } from "lucide-react";
+import { Search, ChevronDown, Check } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 import { useSearch } from "@/hooks/useSearch";
+import { SEARCH_TABLES } from "@/data/search";
 
 export const Route = createFileRoute("/employee/search")({
   component: RouteComponent,
@@ -14,6 +22,10 @@ function RouteComponent() {
   const {
     searchTerm,
     setSearchTerm,
+    selectedTables,
+    toggleTable,
+    selectAll,
+    deselectAll,
     loading,
     hasSearched,
     searchResults,
@@ -24,6 +36,8 @@ function RouteComponent() {
   const handleSearch = () => {
     search(searchTerm);
   };
+
+  const allSelected = selectedTables.length === SEARCH_TABLES.length;
 
   return (
     <div className="p-6 space-y-6">
@@ -48,6 +62,35 @@ function RouteComponent() {
               <Search className="mr-2 h-4 w-4" />
               Search
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  Filter ({selectedTables.length}/{SEARCH_TABLES.length})
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuCheckboxItem
+                  checked={allSelected}
+                  onCheckedChange={() => allSelected ? deselectAll() : selectAll()}
+                  onSelect={(e) => e.preventDefault()}
+                  className="font-medium"
+                >
+                  {allSelected ? "Deselect All" : "Select All"}
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                {SEARCH_TABLES.map((table) => (
+                  <DropdownMenuCheckboxItem
+                    key={table.type}
+                    checked={selectedTables.includes(table.type)}
+                    onCheckedChange={() => toggleTable(table.type)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {table.type}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent>
