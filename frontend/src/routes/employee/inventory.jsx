@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   PackageIcon, AlertTriangleIcon, CheckCircle2Icon,
   TruckIcon, MinusCircleIcon, ShoppingCartIcon, HistoryIcon,
@@ -26,8 +26,19 @@ export const Route = createFileRoute("/employee/inventory")({
   component: InventoryPage,
 });
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 const fmt = (n) => (n == null ? "—" : parseFloat(n).toFixed(2));
 
+function useToast() {
+  const [toast, setToast] = useState(null);
+  const show = (msg, type = "success") => {
+    setToast({ msg, type, id: Date.now() });
+    setTimeout(() => setToast(null), 4000);
+  };
+  return { toast, show };
+}
+
+// ─── Status Badge ─────────────────────────────────────────────────────────────
 function StatusBadge({ item }) {
   if (item.quantityOnHand === 0)
     return <Badge variant="destructive">Out of Stock</Badge>;
@@ -39,6 +50,7 @@ function StatusBadge({ item }) {
   return <Badge variant="success">In Stock</Badge>;
 }
 
+// ─── Expiry Badge ─────────────────────────────────────────────────────────────
 function ExpiryBadge({ date }) {
   if (!date) return <span className="text-muted-foreground text-xs">—</span>;
   const days = Math.floor((new Date(date) - new Date()) / 86_400_000);
@@ -72,6 +84,7 @@ function QuantityBar({ item }) {
   );
 }
 
+// ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({ icon: Icon, label, value, variant = "default" }) {
   const colorMap = {
     default: "text-foreground",
@@ -748,6 +761,7 @@ function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
   );
 }
 
+// ─── Reorder Dialog ───────────────────────────────────────────────────────────
 function ReorderDialog({ item, open, onOpenChange, onConfirm, loading }) {
   const [qty, setQty] = useState("");
   const suggested = item
@@ -1077,6 +1091,7 @@ function InventoryPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
+      {/* ── Page Header ─────────────────────────────────────────── */}
       <div className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -1085,7 +1100,7 @@ function InventoryPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold leading-tight">Inventory Management</h1>
-              <p className="text-sm text-muted-foreground">{stats.selectedTruckName || "Select a truck"}</p>
+              <p className="text-sm text-muted-foreground">{selectedTruckName || "Select a truck"}</p>
             </div>
           </div>
 
@@ -1134,7 +1149,7 @@ function InventoryPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={refresh}
+              onClick={() => loadData(selectedTruck)}
               disabled={loading}
             >
               <RefreshCwIcon className={`size-4 ${loading ? "animate-spin" : ""}`} />
@@ -1159,11 +1174,12 @@ function InventoryPage() {
       </div>
 
       <div className="max-w-7xl mx-auto w-full px-6 py-6 flex flex-col gap-6">
+        {/* ── Stat Cards ────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard icon={PackageIcon}       label="Total Ingredients" value={stats.totalIngredients} />
-          <StatCard icon={XCircleIcon}       label="Out of Stock"      value={stats.outOfStockCount}  variant={stats.outOfStockCount  > 0 ? "danger"  : "success"} />
-          <StatCard icon={AlertTriangleIcon} label="Below Threshold"   value={stats.belowThreshCount} variant={stats.belowThreshCount > 0 ? "warning" : "success"} />
-          <StatCard icon={BellIcon}          label="Active Alerts"     value={stats.activeAlertCount} variant={stats.activeAlertCount > 0 ? "warning" : "success"} />
+          <StatCard icon={PackageIcon}       label="Total Ingredients" value={inventory.length} />
+          <StatCard icon={XCircleIcon}       label="Out of Stock"      value={outOfStockCount}  variant={outOfStockCount  > 0 ? "danger"  : "success"} />
+          <StatCard icon={AlertTriangleIcon} label="Below Threshold"   value={belowThreshCount} variant={belowThreshCount > 0 ? "warning" : "success"} />
+          <StatCard icon={BellIcon}          label="Active Alerts"     value={activeAlertCount} variant={activeAlertCount > 0 ? "warning" : "success"} />
         </div>
 
         {/* ── Banners ───────────────────────────────────────────── */}
@@ -1186,7 +1202,7 @@ function InventoryPage() {
             <AlertTriangleIcon className="size-4 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium leading-none mb-1">
-                {stats.activeAlertCount} ingredient{stats.activeAlertCount > 1 ? "s" : ""} need{stats.activeAlertCount === 1 ? "s" : ""} reordering
+                {activeAlertCount} ingredient{activeAlertCount > 1 ? "s" : ""} need{activeAlertCount === 1 ? "s" : ""} reordering
               </p>
               <p className="text-sm opacity-80">
                 Check the <strong>Reorder Alerts</strong> tab to place orders.
@@ -1195,21 +1211,22 @@ function InventoryPage() {
           </div>
         )}
 
+        {/* ── Tabs ──────────────────────────────────────────────── */}
         <Tabs defaultValue="inventory" className="gap-0">
           <TabsList className="w-full justify-start rounded-b-none border border-b-0 bg-muted/50 h-auto p-0">
             <TabsTrigger value="inventory" className="rounded-none rounded-tl-lg data-[state=active]:shadow-none border-r py-3 px-5 gap-2">
               <PackageIcon className="size-4" />
               Inventory
-              {stats.belowThreshCount > 0 && (
-                <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0">{stats.belowThreshCount}</Badge>
+              {belowThreshCount > 0 && (
+                <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0">{belowThreshCount}</Badge>
               )}
             </TabsTrigger>
 
             <TabsTrigger value="alerts" className="rounded-none data-[state=active]:shadow-none border-r py-3 px-5 gap-2">
               <BellIcon className="size-4" />
               Reorder Alerts
-              {stats.activeAlertCount > 0 && (
-                <Badge variant="warning" className="ml-1 text-xs px-1.5 py-0">{stats.activeAlertCount}</Badge>
+              {activeAlertCount > 0 && (
+                <Badge variant="warning" className="ml-1 text-xs px-1.5 py-0">{activeAlertCount}</Badge>
               )}
             </TabsTrigger>
 
@@ -1219,6 +1236,7 @@ function InventoryPage() {
             </TabsTrigger>
           </TabsList>
 
+          {/* ── INVENTORY TAB ──────────────────────────────────── */}
           <TabsContent value="inventory" className="mt-0">
             <Card className="rounded-tl-none">
               <CardHeader className="border-b pb-4">
@@ -1255,7 +1273,7 @@ function InventoryPage() {
               <CardContent className="p-0">
                 {loading ? (
                   <LoadingRows />
-                ) : inventory.length === 0 ? (
+                ) : filtered.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
                     <PackageIcon className="size-10 opacity-30" />
                     <p className="font-medium text-foreground">No ingredients found</p>
@@ -1327,6 +1345,7 @@ function InventoryPage() {
             </Card>
           </TabsContent>
 
+          {/* ── ALERTS TAB ─────────────────────────────────────── */}
           <TabsContent value="alerts" className="mt-0">
             <Card className="rounded-tl-none rounded-t-none">
               <CardHeader className="border-b">
@@ -1398,6 +1417,7 @@ function InventoryPage() {
             </Card>
           </TabsContent>
 
+          {/* ── HISTORY TAB ────────────────────────────────────── */}
           <TabsContent value="history" className="mt-0">
             <Card className="rounded-tl-none rounded-t-none">
               <CardHeader className="border-b">
@@ -1496,7 +1516,7 @@ function InventoryPage() {
         item={adjustItem}
         open={!!adjustItem}
         onOpenChange={(o) => !o && setAdjustItem(null)}
-        onConfirm={handleAdjustConfirm}
+        onConfirm={handleAdjust}
         loading={modalLoading}
       />
 
@@ -1504,7 +1524,7 @@ function InventoryPage() {
         item={reorderItem}
         open={!!reorderItem}
         onOpenChange={(o) => !o && setReorderItem(null)}
-        onConfirm={handleReorderConfirm}
+        onConfirm={handleReorder}
         loading={modalLoading}
       />
 
