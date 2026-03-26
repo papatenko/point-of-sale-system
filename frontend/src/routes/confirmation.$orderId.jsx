@@ -30,11 +30,12 @@ function ConfirmationPage() {
     );
   }
 
-  if (!order) {
+  if (!order || order.error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Get scammed bozo.</p>
+          <p className="text-2xl font-bold text-gray-800 mb-2">Order Not Found</p>
+          <p className="text-gray-500 mb-6">We couldn't find that order. It may have been removed or the link is invalid.</p>
           <Link to="/order">
             <Button className="bg-amber-600 hover:bg-amber-700 text-white">
               Browse Menu
@@ -73,10 +74,7 @@ function ConfirmationPage() {
           <Clock size={18} className="text-amber-600 flex-shrink-0" />
           <div>
             <p className="text-sm font-semibold text-amber-800">
-              Your order is being prepared
-            </p>
-            <p className="text-xs text-amber-600 mt-0.5">
-              Please show this confirmation at pickup.
+              Please show this confirmation at pickup
             </p>
           </div>
         </div>

@@ -15,8 +15,8 @@ export async function findById(db, orderId) {
        oi.line_total_price,
        m.item_name
      FROM checkout c
-     JOIN order_items oi ON c.checkout_id = oi.order_id
-     JOIN menu_items  m  ON oi.menu_item_id = m.menu_item_id
+     LEFT JOIN order_items oi ON c.checkout_id = oi.order_id
+     LEFT JOIN menu_items  m  ON oi.menu_item_id = m.menu_item_id
      WHERE c.checkout_id = ?`,
     [orderId],
   );
@@ -32,12 +32,14 @@ export async function findById(db, orderId) {
     paymentMethod: rows[0].payment_method,
     paymentStatus: rows[0].payment_status,
     customerEmail: rows[0].customer_email,
-    items: rows.map((r) => ({
-      orderItemId: r.order_item_id,
-      menuItemId: r.menu_item_id,
-      name: r.item_name,
-      quantity: r.quantity,
-      lineTotal: r.line_total_price,
-    })),
+    items: rows
+      .filter((r) => r.order_item_id !== null)
+      .map((r) => ({
+        orderItemId: r.order_item_id,
+        menuItemId: r.menu_item_id,
+        name: r.item_name,
+        quantity: r.quantity,
+        lineTotal: r.line_total_price,
+      })),
   };
 }
