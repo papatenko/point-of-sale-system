@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OrderRouteImport } from './routes/order'
-import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as EmployeeRouteRouteImport } from './routes/employee/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -40,11 +39,6 @@ import { Route as EmployeeCreateEmployeeRouteImport } from './routes/employee/cr
 const OrderRoute = OrderRouteImport.update({
   id: '/order',
   path: '/order',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InventoryRoute = InventoryRouteImport.update({
-  id: '/inventory',
-  path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutRoute = CheckoutRouteImport.update({
@@ -183,7 +177,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/checkout': typeof CheckoutRoute
-  '/inventory': typeof InventoryRoute
   '/order': typeof OrderRoute
   '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
@@ -211,7 +204,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/checkout': typeof CheckoutRoute
-  '/inventory': typeof InventoryRoute
   '/order': typeof OrderRoute
   '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
@@ -241,7 +233,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/checkout': typeof CheckoutRoute
-  '/inventory': typeof InventoryRoute
   '/order': typeof OrderRoute
   '/employee/create': typeof EmployeeCreateRouteRouteWithChildren
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
@@ -272,7 +263,6 @@ export interface FileRouteTypes {
     | '/'
     | '/employee'
     | '/checkout'
-    | '/inventory'
     | '/order'
     | '/employee/create'
     | '/employee/database'
@@ -300,7 +290,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/checkout'
-    | '/inventory'
     | '/order'
     | '/employee/create'
     | '/employee/database'
@@ -329,7 +318,6 @@ export interface FileRouteTypes {
     | '/'
     | '/employee'
     | '/checkout'
-    | '/inventory'
     | '/order'
     | '/employee/create'
     | '/employee/database'
@@ -359,7 +347,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EmployeeRouteRoute: typeof EmployeeRouteRouteWithChildren
   CheckoutRoute: typeof CheckoutRoute
-  InventoryRoute: typeof InventoryRoute
   OrderRoute: typeof OrderRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
@@ -374,13 +361,6 @@ declare module '@tanstack/react-router' {
       path: '/order'
       fullPath: '/order'
       preLoaderRoute: typeof OrderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inventory': {
-      id: '/inventory'
-      path: '/inventory'
-      fullPath: '/inventory'
-      preLoaderRoute: typeof InventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout': {
@@ -631,7 +611,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EmployeeRouteRoute: EmployeeRouteRouteWithChildren,
   CheckoutRoute: CheckoutRoute,
-  InventoryRoute: InventoryRoute,
   OrderRoute: OrderRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,

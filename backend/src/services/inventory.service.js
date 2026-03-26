@@ -42,19 +42,7 @@ export async function useInventory(db, body) {
     adjusted_by: adjustedBy,
   });
 
-  const existingAlert = await InventoryModel.findActiveAlert(db, licensePlate, ingredientId);
-  let alertCreated = false;
-  if (!existingAlert && newQty < parseFloat(current.reorder_threshold)) {
-    await InventoryModel.createAlert(db, {
-      license_plate: licensePlate,
-      ingredient_id: ingredientId,
-      current_quantity: newQty,
-      reorder_threshold: current.reorder_threshold,
-    });
-    alertCreated = true;
-  }
-
-  return { success: true, newQuantity: newQty, alertCreated };
+  return { success: true, newQuantity: newQty };
 }
 
 export async function useRecipe(db, body) {
@@ -84,7 +72,6 @@ export async function useRecipe(db, body) {
     return { success: false, shortages };
   }
 
-  const alertsCreated = [];
   for (const r of recipe) {
     const needed = parseFloat(r.quantity_needed) * parseInt(quantity);
     const item = await InventoryModel.findInventoryItem(db, licensePlate, r.ingredient_id);
@@ -100,20 +87,9 @@ export async function useRecipe(db, body) {
       reason: `Made ${quantity}x menu item #${menuItemId}`,
       adjusted_by: adjustedBy,
     });
-
-    const existingAlert = await InventoryModel.findActiveAlert(db, licensePlate, r.ingredient_id);
-    if (!existingAlert && newQty < parseFloat(item.reorder_threshold)) {
-      await InventoryModel.createAlert(db, {
-        license_plate: licensePlate,
-        ingredient_id: r.ingredient_id,
-        current_quantity: newQty,
-        reorder_threshold: item.reorder_threshold,
-      });
-      alertsCreated.push(r.ingredient_name);
-    }
   }
 
-  return { success: true, alertsCreated };
+  return { success: true };
 }
 
 /**
@@ -161,7 +137,6 @@ export async function useMenuItem(db, body) {
   }
 
   // Apply all deductions
-  const alertsCreated = [];
   const deductions = [];
 
   for (const r of recipe) {
@@ -186,18 +161,6 @@ export async function useMenuItem(db, body) {
       deducted: needed,
       remaining: newQty,
     });
-
-    // Create reorder alert if now below threshold
-    const existingAlert = await InventoryModel.findActiveAlert(db, licensePlate, r.ingredient_id);
-    if (!existingAlert && newQty < parseFloat(item.reorder_threshold)) {
-      await InventoryModel.createAlert(db, {
-        license_plate: licensePlate,
-        ingredient_id: r.ingredient_id,
-        current_quantity: newQty,
-        reorder_threshold: item.reorder_threshold,
-      });
-      alertsCreated.push(r.ingredient_name);
-    }
   }
 
   return {
@@ -205,7 +168,6 @@ export async function useMenuItem(db, body) {
     menuItemName: menuItemName || `Menu item #${menuItemId}`,
     quantityMade: qty,
     deductions,
-    alertsCreated,
   };
 }
 
@@ -280,7 +242,6 @@ export async function useDailyProduction(db, body) {
   }
 
   // Apply all deductions
-  const alertsCreated = [];
   const productionSummary = productions.map((p) => `${p.quantity}x menu item #${p.menuItemId}`).join(", ");
 
   for (const [ingId, agg] of Object.entries(aggregatedIngredients)) {
@@ -297,21 +258,9 @@ export async function useDailyProduction(db, body) {
       reason: `Daily production: ${productionSummary}`,
       adjusted_by: adjustedBy,
     });
-
-    // Create reorder alert if below threshold
-    const existingAlert = await InventoryModel.findActiveAlert(db, licensePlate, ingId);
-    if (!existingAlert && newQty < parseFloat(item.reorder_threshold)) {
-      await InventoryModel.createAlert(db, {
-        license_plate: licensePlate,
-        ingredient_id: ingId,
-        current_quantity: newQty,
-        reorder_threshold: item.reorder_threshold,
-      });
-      alertsCreated.push(agg.menuItemName);
-    }
   }
 
-  return { success: true, alertsCreated };
+  return { success: true };
 }
 
 /**
@@ -350,17 +299,7 @@ export async function expireInventory(db, body) {
       adjusted_by: adjustedBy,
     });
 
-    // Create reorder alert if one doesn't already exist
-    const current = await InventoryModel.findInventoryItem(db, licensePlate, item.ingredientId);
-    const existingAlert = await InventoryModel.findActiveAlert(db, licensePlate, item.ingredientId);
-    if (!existingAlert && current) {
-      await InventoryModel.createAlert(db, {
-        license_plate: licensePlate,
-        ingredient_id: item.ingredientId,
-        current_quantity: 0,
-        reorder_threshold: current.reorder_threshold,
-      });
-    }
+    // Reorder alert creation is now handled by a database trigger; no backend code needed here.
 
     expired.push({
       ingredientId: item.ingredientId,

@@ -85,23 +85,6 @@ export async function createAdjustment(db, data) {
   );
 }
 
-export async function findActiveAlert(db, licensePlate, ingredientId) {
-  const [[row]] = await db.query(
-    `SELECT alert_id FROM reorder_alerts
-       WHERE license_plate = ? AND ingredient_id = ? AND alert_status = 'active'`,
-    [licensePlate, ingredientId],
-  );
-  return row;
-}
-
-export async function createAlert(db, data) {
-  await db.query(
-    `INSERT INTO reorder_alerts
-       (license_plate, ingredient_id, current_quantity, reorder_threshold, alert_status)
-     VALUES (?, ?, ?, ?, 'active')`,
-    [data.license_plate, data.ingredient_id, data.current_quantity, data.reorder_threshold],
-  );
-}
 
 export async function findIngredientById(db, ingredientId) {
   const [[row]] = await db.query(
