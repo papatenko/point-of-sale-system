@@ -18,9 +18,10 @@ export async function createCustomer(db, data) {
   }
 
   const existingCustomer = await CustomerModel.findByEmail(db, email);
+
   if (existingCustomer) {
-    return { error: "Customer already exists" };
-  }
+  return { error: "Customer already exists" };
+}
 
   const result = await CustomerModel.create(db, {
     email,
@@ -54,3 +55,4 @@ export async function deleteCustomer(db, data) {
     message: "Customer and associated user deleted successfully",
   };
 }
+

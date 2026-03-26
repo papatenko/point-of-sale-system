@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,29 +19,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import { GENDER_OPTIONS } from "@/data/gender";
+import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
+
 export const Route = createFileRoute("/customer/create_customer")({
   component: CustomerCreationComponent,
 });
-
-const GENDER_OPTIONS = [
-  { id: 1, label: "Male" },
-  { id: 2, label: "Female" },
-  { id: 3, label: "Non-binary" },
-  { id: 4, label: "Prefer not to say" },
-];
-
-
-
-const ETHNICITY_OPTIONS = [
-  { id: 1, label: "Arab" },
-  { id: 2, label: "Asian" },
-  { id: 3, label: "Black or African American" },
-  { id: 4, label: "Hispanic or Latino" },
-  { id: 5, label: "Native American" },
-  { id: 6, label: "Pacific Islander" },
-  { id: 7, label: "White" },
-  { id: 8, label: "Prefer not to say" },
-];
 
 function CustomerCreationComponent() {
 
@@ -49,6 +32,7 @@ function CustomerCreationComponent() {
   const [nameError, setNameError] = useState(""); 
   const [LnameError, setLNameError] = useState(""); 
   const navigate = useNavigate();
+  const [existingEmails, setExistingEmails] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState({
     email: "",
@@ -60,6 +44,22 @@ function CustomerCreationComponent() {
     gender: "1",
     ethnicity: "1",
   });
+
+  useEffect(() => {
+  async function fetchExistingEmails() {
+    try {
+      const res = await fetch("http://localhost:3000/api/customers");
+      const data = await res.json();
+      // data sería un array de customers, extraemos solo emails
+      const emails = data.map(c => c.email);
+      setExistingEmails(emails);
+    } catch (err) {
+      console.error("Error fetching existing emails", err);
+    }
+  }
+
+  fetchExistingEmails();
+}, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -113,6 +113,13 @@ function CustomerCreationComponent() {
     e.preventDefault();
     setIsSubmitting(true);
     const token = localStorage.getItem("token");
+
+     if (existingEmails.includes(form.email)) {
+      alert("Customer with this email already exists!");
+      setIsSubmitting(false);
+      return;
+  }
+
 
     if (
       form.phone_number &&
@@ -287,44 +294,44 @@ function CustomerCreationComponent() {
 
               {/* Gender */}
               <div className="space-y-1">
-                <Label>Gender</Label>
-                <Select
-                  value={form.gender}
-                  onValueChange={(v) => handleSelectChange("gender", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GENDER_OPTIONS.map((g) => (
-                      <SelectItem key={g.id} value={String(g.id)}>
-                        {g.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  <Label>Gender</Label>
+                  <Select
+                    value={form.gender}
+                    onValueChange={(v) => handleSelectChange("gender", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GENDER_OPTIONS.map((g) => (
+                        <SelectItem key={g.value} value={g.value}>
+                          {g.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Ethnicity */}
-              <div className="space-y-1">
-                <Label>Ethnicity</Label>
-                <Select
-                  value={form.ethnicity}
-                  onValueChange={(v) => handleSelectChange("ethnicity", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select ethnicity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ETHNICITY_OPTIONS.map((e) => (
-                      <SelectItem key={e.id} value={String(e.id)}>
-                        {e.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                {/* Ethnicity */}
+                <div className="space-y-1">
+                  <Label>Ethnicity</Label>
+                  <Select
+                    value={form.ethnicity}
+                    onValueChange={(v) => handleSelectChange("ethnicity", v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select ethnicity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ETHNICITY_OPTIONS.map((e) => (
+                        <SelectItem key={e.value} value={e.value}>
+                          {e.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                </div>
 
             <Button
               type="submit"

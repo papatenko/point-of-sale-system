@@ -166,6 +166,7 @@ router.get("/api/customers", async (_, db) =>
 router.post("/api/customers", async (body, db) =>
   CustomerService.createCustomer(db, body),
 );
+
 router.delete("/api/customers", async (body, db) => {
   const { email } = body;
   return CustomerService.deleteCustomer(db, email);
