@@ -1,176 +1,43 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search } from "lucide-react";
+import { Search, ChevronDown, Check } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+import { useSearch } from "@/hooks/useSearch";
+import { SEARCH_TABLES } from "@/data/search";
 
 export const Route = createFileRoute("/employee/search")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(null);
-  const [menuItems, setMenuItems] = useState([]);
-  const [ingredients, setIngredients] = useState([]);
-  const [employees, setEmployees] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
+  const {
+    searchTerm,
+    setSearchTerm,
+    selectedTables,
+    toggleTable,
+    selectAll,
+    deselectAll,
+    loading,
+    hasSearched,
+    searchResults,
+    fetchError,
+    search,
+  } = useSearch();
 
-  const normalizeArrayResponse = (data) => {
-    if (Array.isArray(data)) return data;
-    if (typeof data === "string") {
-      try {
-        const parsed = JSON.parse(data);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-    return [];
+  const handleSearch = () => {
+    search(searchTerm);
   };
 
-  const fetchAll = async () => {
-    try {
-      const token = localStorage.getItem("token");
-
-      const makeAuthHeaders = () =>
-        token ? { Authorization: `Bearer ${token}` } : undefined;
-
-      const [menuRes, ingRes, empRes, supRes] = await Promise.all([
-        fetch("http://localhost:3000/api/menu-items", {
-          headers: makeAuthHeaders(),
-        }),
-        fetch("http://localhost:3000/api/ingredients", {
-          headers: makeAuthHeaders(),
-        }),
-        fetch("http://localhost:3000/api/employees", {
-          headers: makeAuthHeaders(),
-        }),
-        fetch("http://localhost:3000/api/suppliers", {
-          headers: makeAuthHeaders(),
-        }),
-      ]);
-
-      const [menuData, ingData, empData, supData] = await Promise.all([
-        menuRes.json(),
-        ingRes.json(),
-        empRes.json(),
-        supRes.json(),
-      ]);
-
-      const errors = [];
-      if (!menuRes.ok) errors.push(menuData?.error || "Failed to load menu items");
-      if (!ingRes.ok) errors.push(ingData?.error || "Failed to load ingredients");
-      if (!empRes.ok) errors.push(empData?.error || "Failed to load employees");
-      if (!supRes.ok) errors.push(supData?.error || "Failed to load suppliers");
-
-      if (errors.length > 0) {
-        setFetchError(errors.join(" | "));
-        setMenuItems([]);
-        setIngredients([]);
-        setEmployees([]);
-        setSuppliers([]);
-        return;
-      }
-
-      setMenuItems(normalizeArrayResponse(menuData));
-      setIngredients(normalizeArrayResponse(ingData));
-      setEmployees(normalizeArrayResponse(empData));
-      setSuppliers(normalizeArrayResponse(supData));
-    } catch (err) {
-      setFetchError("Failed to load database entries");
-      setMenuItems([]);
-      setIngredients([]);
-      setEmployees([]);
-      setSuppliers([]);
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const term = searchTerm.trim().toLowerCase();
-
-  const results = useMemo(() => {
-    const matches = (...fields) =>
-      fields.some((f) =>
-        String(f ?? "")
-          .toLowerCase()
-          .includes(term),
-      );
-
-    const out = [];
-
-    const limit = 50;
-
-    for (const m of menuItems) {
-      const hit = term.length === 0
-        ? true
-        : matches(m.item_name, m.description, m.category_name, m.price);
-      if (!hit) continue;
-      out.push({
-        type: "Menu Item",
-        id: m.menu_item_id,
-        title: m.item_name,
-        details: [m.category_name, m.price != null ? `$${m.price}` : null].filter(Boolean).join(" - "),
-      });
-      if (out.length >= limit) break;
-    }
-
-    for (const i of ingredients) {
-      if (out.length >= limit) break;
-      const hit =
-        term.length === 0
-          ? true
-          : matches(i.ingredient_name, i.category, i.unit_of_measure, i.preferred_supplier_name);
-      if (!hit) continue;
-      out.push({
-        type: "Ingredient",
-        id: i.ingredient_id,
-        title: i.ingredient_name,
-        details: [i.category, i.unit_of_measure, i.preferred_supplier_name].filter(Boolean).join(" - "),
-      });
-    }
-
-    for (const e of employees) {
-      if (out.length >= limit) break;
-      const hit =
-        term.length === 0
-          ? true
-          : matches(e.first_name, e.last_name, e.email, e.role, e.license_plate);
-      if (!hit) continue;
-      out.push({
-        type: "Employee",
-        id: e.email,
-        title: `${e.first_name || ""} ${e.last_name || ""}`.trim(),
-        details: [e.role, e.email, e.license_plate].filter(Boolean).join(" - "),
-      });
-    }
-
-    for (const s of suppliers) {
-      if (out.length >= limit) break;
-      const hit =
-        term.length === 0
-          ? true
-          : matches(s.supplier_name, s.contact_person, s.email, s.phone_number, s.address);
-      if (!hit) continue;
-      out.push({
-        type: "Supplier",
-        id: s.supplier_id,
-        title: s.supplier_name,
-        details: [s.contact_person, s.email, s.phone_number].filter(Boolean).join(" - "),
-      });
-    }
-
-    return out;
-  }, [term, menuItems, ingredients, employees, suppliers]);
+  const allSelected = selectedTables.length === SEARCH_TABLES.length;
 
   return (
     <div className="p-6 space-y-6">
@@ -184,22 +51,57 @@ function RouteComponent() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Search className="h-4 w-4" />
             <Input
-              placeholder="Search anything..."
+              placeholder="Search menu items, ingredients, employees, suppliers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              className="max-w-md"
             />
+            <Button onClick={handleSearch}>
+              <Search className="mr-2 h-4 w-4" />
+              Search
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  Filter ({selectedTables.length}/{SEARCH_TABLES.length})
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuCheckboxItem
+                  checked={allSelected}
+                  onCheckedChange={() => allSelected ? deselectAll() : selectAll()}
+                  onSelect={(e) => e.preventDefault()}
+                  className="font-medium"
+                >
+                  {allSelected ? "Deselect All" : "Select All"}
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                {SEARCH_TABLES.map((table) => (
+                  <DropdownMenuCheckboxItem
+                    key={table.type}
+                    checked={selectedTables.includes(table.type)}
+                    onCheckedChange={() => toggleTable(table.type)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {table.type}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent>
           {fetchError ? (
             <p className="text-destructive text-sm py-2">{fetchError}</p>
           ) : loading ? (
-            <p className="text-muted-foreground">Loading...</p>
-          ) : results.length === 0 ? (
-            <p className="text-muted-foreground">No results found.</p>
+            <p className="text-muted-foreground">Searching...</p>
+          ) : !hasSearched ? (
+            <p className="text-muted-foreground">Enter a search term and click Search to find items across all data.</p>
+          ) : searchResults.length === 0 ? (
+            <p className="text-muted-foreground">No results found for "{searchTerm}".</p>
           ) : (
             <div className="rounded-md border">
               <Table>
@@ -211,7 +113,7 @@ function RouteComponent() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {results.map((r) => (
+                  {searchResults.map((r) => (
                     <TableRow key={`${r.type}-${r.id}`}>
                       <TableCell className="whitespace-nowrap text-sm">{r.type}</TableCell>
                       <TableCell className="text-sm">{r.title}</TableCell>

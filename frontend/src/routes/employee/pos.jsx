@@ -1,9 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { clearCart } from "@/redux/cartSlice";
-import { addItem, updateQuantity } from "@/redux/cartSlice";
-import { X } from "lucide-react";
+import { clearCart, addItem, updateQuantity } from "@/redux/cartSlice";
+import { X, CheckCircle } from "lucide-react";
 import { MenuCard } from "@/components/order/menu-card";
 import { CartPanel } from "@/components/order/cart-panel";
 
@@ -15,21 +14,25 @@ function PosScreen() {
   const [menu, setMenu] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cartOpen, setCartOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [successOrder, setSuccessOrder] = useState(null); // { orderId, orderNumber }
+
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const cartItems = useSelector((s) => s.cart.items);
   const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("credit");
-  const [licensePlate, setLicensePlate] = useState("");
+
+  // Get truck info from logged-in employee
+  const user = useSelector((s) => s.auth.user);
+  const licensePlate = user?.license_plate ?? null;
 
   useEffect(() => {
     fetch("/api/menu")
       .then((r) => r.json())
       .then((data) => {
-        setMenu(data);
+        setMenu(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -42,13 +45,7 @@ function PosScreen() {
     return acc;
   }, {});
 
-  const categoryOrder = [
-    "Entrees",
-    "Sides",
-    "Drinks",
-    "Appetizers",
-    "Desserts",
-  ];
+  const categoryOrder = ["Entrees", "Sides", "Drinks", "Appetizers", "Desserts"];
   const sortedCategories = Object.keys(grouped).sort(
     (a, b) => categoryOrder.indexOf(a) - categoryOrder.indexOf(b),
   );
@@ -70,18 +67,20 @@ function PosScreen() {
     dispatch(updateQuantity({ menuItemId, quantity: qty }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handlePosCheckout = async () => {
+    if (cartItems.length === 0) return;
     setError("");
     setSubmitting(true);
     try {
-      const res = await fetch("/api/checkout", {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/pos/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
-          customerEmail: null,
           paymentMethod,
-          licensePlate,
           items: cartItems.map((i) => ({
             menuItemId: i.menuItemId,
             quantity: i.quantity,
@@ -92,10 +91,8 @@ function PosScreen() {
       const data = await res.json();
       if (data.orderId) {
         dispatch(clearCart());
-        navigate({
-          to: "/confirmation/$orderId",
-          params: { orderId: String(data.orderId) },
-        });
+        setCartOpen(false);
+        setSuccessOrder({ orderId: data.orderId, orderNumber: data.orderNumber });
       } else {
         setError(data.error || "Something went wrong. Please try again.");
       }
@@ -113,9 +110,7 @@ function PosScreen() {
           {/* Menu */}
           <div className="flex-1 min-w-0">
             {loading ? (
-              <div className="text-gray-400 py-12 text-center">
-                Loading menu...
-              </div>
+              <div className="text-gray-400 py-12 text-center">Loading menu...</div>
             ) : (
               sortedCategories.map((category) => (
                 <section key={category} className="mb-10">
@@ -138,24 +133,36 @@ function PosScreen() {
             )}
           </div>
 
-          {/* Desktop cart panel */}
-          <div className="hidden lg:block w-80 flex-shrink-0">
+          {/* Desktop sidebar */}
+          <div className="hidden lg:flex flex-col w-80 flex-shrink-0 gap-4">
+            {/* Truck badge */}
+            {licensePlate && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+                <span className="font-semibold">Truck:</span> {licensePlate}
+              </div>
+            )}
+
             <CartPanel
               items={cartItems}
               total={cartTotal}
               onQty={handleQty}
-              onCheckout={() => navigate({ to: "/checkout" })}
+              onCheckout={handlePosCheckout}
+              checkoutLabel={submitting ? "Placing Order..." : "Place Order"}
+              disabled={submitting}
             />
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-              <h2 className="text-base font-semibold mb-4">Payment Method</h2>
-              <div className="space-y-2.5">
+
+            {/* Payment Method */}
+            <div className="bg-white rounded-xl shadow-sm border p-5">
+              <h2 className="text-sm font-semibold mb-3">Payment Method</h2>
+              <div className="space-y-2">
                 {[
-                  { value: "credit", label: "Credit Card at Pickup" },
-                  { value: "debit", label: "Debit Card at Pickup" },
+                  { value: "cash", label: "Cash" },
+                  { value: "credit", label: "Credit Card" },
+                  { value: "debit", label: "Debit Card" },
                 ].map((opt) => (
                   <label
                     key={opt.value}
-                    className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                       paymentMethod === opt.value
                         ? "border-amber-500 bg-amber-50"
                         : "border-gray-200 hover:bg-gray-50"
@@ -174,6 +181,12 @@ function PosScreen() {
                 ))}
               </div>
             </div>
+
+            {error && (
+              <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                {error}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -211,15 +224,64 @@ function PosScreen() {
                 <X size={20} />
               </button>
             </div>
+
+            {/* Payment method in mobile drawer */}
+            <div className="mb-4">
+              <p className="text-sm font-semibold mb-2">Payment</p>
+              <div className="flex gap-2">
+                {["cash", "credit", "debit"].map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setPaymentMethod(opt)}
+                    className={`flex-1 py-2 text-xs rounded-lg border transition-colors capitalize ${
+                      paymentMethod === opt
+                        ? "border-amber-500 bg-amber-50 text-amber-700 font-semibold"
+                        : "border-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <CartPanel
               items={cartItems}
               total={cartTotal}
               onQty={handleQty}
-              onCheckout={() => {
-                setCartOpen(false);
-                handleSubmit();
-              }}
+              onCheckout={handlePosCheckout}
+              checkoutLabel={submitting ? "Placing Order..." : "Place Order"}
+              disabled={submitting}
             />
+
+            {error && (
+              <p className="text-red-600 text-xs mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                {error}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Success modal */}
+      {successOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
+            <CheckCircle size={52} className="text-green-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-1">Order Placed!</h2>
+            <p className="text-5xl font-black text-amber-600 my-4">
+              #{successOrder.orderNumber}
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Order ID: {successOrder.orderId}
+            </p>
+            <button
+              onClick={() => setSuccessOrder(null)}
+              className="w-full bg-amber-600 hover:bg-amber-700 text-white py-3 rounded-xl font-semibold transition-colors"
+            >
+              New Order
+            </button>
           </div>
         </div>
       )}

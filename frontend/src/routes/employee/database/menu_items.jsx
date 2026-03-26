@@ -32,7 +32,7 @@ function MenuItemsDatabaseComponent() {
   const fetchMenuItems = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3000/api/menu-items", {
+      const res = await fetch("/api/menu-items", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -54,7 +54,7 @@ function MenuItemsDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/menu-items", {
+      const res = await fetch("/api/menu-items", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -88,7 +88,7 @@ function MenuItemsDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/menu-items", {
+      const res = await fetch("/api/menu-items", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -139,6 +139,7 @@ function MenuItemsDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={menuItems}
+        limit={5}
         searchKeys={["item_name", "category_name"]}
         deleteIdKey="menu_item_id"
         onDelete={handleDelete}

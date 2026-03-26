@@ -1,4 +1,57 @@
 import * as UserModel from "../models/users.model.js";
+import { verifyToken, signEmployeeToken } from "../auth/jwt.js";
+
+function getAuthEmail(req) {
+  const header = req?.headers?.authorization;
+  if (!header?.startsWith("Bearer ")) return null;
+  const token = header.slice(7);
+  const payload = verifyToken(token);
+  return payload?.email ?? null;
+}
+
+export async function getMyProfile(req, db) {
+  const email = getAuthEmail(req);
+  if (!email) return { error: "Unauthorized" };
+
+  const [[row]] = await db.query(`
+    SELECT u.email, u.first_name, u.last_name, u.phone_number, u.gender, u.ethnicity,
+           g.gender AS gender_name, r.race AS race_name
+    FROM users u
+    LEFT JOIN gender_lookup g ON u.gender = g.gender_id
+    LEFT JOIN race_lookup r ON u.ethnicity = r.race_id
+    WHERE u.email = ?`, [email]);
+
+  if (!row) return { error: "User not found" };
+  return row;
+}
+
+export async function updateMyProfile(req, body, db) {
+  const email = getAuthEmail(req);
+  if (!email) return { error: "Unauthorized" };
+
+  const { first_name, last_name, phone_number, gender, ethnicity, password } = body || {};
+  if (!first_name || !last_name) return { error: "first_name and last_name are required" };
+
+  const [[existing]] = await db.query("SELECT email FROM users WHERE email = ?", [email]);
+  if (!existing) return { error: "User not found" };
+
+  const g = gender != null && gender !== "" ? parseInt(String(gender), 10) : null;
+  const e = ethnicity != null && ethnicity !== "" ? parseInt(String(ethnicity), 10) : null;
+
+  if (password) {
+    await db.query(
+      `UPDATE users SET first_name = ?, last_name = ?, phone_number = ?, gender = ?, ethnicity = ?, password = ? WHERE email = ?`,
+      [first_name, last_name, phone_number || null, Number.isNaN(g) ? null : g, Number.isNaN(e) ? null : e, password, email]
+    );
+  } else {
+    await db.query(
+      `UPDATE users SET first_name = ?, last_name = ?, phone_number = ?, gender = ?, ethnicity = ? WHERE email = ?`,
+      [first_name, last_name, phone_number || null, Number.isNaN(g) ? null : g, Number.isNaN(e) ? null : e, email]
+    );
+  }
+
+  return { success: true, message: "Profile updated", email };
+}
 
 export async function getAllUsers(db) {
   return await UserModel.findAll(db);

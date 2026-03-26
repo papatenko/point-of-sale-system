@@ -4,23 +4,11 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
 import { CreateForm } from "@/components/database/create-form";
 import { Plus } from "lucide-react";
+import { UNIT_OPTIONS } from "@/data/units";
 
 export const Route = createFileRoute("/employee/database/ingredients")({
   component: IngredientsDatabaseComponent,
 });
-
-const UNIT_OPTIONS = [
-  { value: "g", label: "Grams (g)" },
-  { value: "kg", label: "Kilograms (kg)" },
-  { value: "ml", label: "Milliliters (ml)" },
-  { value: "l", label: "Liters (l)" },
-  { value: "tsp", label: "Teaspoons (tsp)" },
-  { value: "tbsp", label: "Tablespoons (tbsp)" },
-  { value: "cup", label: "Cups (cup)" },
-  { value: "oz", label: "Ounces (oz)" },
-  { value: "lb", label: "Pounds (lb)" },
-  { value: "pcs", label: "Pieces (pcs)" },
-];
 
 const COLUMNS = [
   { key: "ingredient_id", label: "ID" },
@@ -45,7 +33,7 @@ function IngredientsDatabaseComponent() {
   const fetchIngredients = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3000/api/ingredients", {
+      const res = await fetch("/api/ingredients", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -67,7 +55,7 @@ function IngredientsDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/ingredients", {
+      const res = await fetch("/api/ingredients", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -101,7 +89,7 @@ function IngredientsDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/ingredients", {
+      const res = await fetch("/api/ingredients", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -154,6 +142,7 @@ function IngredientsDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={ingredients}
+        limit={5}
         searchKeys={["ingredient_name"]}
         deleteIdKey="ingredient_id"
         onDelete={handleDelete}

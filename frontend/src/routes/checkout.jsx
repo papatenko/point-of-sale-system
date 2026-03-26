@@ -3,18 +3,43 @@ import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCart } from "@/redux/cartSlice";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin, Clock } from "lucide-react";
 
-// Decode JWT payload to get user info (no verification needed client-side)
-function getEmailFromToken(token) {
-  try {
-    const payload = JSON.parse(
-      atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))
-    );
-    return payload.email ?? null;
-  } catch {
-    return null;
+function getAvailableTimeSlots() {
+  const now = new Date();
+  const slots = [];
+
+  // Round current time up to the next 30-min boundary
+  const rounded = new Date(now);
+  const m = rounded.getMinutes();
+  if (m === 0) {
+    // exactly on the hour — keep
+  } else if (m <= 30) {
+    rounded.setMinutes(30, 0, 0);
+  } else {
+    rounded.setHours(rounded.getHours() + 1, 0, 0, 0);
   }
+
+  for (let h = 10; h <= 22; h++) {
+    for (const min of [0, 30]) {
+      if (h === 22 && min === 30) continue;
+      const slot = new Date(now);
+      slot.setHours(h, min, 0, 0);
+      if (slot < rounded) continue; // past slot
+
+      const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+      const ampm = h >= 12 ? "PM" : "AM";
+      const label = `${displayH}:${min.toString().padStart(2, "0")} ${ampm}`;
+      const value = `${h.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
+      slots.push({ value, label });
+    }
+  }
+  return slots;
+}
+
+function isAfterClosing() {
+  const now = new Date();
+  return now.getHours() >= 22;
 }
 
 export const Route = createFileRoute("/checkout")({
@@ -26,8 +51,9 @@ function CheckoutPage() {
   const dispatch = useDispatch();
   const cartItems = useSelector((s) => s.cart.items);
   const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const user = useSelector((s) => s.auth.user);
 
-  // Auth guard — must be logged in to checkout
+  // Auth guard
   const token = localStorage.getItem("token");
   useEffect(() => {
     if (!token) {
@@ -35,12 +61,14 @@ function CheckoutPage() {
     }
   }, [token]);
 
-  const customerEmail =
-    localStorage.getItem("userEmail") ||
-    (token ? getEmailFromToken(token) : null);
+  const timeSlots = getAvailableTimeSlots();
+  const closed = isAfterClosing();
 
   const [paymentMethod, setPaymentMethod] = useState("credit");
   const [licensePlate, setLicensePlate] = useState("");
+  const [scheduledTime, setScheduledTime] = useState(
+    timeSlots.length > 0 ? timeSlots[0].value : "",
+  );
   const [trucks, setTrucks] = useState([]);
   const [trucksLoading, setTrucksLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -50,8 +78,9 @@ function CheckoutPage() {
     fetch("/api/trucks")
       .then((r) => r.json())
       .then((data) => {
-        setTrucks(data);
-        if (data.length > 0) setLicensePlate(data[0].license_plate);
+        const list = Array.isArray(data) ? data : [];
+        setTrucks(list);
+        if (list.length > 0) setLicensePlate(list[0].license_plate);
       })
       .catch(() => {})
       .finally(() => setTrucksLoading(false));
@@ -72,6 +101,22 @@ function CheckoutPage() {
     );
   }
 
+  if (closed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-3">
+          <p className="text-xl font-semibold text-gray-800">We're closed</p>
+          <p className="text-gray-500 text-sm">
+            Online ordering is available 10:00 AM – 10:00 PM.
+          </p>
+          <Link to="/order">
+            <Button variant="outline" className="mt-2">Back to Menu</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -79,11 +124,15 @@ function CheckoutPage() {
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
-          customerEmail,
+          customerEmail: user?.email ?? null,
           paymentMethod,
           licensePlate,
+          scheduledTime,
           items: cartItems.map((i) => ({
             menuItemId: i.menuItemId,
             quantity: i.quantity,
@@ -124,6 +173,7 @@ function CheckoutPage() {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Form */}
           <form onSubmit={handleSubmit} className="md:col-span-3 space-y-5">
+            {/* Pickup Location */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
               <h2 className="text-base font-semibold mb-4">Pickup Location</h2>
               {trucksLoading ? (
@@ -152,9 +202,7 @@ function CheckoutPage() {
                         className="accent-amber-600 mt-0.5"
                       />
                       <div>
-                        <p className="text-sm font-medium">
-                          {truck.truck_name}
-                        </p>
+                        <p className="text-sm font-medium">{truck.truck_name}</p>
                         {truck.current_location && (
                           <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                             <MapPin size={11} />
@@ -168,6 +216,35 @@ function CheckoutPage() {
               )}
             </div>
 
+            {/* Scheduled Pickup Time */}
+            <div className="bg-white rounded-xl shadow-sm border p-6">
+              <h2 className="text-base font-semibold mb-1 flex items-center gap-2">
+                <Clock size={16} className="text-amber-600" />
+                Pickup Time
+              </h2>
+              <p className="text-xs text-gray-400 mb-4">
+                Select your preferred pickup time (10:00 AM – 10:00 PM).
+              </p>
+              {timeSlots.length === 0 ? (
+                <p className="text-sm text-red-500">
+                  No available times today. We close at 10:00 PM.
+                </p>
+              ) : (
+                <select
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                >
+                  {timeSlots.map((slot) => (
+                    <option key={slot.value} value={slot.value}>
+                      {slot.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Payment Method */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
               <h2 className="text-base font-semibold mb-4">Payment Method</h2>
               <div className="space-y-2.5">
@@ -205,7 +282,7 @@ function CheckoutPage() {
 
             <Button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || timeSlots.length === 0}
               className="w-full bg-amber-600 hover:bg-amber-700 text-white py-6 text-base font-semibold disabled:opacity-60"
             >
               {submitting

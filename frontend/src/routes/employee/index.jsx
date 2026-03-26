@@ -9,7 +9,7 @@ function RouteComponent() {
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/employee")
+    fetch("/api/employee")
       .then((res) => res.text())
       .then((data) => setData(data));
   }, []);

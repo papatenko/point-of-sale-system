@@ -7,23 +7,15 @@ import { Plus } from "lucide-react";
 import { GENDER_OPTIONS } from "@/data/gender";
 import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
 
-export const Route = createFileRoute("/employee/database/employees")({
-  component: EmployeesDatabaseComponent,
+export const Route = createFileRoute("/customer/database/customer")({
+  component: CustomersDatabaseComponent,
 });
-
-const ROLE_OPTIONS = [
-  { value: "cashier", label: "Cashier" },
-  { value: "cook", label: "Cook" },
-  { value: "manager", label: "Manager" },
-  { value: "admin", label: "Admin" },
-];
 
 const COLUMNS = [
   { key: "email", label: "Email" },
   { key: "first_name", label: "First Name" },
   { key: "last_name", label: "Last Name" },
-  { key: "role", label: "Role" },
-  { key: "license_plate", label: "Truck" },
+  { key: "default_address", label: "Default Address" },
 ];
 
 const CREATE_FIELDS = [
@@ -32,47 +24,35 @@ const CREATE_FIELDS = [
   { name: "last_name", label: "Last Name", type: "text", required: true },
   { name: "password", label: "Password", type: "password", required: true },
   { name: "phone_number", label: "Phone", type: "text" },
-  { name: "role", label: "Role", type: "select", options: ROLE_OPTIONS, required: true },
+  { name: "default_address", label: "Default Address", type: "text" },
   { name: "gender", label: "Gender", type: "select", options: GENDER_OPTIONS },
   { name: "ethnicity", label: "Ethnicity", type: "select", options: ETHNICITY_OPTIONS },
 ];
 
-function EmployeesDatabaseComponent() {
-  const [employees, setEmployees] = useState([]);
-  const [trucks, setTrucks] = useState([]);
+function CustomersDatabaseComponent() {
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchEmployees = async () => {
+  const fetchCustomers = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/employees", {
+      const res = await fetch("http://localhost:3000/api/customers", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setEmployees(Array.isArray(data) ? data : []);
+      setCustomers(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Failed to fetch employees:", err);
+      console.error("Failed to fetch customers:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchTrucks = async () => {
-    try {
-      const res = await fetch("/api/trucks");
-      const data = await res.json();
-      setTrucks(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Failed to fetch trucks:", err);
-    }
-  };
-
   useEffect(() => {
-    fetchEmployees();
-    fetchTrucks();
+    fetchCustomers();
   }, []);
 
   const handleCreateSubmit = async (formData) => {
@@ -81,7 +61,7 @@ function EmployeesDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const userResponse = await fetch("/api/users", {
+      const userResponse = await fetch("http://localhost:3000/api/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -95,6 +75,7 @@ function EmployeesDatabaseComponent() {
           phone_number: formData.phone_number || null,
           gender: formData.gender ? parseInt(formData.gender) : null,
           ethnicity: formData.ethnicity ? parseInt(formData.ethnicity) : null,
+          user_type: "customer",
         }),
       });
 
@@ -104,7 +85,7 @@ function EmployeesDatabaseComponent() {
         throw new Error(userData.error);
       }
 
-      const employeeResponse = await fetch("/api/employees", {
+      const customerResponse = await fetch("http://localhost:3000/api/customers", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -112,24 +93,21 @@ function EmployeesDatabaseComponent() {
         },
         body: JSON.stringify({
           email: formData.email,
-          license_plate: trucks[0]?.license_plate || "ABC-123",
-          role: formData.role,
-          hire_date: new Date().toISOString().split("T")[0],
-          hourly_rate: null,
+          default_address: formData.default_address || null,
         }),
       });
 
-      const employeeData = await employeeResponse.json();
-      if (!employeeResponse.ok) {
-        setError(employeeData.error || "Error creating employee");
-        throw new Error(employeeData.error);
+      const customerData = await customerResponse.json();
+      if (!customerResponse.ok) {
+        setError(customerData.error || "Error creating customer");
+        throw new Error(customerData.error);
       }
 
       setShowCreateForm(false);
-      fetchEmployees();
+      fetchCustomers();
     } catch (err) {
       if (!err.message.includes("Error creating")) {
-        setError("Failed to create employee");
+        setError("Failed to create customer");
       }
     } finally {
       setIsSubmitting(false);
@@ -140,7 +118,7 @@ function EmployeesDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("/api/employees", {
+      const res = await fetch("http://localhost:3000/api/customers", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -150,13 +128,13 @@ function EmployeesDatabaseComponent() {
       });
 
       if (res.ok) {
-        fetchEmployees();
+        fetchCustomers();
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to delete employee");
+        alert(data.error || "Failed to delete customer");
       }
     } catch (err) {
-      alert("Failed to delete employee");
+      alert("Failed to delete customer");
     }
   };
 
@@ -164,18 +142,18 @@ function EmployeesDatabaseComponent() {
     <div className="p-6 space-y-6 w-full">
       <div className="flex justify-between items-center w-full">
         <div>
-          <h1 className="text-2xl font-bold">Employees</h1>
-          <p className="text-muted-foreground">Manage your employee records</p>
+          <h1 className="text-2xl font-bold">Customers</h1>
+          <p className="text-muted-foreground">Manage your customer records</p>
         </div>
         <Button onClick={() => setShowCreateForm(!showCreateForm)}>
           <Plus className="mr-2 h-4 w-4" />
-          {showCreateForm ? "Cancel" : "Add Employee"}
+          {showCreateForm ? "Cancel" : "Add Customer"}
         </Button>
       </div>
 
       {showCreateForm && (
         <CreateForm
-          title="Add New Employee"
+          title="Add New Customer"
           fields={CREATE_FIELDS}
           onSubmit={handleCreateSubmit}
           onCancel={() => {
@@ -184,19 +162,18 @@ function EmployeesDatabaseComponent() {
           }}
           isSubmitting={isSubmitting}
           error={error}
-          submitLabel="Create Employee"
+          submitLabel="Create Customer"
         />
       )}
 
       <DataTable
         columns={COLUMNS}
-        data={employees}
-        limit={5}
-        searchKeys={["first_name", "last_name", "email", "role"]}
+        data={customers}
+        searchKeys={["first_name", "last_name", "email", "default_address"]}
         deleteIdKey="email"
         onDelete={handleDelete}
         loading={loading}
-        emptyMessage="No employees found"
+        emptyMessage="No customers found"
       />
     </div>
   );

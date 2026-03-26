@@ -35,7 +35,7 @@ function SuppliersDatabaseComponent() {
   const fetchSuppliers = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:3000/api/suppliers", {
+      const res = await fetch("/api/suppliers", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -57,7 +57,7 @@ function SuppliersDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/suppliers", {
+      const res = await fetch("/api/suppliers", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -93,7 +93,7 @@ function SuppliersDatabaseComponent() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch("http://localhost:3000/api/suppliers", {
+      const res = await fetch("/api/suppliers", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -144,6 +144,7 @@ function SuppliersDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={suppliers}
+        limit={5}
         searchKeys={["supplier_name", "contact_person", "email"]}
         deleteIdKey="supplier_id"
         onDelete={handleDelete}

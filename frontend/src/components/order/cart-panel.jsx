@@ -1,7 +1,7 @@
 import { ShoppingCart, Plus, Minus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function CartPanel({ items, total, onQty, onCheckout }) {
+export function CartPanel({ items, total, onQty, onCheckout, checkoutLabel = "Checkout", disabled = false }) {
   if (items.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-4">
@@ -59,9 +59,10 @@ export function CartPanel({ items, total, onQty, onCheckout }) {
         </div>
         <Button
           onClick={onCheckout}
-          className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+          disabled={disabled}
+          className="w-full bg-amber-600 hover:bg-amber-700 text-white disabled:opacity-60"
         >
-          Checkout
+          {checkoutLabel}
         </Button>
       </div>
     </div>

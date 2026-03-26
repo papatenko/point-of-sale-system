@@ -2,7 +2,7 @@ import { createServer } from "http";
 import fs from "node:fs";
 import path from "node:path";
 import { getDatabase } from "./database.js";
-import { handleRoute } from "./routes/index.js";
+import { handleRoute } from "./routes.js";
 
 // Grabs the built /dist/ directory built from Vite
 const FRONTEND_PATH = path.resolve("..") + "/frontend/dist";
@@ -79,7 +79,9 @@ const server = createServer(async (req, res) => {
 
   // API routes
   if (req.url.startsWith("/api")) {
-    const body = ["POST", "PUT", "DELETE"].includes(req.method) ? await readBody(req) : null;
+    const body = ["POST", "PUT", "DELETE"].includes(req.method)
+      ? await readBody(req)
+      : null;
     try {
       const db = await getDatabase();
       const result = await handleRoute(req.url, body, req.method, req, res, db);

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setLogin } from '@/redux/authSlice';
@@ -110,6 +110,13 @@ function LoginComponent() {
         >
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
+
+        <p className="text-sm text-center text-gray-600">
+          Don't have an account?{' '}
+          <Link to="/auth/signup" className="text-amber-600 hover:underline">
+            Sign up
+          </Link>
+        </p>
       </form>
     </div>
   );
