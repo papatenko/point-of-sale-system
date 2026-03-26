@@ -15,13 +15,23 @@ function SignupComponent() {
   const [lastName, setLastName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/register", {
@@ -35,6 +45,8 @@ function SignupComponent() {
         }),
       });
 
+      // 
+      
       const data = await res.json();
 
       if (!res.ok) {
@@ -84,7 +96,13 @@ function SignupComponent() {
             type="text"
             placeholder="John"
             value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            // onChange={(e) => setFirstName(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              const onlyLetters = value.replace(/[^a-zA-Z]/g, "");
+
+              setFirstName(onlyLetters);
+            }}
             className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             autoComplete="given-name"
             required
@@ -104,7 +122,13 @@ function SignupComponent() {
             type="text"
             placeholder="Doe"
             value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            // onChange={(e) => setLastName(e.target.value)}
+            onChange={(e) => {
+            const value= e.target.value;
+            const onlyLetters = value.replace(/[^a-zA-Z]/g, "");
+
+            setLastName(onlyLetters);
+          }}
             className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             autoComplete="family-name"
             required
