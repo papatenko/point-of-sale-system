@@ -255,4 +255,21 @@ CREATE TABLE inventory_adjustments (
         FOREIGN KEY (adjusted_by)   REFERENCES employees(email)
 );
 
---using this remember how to add to github
+-- Trigger: Apply single-item discount for multiples of same menu item in order_items
+DELIMITER $$
+CREATE TRIGGER order_items_discount_before_insert
+BEFORE INSERT ON order_items
+FOR EACH ROW
+BEGIN
+  DECLARE item_price DECIMAL(10,2);
+  -- Get the price of the menu item
+  SELECT price INTO item_price FROM menu_items WHERE menu_item_id = NEW.menu_item_id;
+  IF NEW.quantity >= 2 THEN
+    -- Apply discount: 1 item free
+    SET NEW.line_total_price = (NEW.quantity - 1) * item_price;
+  ELSE
+    -- No discount
+    SET NEW.line_total_price = NEW.quantity * item_price;
+  END IF;
+END$$
+DELIMITER ;
