@@ -64,37 +64,41 @@ export async function createCheckout(db, body, req = null) {
   );
   const orderNumber = String(nextNum);
 
-  const total = items
-    .reduce((sum, i) => sum + parseFloat(i.price) * parseInt(i.quantity), 0)
-    .toFixed(2);
-
+  // Insert checkout with a placeholder total (will update after order_items trigger runs)
   const [result] = await db.query(
     `INSERT INTO checkout
        (order_number, license_plate, customer_email, order_type, order_status,
         scheduled_time, total_price, payment_method, payment_status)
-     VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, 'pending')`,
+     VALUES (?, ?, ?, ?, 'pending', ?, 0, ?, 'pending')`,
     [
       orderNumber,
       licensePlate,
       customerEmail || null,
       orderType,
       scheduledMysql,
-      total,
       paymentMethod,
     ],
   );
   const orderId = result.insertId;
 
   for (const item of items) {
-    const lineTotal = (
-      parseFloat(item.price) * parseInt(item.quantity)
-    ).toFixed(2);
+    // Insert with any value, trigger will set correct line_total_price
     await db.query(
       `INSERT INTO order_items (order_id, menu_item_id, quantity, line_total_price)
-       VALUES (?, ?, ?, ?)`,
-      [orderId, item.menuItemId, item.quantity, lineTotal],
+       VALUES (?, ?, ?, 0)`,
+      [orderId, item.menuItemId, item.quantity],
     );
   }
+
+  // Now sum the (possibly discounted) order_items and update checkout
+  const [[{ total }]] = await db.query(
+    `SELECT SUM(line_total_price) AS total FROM order_items WHERE order_id = ?`,
+    [orderId]
+  );
+  await db.query(
+    `UPDATE checkout SET total_price = ? WHERE checkout_id = ?`,
+    [total, orderId]
+  );
 
   return { orderId, orderNumber };
 }

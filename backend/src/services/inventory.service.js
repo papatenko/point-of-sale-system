@@ -1,3 +1,41 @@
+// Aggregate today's 'ready' orders for a truck, by menu item
+import { parse } from "url";
+export async function getTodaySales(db, url) {
+  // Parse licensePlate from query string
+  const { searchParams } = new URL(url, "http://localhost");
+  const licensePlate = searchParams.get("licensePlate");
+  if (!licensePlate) throw new Error("licensePlate query param required");
+
+  // Get today's date in YYYY-MM-DD
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+
+  // Query all 'ready' orders for this truck today
+  const [rows] = await db.query(
+    `SELECT oi.menu_item_id, m.item_name, SUM(oi.quantity) as total_quantity
+     FROM checkout c
+     JOIN order_items oi ON c.checkout_id = oi.order_id
+     JOIN menu_items m ON oi.menu_item_id = m.menu_item_id
+     WHERE c.license_plate = ?
+       AND c.order_status = 'ready'
+       AND DATE(c.created_at) = ?
+     GROUP BY oi.menu_item_id, m.item_name`,
+    [licensePlate, todayStr]
+  );
+
+  // Return as { menuItemId: quantity, ... }
+  const result = {};
+  for (const row of rows) {
+    result[row.menu_item_id] = {
+      quantity: Number(row.total_quantity),
+      name: row.item_name,
+    };
+  }
+  return result;
+}
 import * as InventoryModel from "../models/inventory.model.js";
 
 export async function getInventory(db, url) {

@@ -155,6 +155,10 @@ router.get("/api/inventory/alerts", async (_, db, _req, url) =>
 router.get("/api/inventory/history", async (_, db, _req, url) =>
   InventoryService.getHistory(db, url),
 );
+// NEW: Today's sales aggregation for daily production
+router.get("/api/inventory/today-sales", async (_, db, _req, url) =>
+  InventoryService.getTodaySales(db, url),
+);
 
 // Backup
 router.get("/api/backup", async (_, db) => BackupService.createBackup());
