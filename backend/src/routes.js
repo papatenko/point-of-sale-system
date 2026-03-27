@@ -129,11 +129,14 @@ router.delete("/api/recipes", async (body, db) => {
 });
 
 // Orders
-router.get("/api/orders", async (_, db, _req, url) =>
-  OrderService.listOrders(db, url),
+router.get("/api/orders", async (_, db, req, url) =>
+  OrderService.listOrders(db, req, url),
 );
 router.get("/api/orders/:id", async (_, db, _req, url) =>
   OrderService.getOrderById(db, url),
+);
+router.patch("/api/orders/:id/status", async (body, db, req, url, params) =>
+  OrderService.updateOrderStatus(db, params.id, body.status),
 );
 
 // Inventory
