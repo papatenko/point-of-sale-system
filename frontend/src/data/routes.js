@@ -1,0 +1,117 @@
+import {
+  ShoppingCart,
+  BarChart3,
+  Package,
+  Search,
+  Beef,
+  Users,
+  Utensils,
+  UtensilsCrossed,
+  Truck,
+  Scroll,
+  Archive,
+  UserCircle,
+  Database,
+  ClipboardList,
+  Briefcase,
+  Settings,
+} from "lucide-react";
+
+export const EMPLOYEE_ROUTES = [
+  {
+    name: "POS",
+    url: "/employee/pos",
+    roles: ["cashier", "manager", "admin"],
+    icon: ShoppingCart,
+  },
+  {
+    name: "Current Orders",
+    url: "/employee/orders",
+    roles: ["cashier", "cook", "manager", "admin"],
+    icon: ClipboardList,
+  },
+  {
+    name: "Stats",
+    url: "/employee/reports",
+    roles: ["manager", "admin"],
+    icon: BarChart3,
+  },
+  {
+    name: "Inventory",
+    url: "/employee/inventory",
+    roles: ["manager", "admin"],
+    icon: Package,
+  },
+  {
+    name: "Search",
+    url: "/employee/search",
+    roles: ["manager", "admin"],
+    icon: Search,
+  },
+];
+
+export const DATABASE_MANAGEMENT_ROUTES = [
+  {
+    name: "Employees",
+    url: "/employee/database/employees",
+    icon: Users,
+    roles: ["admin"],
+    category: "people",
+  },
+  {
+    name: "Users",
+    url: "/employee/database/users",
+    icon: UserCircle,
+    roles: ["admin"],
+    category: "people",
+  },
+  {
+    name: "Customers",
+    url: "/employee/database/customers",
+    icon: UserCircle,
+    roles: ["admin"],
+    category: "people",
+  },
+  {
+    name: "Menu Items",
+    url: "/employee/database/menu_items",
+    icon: Utensils,
+    roles: ["admin"],
+    category: "products",
+  },
+  {
+    name: "Recipes",
+    url: "/employee/database/recipes",
+    icon: Scroll,
+    roles: ["admin"],
+    category: "products",
+  },
+  {
+    name: "Ingredients",
+    url: "/employee/database/ingredients",
+    icon: Beef,
+    roles: ["admin"],
+    category: "products",
+  },
+  {
+    name: "Suppliers",
+    url: "/employee/database/suppliers",
+    icon: Archive,
+    roles: ["admin"],
+    category: "business",
+  },
+  {
+    name: "Food Trucks",
+    url: "/employee/database/food-trucks",
+    icon: Truck,
+    roles: ["admin"],
+    category: "business",
+  },
+  {
+    name: "Backup",
+    url: "/employee/database/backup",
+    icon: Database,
+    roles: ["admin"],
+    category: "system",
+  },
+];
