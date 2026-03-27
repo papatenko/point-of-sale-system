@@ -129,14 +129,11 @@ router.delete("/api/recipes", async (body, db) => {
 });
 
 // Orders
-router.get("/api/orders", async (_, db, req, url) =>
-  OrderService.listOrders(db, req, url),
+router.get("/api/orders", async (_, db, _req, url) =>
+  OrderService.listOrders(db, url),
 );
 router.get("/api/orders/:id", async (_, db, _req, url) =>
   OrderService.getOrderById(db, url),
-);
-router.patch("/api/orders/:id/status", async (body, db, req, url, params) =>
-  OrderService.updateOrderStatus(db, params.id, body.status),
 );
 
 // Inventory
@@ -146,8 +143,14 @@ router.get("/api/inventory", async (_, db, _req, url) =>
 router.post("/api/inventory/use", async (body, db) =>
   InventoryService.useInventory(db, body),
 );
-router.post("/api/inventory/use-recipe", async (body, db) =>
-  InventoryService.useRecipe(db, body),
+router.post("/api/inventory/use-menu-item", async (body, db) =>
+  InventoryService.useMenuItem(db, body),
+);
+router.post("/api/inventory/use-daily-production", async (body, db) =>
+  InventoryService.useDailyProduction(db, body),
+);
+router.post("/api/inventory/expire", async (body, db) =>
+  InventoryService.expireInventory(db, body),
 );
 router.post("/api/inventory/reorder", async (body, db) =>
   InventoryService.reorderInventory(db, body),
@@ -158,9 +161,16 @@ router.get("/api/inventory/alerts", async (_, db, _req, url) =>
 router.get("/api/inventory/history", async (_, db, _req, url) =>
   InventoryService.getHistory(db, url),
 );
-// NEW: Today's sales aggregation for daily production
 router.get("/api/inventory/today-sales", async (_, db, _req, url) =>
-  InventoryService.getTodaySales(db, url),
+  InventoryService.getTodaysSales(db, url),
+);
+// Pending supply orders — managers and admins only
+router.get("/api/inventory/pending-orders", async (_, db, req, url) =>
+  InventoryService.getPendingSupplyOrders(db, url, req),
+);
+// Receive a supply order — managers and admins only
+router.post("/api/inventory/receive-order", async (body, db, req) =>
+  InventoryService.receiveSupplyOrder(db, body, req),
 );
 
 // Backup
@@ -200,6 +210,11 @@ router.get("/api/employee/pos", async (_, db) => {
   );
   return menuItems;
 });
+
+// Get the truck for the current user (manager/employee)
+router.get("/api/trucks/for-user", async (_, db, req) =>
+  TruckService.getTruckForUser(db, req),
+);
 
 export async function handleRoute(url, body, method, req, res, db) {
   const basePath = url.split("?")[0];

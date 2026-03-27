@@ -1,41 +1,5 @@
-// Aggregate today's 'ready' orders for a truck, by menu item
-import { parse } from "url";
-export async function getTodaySales(db, url) {
-  // Parse licensePlate from query string
-  const { searchParams } = new URL(url, "http://localhost");
-  const licensePlate = searchParams.get("licensePlate");
-  if (!licensePlate) throw new Error("licensePlate query param required");
-
-  // Get today's date in YYYY-MM-DD
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const todayStr = `${yyyy}-${mm}-${dd}`;
-
-  // Query all 'ready' orders for this truck today
-  const [rows] = await db.query(
-    `SELECT oi.menu_item_id, m.item_name, SUM(oi.quantity) as total_quantity
-     FROM checkout c
-     JOIN order_items oi ON c.checkout_id = oi.order_id
-     JOIN menu_items m ON oi.menu_item_id = m.menu_item_id
-     WHERE c.license_plate = ?
-       AND c.order_status = 'ready'
-       AND DATE(c.created_at) = ?
-     GROUP BY oi.menu_item_id, m.item_name`,
-    [licensePlate, todayStr]
-  );
-
-  // Return as { menuItemId: quantity, ... }
-  const result = {};
-  for (const row of rows) {
-    result[row.menu_item_id] = {
-      quantity: Number(row.total_quantity),
-      name: row.item_name,
-    };
-  }
-  return result;
-}
+// backend/src/services/inventory.service.js
+import { verifyToken } from "../auth/jwt.js";
 import * as InventoryModel from "../models/inventory.model.js";
 
 export async function getInventory(db, url) {
@@ -83,60 +47,6 @@ export async function useInventory(db, body) {
   return { success: true, newQuantity: newQty };
 }
 
-export async function useRecipe(db, body) {
-  const { licensePlate, menuItemId, quantity = 1, adjustedBy } = body;
-  if (!licensePlate || !menuItemId || !adjustedBy) {
-    throw new Error("Missing required fields: licensePlate, menuItemId, adjustedBy");
-  }
-
-  const recipe = await InventoryModel.findRecipeByMenuItem(db, menuItemId);
-  if (recipe.length === 0) {
-    throw new Error("No recipe found for this menu item");
-  }
-
-  const shortages = [];
-  for (const r of recipe) {
-    const needed = parseFloat(r.quantity_needed) * parseInt(quantity);
-    const item = await InventoryModel.findInventoryItem(db, licensePlate, r.ingredient_id);
-    if (!item || parseFloat(item.quantity_on_hand) < needed) {
-      shortages.push({
-        ingredient: r.ingredient_name,
-        needed,
-        available: item ? parseFloat(item.quantity_on_hand) : 0,
-      });
-    }
-  }
-  if (shortages.length > 0) {
-    return { success: false, shortages };
-  }
-
-  for (const r of recipe) {
-    const needed = parseFloat(r.quantity_needed) * parseInt(quantity);
-    const item = await InventoryModel.findInventoryItem(db, licensePlate, r.ingredient_id);
-    const newQty = parseFloat(item.quantity_on_hand) - needed;
-
-    await InventoryModel.updateQuantity(db, licensePlate, r.ingredient_id, newQty);
-
-    await InventoryModel.createAdjustment(db, {
-      license_plate: licensePlate,
-      ingredient_id: r.ingredient_id,
-      adjustment_type: "order-deduction",
-      quantity_change: -needed,
-      reason: `Made ${quantity}x menu item #${menuItemId}`,
-      adjusted_by: adjustedBy,
-    });
-  }
-
-  return { success: true };
-}
-
-/**
- * NEW: Deduct inventory by menu item + quantity.
- * Looks up the recipe for the given menu item, checks for shortages,
- * then deducts all ingredients accordingly.
- *
- * Body: { licensePlate, menuItemId, menuItemName, quantity, adjustedBy }
- */
 export async function useMenuItem(db, body) {
   const { licensePlate, menuItemId, menuItemName, quantity = 1, adjustedBy } = body;
 
@@ -149,13 +59,11 @@ export async function useMenuItem(db, body) {
     throw new Error("quantity must be a positive integer");
   }
 
-  // Fetch the recipe for this menu item
   const recipe = await InventoryModel.findRecipeByMenuItem(db, menuItemId);
   if (recipe.length === 0) {
     throw new Error(`No recipe found for "${menuItemName || `menu item #${menuItemId}`}". Add ingredients to this item's recipe first.`);
   }
 
-  // Pre-check all ingredients for shortages
   const shortages = [];
   for (const r of recipe) {
     const needed = parseFloat(r.quantity_needed) * qty;
@@ -174,7 +82,6 @@ export async function useMenuItem(db, body) {
     return { success: false, shortages };
   }
 
-  // Apply all deductions
   const deductions = [];
 
   for (const r of recipe) {
@@ -209,13 +116,6 @@ export async function useMenuItem(db, body) {
   };
 }
 
-/**
- * NEW: Deduct inventory for multiple menu items prepared during the day.
- * Aggregates ingredients needed for all items and deducts in bulk.
- *
- * Body: { licensePlate, productions: [{menuItemId, quantity}, ...], adjustedBy }
- * Returns: { success, alertsCreated: [ingredientNames] }
- */
 export async function useDailyProduction(db, body) {
   const { licensePlate, productions, adjustedBy } = body;
 
@@ -227,8 +127,7 @@ export async function useDailyProduction(db, body) {
     throw new Error("productions must be a non-empty array");
   }
 
-  // Aggregate all ingredients needed
-  const aggregatedIngredients = {}; // { ingredientId: { needed, menuItemId, menuItemName } }
+  const aggregatedIngredients = {};
 
   for (const prod of productions) {
     const menuItemId = prod.menuItemId;
@@ -238,13 +137,11 @@ export async function useDailyProduction(db, body) {
       throw new Error(`Invalid quantity for menu item ${menuItemId}`);
     }
 
-    // Fetch recipe for this menu item
     const recipe = await InventoryModel.findRecipeByMenuItem(db, menuItemId);
     if (recipe.length === 0) {
       throw new Error(`No recipe found for menu item #${menuItemId}`);
     }
 
-    // Add to aggregated ingredients
     for (const r of recipe) {
       const needed = parseFloat(r.quantity_needed) * qty;
       const ingId = r.ingredient_id;
@@ -261,7 +158,6 @@ export async function useDailyProduction(db, body) {
     }
   }
 
-  // Pre-check: verify all ingredients are available
   const shortages = [];
   for (const [ingId, agg] of Object.entries(aggregatedIngredients)) {
     const item = await InventoryModel.findInventoryItem(db, licensePlate, ingId);
@@ -279,7 +175,6 @@ export async function useDailyProduction(db, body) {
     return { success: false, shortages };
   }
 
-  // Apply all deductions
   const productionSummary = productions.map((p) => `${p.quantity}x menu item #${p.menuItemId}`).join(", ");
 
   for (const [ingId, agg] of Object.entries(aggregatedIngredients)) {
@@ -301,13 +196,6 @@ export async function useDailyProduction(db, body) {
   return { success: true };
 }
 
-/**
- * NEW: Expire all inventory items for a truck that have passed their
- * expiration_date. Sets quantity_on_hand = 0 and logs a "waste" adjustment.
- *
- * Body: { licensePlate, adjustedBy }
- * Returns: { success, expired: [{ ingredientName, previousQty, unit }] }
- */
 export async function expireInventory(db, body) {
   const { licensePlate, adjustedBy } = body;
 
@@ -324,10 +212,8 @@ export async function expireInventory(db, body) {
   const expired = [];
 
   for (const item of expiredItems) {
-    // Zero out the quantity
     await InventoryModel.zeroQuantity(db, licensePlate, item.ingredientId);
 
-    // Record waste adjustment
     await InventoryModel.createAdjustment(db, {
       license_plate: licensePlate,
       ingredient_id: item.ingredientId,
@@ -336,8 +222,6 @@ export async function expireInventory(db, body) {
       reason: `Expired on ${new Date(item.expirationDate).toLocaleDateString()} — auto-expired`,
       adjusted_by: adjustedBy,
     });
-
-    // Reorder alert creation is now handled by a database trigger; no backend code needed here.
 
     expired.push({
       ingredientId: item.ingredientId,
@@ -386,6 +270,7 @@ export async function reorderInventory(db, body) {
     supplier_id: ing.preferred_supplier_id,
     license_plate: licensePlate,
     created_by: createdBy,
+    status: "ordered",
     total_cost: lineTotal,
   });
   const poId = orderResult.insertId;
@@ -425,17 +310,87 @@ export async function getHistory(db, url) {
   return await InventoryModel.findHistoryByLicensePlate(db, licensePlate, limit);
 }
 
-/**
- * NEW: Get today's sales by menu item (excluding pending/cancelled orders)
- * for a given truck. Used to auto-populate daily production quantities.
- *
- * Query: licensePlate
- * Returns: [{ menuItemId, itemName, totalQuantity }]
- */
 export async function getTodaysSales(db, url) {
   const { licensePlate } = InventoryModel.parseParams(url);
   if (!licensePlate) {
     throw new Error("licensePlate query param required");
   }
   return await InventoryModel.findTodaysSalesByMenuItem(db, licensePlate);
+}
+
+// ── Supply-order receipt ───────────────────────────────────────────────────
+
+/**
+ * GET pending supply orders for a truck.
+ * Extracts the role from the JWT and enforces manager/admin access internally.
+ */
+export async function getPendingSupplyOrders(db, url, req) {
+  const authHeader = req?.headers?.authorization ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+  const payload = verifyToken(token);
+  if (!payload || (payload.role !== "manager" && payload.role !== "admin")) {
+    return { error: "Forbidden: managers and admins only" };
+  }
+  const { licensePlate } = InventoryModel.parseParams(url);
+  if (!licensePlate) {
+    throw new Error("licensePlate query param required");
+  }
+  return await InventoryModel.findPendingSupplyOrders(db, licensePlate);
+}
+
+/**
+ * Mark a supply order as received, restock inventory, resolve alerts.
+ * Extracts receivedBy and enforces manager/admin access from the JWT internally.
+ *
+ * Body: {
+ *   poId:         number,
+ *   licensePlate: string,
+ *   items: [{ poItemId, ingredientId, quantityReceived }]
+ * }
+ */
+export async function receiveSupplyOrder(db, body, req) {
+  const authHeader = req?.headers?.authorization ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+  const payload = verifyToken(token);
+  if (!payload || (payload.role !== "manager" && payload.role !== "admin")) {
+    return { error: "Forbidden: managers and admins only" };
+  }
+
+  const { poId, licensePlate, items } = body;
+  const receivedBy = payload.email;
+
+  if (!poId || !licensePlate) {
+    throw new Error("poId and licensePlate are required");
+  }
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("items must be a non-empty array");
+  }
+
+  for (const item of items) {
+    const qty = parseFloat(item.quantityReceived);
+    if (isNaN(qty) || qty < 0) {
+      throw new Error(`Invalid quantityReceived for item ${item.poItemId}`);
+    }
+
+    // 1. Record quantity received on the PO line item
+    await InventoryModel.updateSupplyOrderItemReceived(db, item.poItemId, qty);
+
+    if (qty > 0) {
+      // 2. Add to truck_inventory; refresh last_restocked
+      await InventoryModel.restockInventoryItem(db, licensePlate, item.ingredientId, qty);
+
+      // 3. Resolve open reorder_alerts — fills resolved_date + resolved_by
+      await InventoryModel.resolveReorderAlerts(db, licensePlate, item.ingredientId, receivedBy);
+
+      // 4. Write a restock row to inventory_adjustments for the history tab
+      await InventoryModel.logRestockAdjustment(
+        db, licensePlate, item.ingredientId, qty, poId, receivedBy,
+      );
+    }
+  }
+
+  // 5. Mark supply_order as received — fills actual_delivery_date
+  await InventoryModel.markSupplyOrderReceived(db, poId);
+
+  return { success: true, message: `Supply order PO-${poId} marked as received.` };
 }

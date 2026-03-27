@@ -1,3 +1,4 @@
+// backend/src/models/inventory.model.js
 function parseParams(url) {
   const qs = url.includes("?") ? url.split("?")[1] : "";
   const params = {};
@@ -97,8 +98,8 @@ export async function findIngredientById(db, ingredientId) {
 export async function createSupplyOrder(db, data) {
   const [result] = await db.query(
     `INSERT INTO supply_orders (supplier_id, license_plate, created_by, status, total_cost)
-     VALUES (?, ?, ?, 'pending', ?)`,
-    [data.supplier_id, data.license_plate, data.created_by, data.total_cost],
+     VALUES (?, ?, ?, ?, ?)`,
+    [data.supplier_id, data.license_plate, data.created_by, data.status ?? "ordered", data.total_cost],
   );
   return result;
 }
@@ -185,12 +186,6 @@ export async function findRecipeByMenuItem(db, menuItemId) {
   return rows;
 }
 
-// ── NEW: Expiry helpers ────────────────────────────────────────────────────────
-
-/**
- * Find all truck_inventory rows for a given truck where the item has expired
- * (expiration_date < NOW()) and still has stock (quantity_on_hand > 0).
- */
 export async function findExpiredItems(db, licensePlate) {
   const [rows] = await db.query(
     `SELECT
@@ -220,9 +215,6 @@ export async function findExpiredItems(db, licensePlate) {
   }));
 }
 
-/**
- * Zero out a single inventory item's quantity in place.
- */
 export async function zeroQuantity(db, licensePlate, ingredientId) {
   await db.query(
     `UPDATE truck_inventory SET quantity_on_hand = 0
@@ -231,10 +223,6 @@ export async function zeroQuantity(db, licensePlate, ingredientId) {
   );
 }
 
-/**
- * Find sales by menu item for today (completed/ready orders only, excluding pending/cancelled)
- * for a given truck. Returns aggregated quantities of each menu item sold.
- */
 export async function findTodaysSalesByMenuItem(db, licensePlate) {
   const [rows] = await db.query(
     `SELECT
@@ -257,4 +245,152 @@ export async function findTodaysSalesByMenuItem(db, licensePlate) {
     itemName: r.item_name,
     totalQuantity: parseInt(r.total_quantity),
   }));
+}
+
+// ── Supply-order receipt helpers ───────────────────────────────────────────
+
+/**
+ * Fetch all supply orders in status 'pending' or 'ordered' for a given truck,
+ * joined with their line items and ingredient names.
+ */
+export async function findPendingSupplyOrders(db, licensePlate) {
+  const [rows] = await db.query(
+    `SELECT
+       so.po_id,
+       so.supplier_id,
+       s.supplier_name,
+       so.license_plate,
+       so.created_by,
+       so.expected_delivery_date,
+       so.actual_delivery_date,
+       so.status,
+       so.total_cost,
+       soi.po_item_id,
+       soi.ingredient_id,
+       i.ingredient_name,
+       i.unit_of_measure,
+       soi.quantity_ordered,
+       soi.quantity_received,
+       soi.unit_cost,
+       soi.line_total
+     FROM supply_orders so
+     JOIN suppliers s          ON so.supplier_id    = s.supplier_id
+     JOIN supply_order_items soi ON so.po_id        = soi.po_id
+     JOIN ingredients i          ON soi.ingredient_id = i.ingredient_id
+     WHERE so.license_plate = ?
+       AND so.status IN ('pending', 'ordered')
+     ORDER BY so.po_id DESC, i.ingredient_name`,
+    [licensePlate],
+  );
+
+  // Group line items under their parent PO
+  const ordersMap = new Map();
+  for (const row of rows) {
+    if (!ordersMap.has(row.po_id)) {
+      ordersMap.set(row.po_id, {
+        poId: row.po_id,
+        supplierId: row.supplier_id,
+        supplierName: row.supplier_name,
+        licensePlate: row.license_plate,
+        createdBy: row.created_by,
+        expectedDeliveryDate: row.expected_delivery_date,
+        actualDeliveryDate: row.actual_delivery_date,
+        status: row.status,
+        totalCost: parseFloat(row.total_cost),
+        items: [],
+      });
+    }
+    ordersMap.get(row.po_id).items.push({
+      poItemId: row.po_item_id,
+      ingredientId: row.ingredient_id,
+      ingredientName: row.ingredient_name,
+      unitOfMeasure: row.unit_of_measure,
+      quantityOrdered: parseFloat(row.quantity_ordered),
+      quantityReceived: parseFloat(row.quantity_received),
+      unitCost: parseFloat(row.unit_cost),
+      lineTotal: parseFloat(row.line_total),
+    });
+  }
+
+  return Array.from(ordersMap.values());
+}
+
+/**
+ * Update how much of a PO line item was actually received.
+ */
+export async function updateSupplyOrderItemReceived(db, poItemId, quantityReceived) {
+  await db.query(
+    `UPDATE supply_order_items SET quantity_received = ? WHERE po_item_id = ?`,
+    [quantityReceived, poItemId],
+  );
+}
+
+/**
+ * Mark the overall supply_order as received:
+ *   status → 'received', actual_delivery_date → today, received_by → employee email.
+ */
+export async function markSupplyOrderReceived(db, poId) {
+  await db.query(
+    `UPDATE supply_orders
+     SET status               = 'received',
+         actual_delivery_date = CURDATE()
+     WHERE po_id = ?`,
+    [poId],
+  );
+}
+
+/**
+ * Add received quantity to truck_inventory and refresh last_restocked.
+ */
+export async function restockInventoryItem(db, licensePlate, ingredientId, quantityReceived) {
+  await db.query(
+    `UPDATE truck_inventory ti
+     JOIN ingredients i ON i.ingredient_id = ti.ingredient_id
+     SET ti.quantity_on_hand = ti.quantity_on_hand + ?,
+         ti.last_restocked   = NOW(),
+         ti.expiration_date  = CASE
+           WHEN i.storage_time IS NOT NULL
+           THEN DATE_ADD(NOW(), INTERVAL i.storage_time DAY)
+           ELSE ti.expiration_date
+         END
+     WHERE ti.license_plate = ?
+       AND ti.ingredient_id = ?`,
+    [quantityReceived, licensePlate, ingredientId],
+  );
+}
+
+/**
+ * Resolve active/ordered reorder_alerts for an ingredient on a truck.
+ * Fills resolved_date and resolved_by which were previously NULL.
+ */
+export async function resolveReorderAlerts(db, licensePlate, ingredientId, resolvedBy) {
+  await db.query(
+    `UPDATE reorder_alerts
+     SET alert_status  = 'resolved',
+         resolved_date = NOW(),
+         resolved_by   = ?
+     WHERE license_plate = ?
+       AND ingredient_id = ?
+       AND alert_status IN ('active', 'ordered')`,
+    [resolvedBy, licensePlate, ingredientId],
+  );
+}
+
+/**
+ * Log a restock inventory_adjustment so the history tab reflects the receipt.
+ * Uses reference_id to link back to the supply order PO.
+ */
+export async function logRestockAdjustment(db, licensePlate, ingredientId, quantityReceived, poId, receivedBy) {
+  await db.query(
+    `INSERT INTO inventory_adjustments
+       (license_plate, ingredient_id, adjustment_type, quantity_change, reason, adjusted_by)
+     VALUES (?, ?, 'restock', ?, ?, ?)`,
+    [
+      licensePlate,
+      ingredientId,
+      quantityReceived,
+      `Supply order PO-${poId} received`,
+      receivedBy,
+    ],
+  );
 }

@@ -5,58 +5,41 @@ import { clearCart } from "@/redux/cartSlice";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Clock } from "lucide-react";
 
-function isOutsideHours() {
-  const h = new Date().getHours();
-  return h < 10 || h >= 22;
-}
-
-function isAfterClosing() {
-  return new Date().getHours() >= 22;
-}
-
-// Returns { slots, date } — date is today's ISO string, or tomorrow's if after closing
 function getAvailableTimeSlots() {
   const now = new Date();
-  const afterClosing = isAfterClosing();
+  const slots = [];
 
-  // Use tomorrow's date when after 10 PM (today's slots are all past)
-  const targetDate = new Date(now);
-  if (afterClosing) {
-    targetDate.setDate(targetDate.getDate() + 1);
-  }
-  const dateStr = targetDate.toISOString().split("T")[0];
-
-  // Round current time up to next 30-min boundary (only matters for today)
+  // Round current time up to the next 30-min boundary
   const rounded = new Date(now);
   const m = rounded.getMinutes();
   if (m === 0) {
-    // on the hour — keep
+    // exactly on the hour — keep
   } else if (m <= 30) {
     rounded.setMinutes(30, 0, 0);
   } else {
     rounded.setHours(rounded.getHours() + 1, 0, 0, 0);
   }
 
-  const slots = [];
   for (let h = 10; h <= 22; h++) {
     for (const min of [0, 30]) {
       if (h === 22 && min === 30) continue;
-
-      if (!afterClosing) {
-        // For today: skip slots already in the past
-        const slot = new Date(now);
-        slot.setHours(h, min, 0, 0);
-        if (slot < rounded) continue;
-      }
+      const slot = new Date(now);
+      slot.setHours(h, min, 0, 0);
+      if (slot < rounded) continue; // past slot
 
       const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
       const ampm = h >= 12 ? "PM" : "AM";
       const label = `${displayH}:${min.toString().padStart(2, "0")} ${ampm}`;
       const value = `${h.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
-      slots.push({ value, label, date: dateStr });
+      slots.push({ value, label });
     }
   }
   return slots;
+}
+
+function isAfterClosing() {
+  const now = new Date();
+  return now.getHours() >= 22;
 }
 
 export const Route = createFileRoute("/checkout")({
@@ -79,18 +62,12 @@ function CheckoutPage() {
   }, [token]);
 
   const timeSlots = getAvailableTimeSlots();
-  const outsideHours = isOutsideHours();
-  const afterClosing = isAfterClosing();
+  const closed = isAfterClosing();
 
   const [paymentMethod, setPaymentMethod] = useState("credit");
   const [licensePlate, setLicensePlate] = useState("");
-  // Force scheduling on when outside business hours
-  const [scheduleEnabled, setScheduleEnabled] = useState(outsideHours);
   const [scheduledTime, setScheduledTime] = useState(
     timeSlots.length > 0 ? timeSlots[0].value : "",
-  );
-  const [scheduledDate, setScheduledDate] = useState(
-    timeSlots.length > 0 ? timeSlots[0].date : "",
   );
   const [trucks, setTrucks] = useState([]);
   const [trucksLoading, setTrucksLoading] = useState(true);
@@ -124,6 +101,21 @@ function CheckoutPage() {
     );
   }
 
+  if (closed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center space-y-3">
+          <p className="text-xl font-semibold text-gray-800">We're closed</p>
+          <p className="text-gray-500 text-sm">
+            Online ordering is available 10:00 AM – 10:00 PM.
+          </p>
+          <Link to="/order">
+            <Button variant="outline" className="mt-2">Back to Menu</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -140,8 +132,7 @@ function CheckoutPage() {
           customerEmail: user?.email ?? null,
           paymentMethod,
           licensePlate,
-          scheduledTime: scheduleEnabled ? scheduledTime : null,
-          scheduledDate: scheduleEnabled ? scheduledDate : null,
+          scheduledTime,
           items: cartItems.map((i) => ({
             menuItemId: i.menuItemId,
             quantity: i.quantity,
@@ -225,67 +216,31 @@ function CheckoutPage() {
               )}
             </div>
 
-            {/* Outside hours banner */}
-            {outsideHours && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
-                <strong>We're currently closed</strong> (10:00 AM – 10:00 PM).{" "}
-                {afterClosing
-                  ? "You can still place an order — your pickup will be scheduled for tomorrow."
-                  : "You can still place an order — your pickup will be scheduled for when we open today."}
-              </div>
-            )}
-
             {/* Scheduled Pickup Time */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
-              <div className="flex items-center justify-between mb-1">
-                <h2 className="text-base font-semibold flex items-center gap-2">
-                  <Clock size={16} className="text-amber-600" />
-                  Schedule for Later
-                </h2>
-                {/* Hide toggle when outside hours — scheduling is required */}
-                {!outsideHours && (
-                  <button
-                    type="button"
-                    onClick={() => setScheduleEnabled((v) => !v)}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-                      scheduleEnabled ? "bg-amber-600" : "bg-gray-200"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
-                        scheduleEnabled ? "translate-x-4" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 mb-3">
-                {outsideHours
-                  ? "A pickup time is required when ordering outside business hours."
-                  : "Leave off to pick up as soon as your order is ready."}
+              <h2 className="text-base font-semibold mb-1 flex items-center gap-2">
+                <Clock size={16} className="text-amber-600" />
+                Pickup Time
+              </h2>
+              <p className="text-xs text-gray-400 mb-4">
+                Select your preferred pickup time (10:00 AM – 10:00 PM).
               </p>
-              {scheduleEnabled && (
-                timeSlots.length === 0 ? (
-                  <p className="text-sm text-red-500">
-                    No available times. Please try again later.
-                  </p>
-                ) : (
-                  <select
-                    value={scheduledTime}
-                    onChange={(e) => {
-                      const slot = timeSlots.find((s) => s.value === e.target.value);
-                      setScheduledTime(e.target.value);
-                      if (slot) setScheduledDate(slot.date);
-                    }}
-                    className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
-                  >
-                    {timeSlots.map((slot) => (
-                      <option key={slot.value} value={slot.value}>
-                        {afterClosing ? `Tomorrow · ${slot.label}` : slot.label}
-                      </option>
-                    ))}
-                  </select>
-                )
+              {timeSlots.length === 0 ? (
+                <p className="text-sm text-red-500">
+                  No available times today. We close at 10:00 PM.
+                </p>
+              ) : (
+                <select
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                >
+                  {timeSlots.map((slot) => (
+                    <option key={slot.value} value={slot.value}>
+                      {slot.label}
+                    </option>
+                  ))}
+                </select>
               )}
             </div>
 
@@ -327,7 +282,7 @@ function CheckoutPage() {
 
             <Button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || timeSlots.length === 0}
               className="w-full bg-amber-600 hover:bg-amber-700 text-white py-6 text-base font-semibold disabled:opacity-60"
             >
               {submitting

@@ -1,4 +1,6 @@
 import * as TruckModel from "../models/trucks.model.js";
+import * as EmployeeModel from "../models/employees.model.js";
+import { verifyToken } from "../auth/jwt.js";
 
 export async function getAllTrucks(db) {
   return await TruckModel.findAll(db);
@@ -72,4 +74,17 @@ export async function deleteTruck(db, data) {
     success: true,
     message: "Truck deleted successfully",
   };
+}
+
+// Get the truck for the current user (manager/employee)
+export async function getTruckForUser(db, req) {
+  const authHeader = req?.headers?.authorization ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+  const payload = verifyToken(token);
+  if (!payload || !payload.email) return { error: "Unauthorized" };
+  const emp = await EmployeeModel.findByEmail(db, payload.email);
+  if (!emp || !emp.license_plate) return { error: "No truck assigned to this user" };
+  const truck = await TruckModel.findByLicensePlate(db, emp.license_plate);
+  if (!truck) return { error: "Truck not found" };
+  return truck;
 }
