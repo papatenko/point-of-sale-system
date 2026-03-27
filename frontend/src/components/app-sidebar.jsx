@@ -64,6 +64,7 @@ const database_management_routes = [
   { name: "Food Trucks", url: "/employee/database/food-trucks", icon: Truck, roles: ["admin"] },
   { name: "Recipes", url: "/employee/database/recipes", icon: Scroll, roles: ["admin"] },
   { name: "Users", url: "/employee/database/users", icon: UserCircle, roles: ["admin"] },
+  { name: "Customers", url: "/employee/database/customers", icon: UserCircle, roles: ["admin"] },
   { name: "Backup", url: "/employee/database/backup", icon: Database, roles: ["admin"] },
 ];
 
