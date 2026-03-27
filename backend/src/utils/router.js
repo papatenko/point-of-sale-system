@@ -13,6 +13,10 @@ export function createRouter() {
     routes.push({ method: "PUT", path, handler });
   }
 
+  function patch(path, handler) {
+    routes.push({ method: "PATCH", path, handler });
+  }
+
   function deleteRoute(path, handler) {
     routes.push({ method: "DELETE", path, handler });
   }
@@ -43,5 +47,5 @@ export function createRouter() {
     return null;
   }
 
-  return { get, post, put, delete: deleteRoute, match };
+  return { get, post, put, patch, delete: deleteRoute, match };
 }
