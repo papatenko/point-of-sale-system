@@ -60,6 +60,24 @@ function ProfilePage() {
     setMessage(null);
     setError(null);
 
+   if (
+  formData.password &&
+  formData.password.length < 8
+) {
+  setError("Password must be at least 8 characters");
+  setSaving(false);
+  return;
+}
+
+if (
+  formData.phone_number &&
+  formData.phone_number.length < 10 || formData.phone_number.length > 11 
+) {
+  setError("phone number  must be 10 - 11 digits");
+  setSaving(false);
+  return;
+}
+
     const token = localStorage.getItem("token");
 
     try {
@@ -138,6 +156,11 @@ function ProfilePage() {
               <input
                 type="text"
                 value={formData.first_name}
+                onBeforeInput={(e) => {
+                  if (e.data && !/^[a-zA-Z]$/.test(e.data)) {
+                    e.preventDefault();
+                  }
+                }}
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, first_name: e.target.value }))
                 }
@@ -153,6 +176,11 @@ function ProfilePage() {
               <input
                 type="text"
                 value={formData.last_name}
+                onBeforeInput={(e) => {
+                  if (e.data && !/^[a-zA-Z]$/.test(e.data)) {
+                    e.preventDefault();
+                  }
+                }}
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, last_name: e.target.value }))
                 }
@@ -168,6 +196,11 @@ function ProfilePage() {
               <input
                 type="tel"
                 value={formData.phone_number}
+                 onBeforeInput={(e) => {
+                  if (e.data && !/^[0-9]$/.test(e.data)) {
+                    e.preventDefault();
+                  }
+                }}
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, phone_number: e.target.value }))
                 }
