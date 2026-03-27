@@ -66,7 +66,7 @@ const server = createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
     "Access-Control-Allow-Methods",
-    "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    "GET, POST, PUT, DELETE, OPTIONS",
   );
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
@@ -79,7 +79,7 @@ const server = createServer(async (req, res) => {
 
   // API routes
   if (req.url.startsWith("/api")) {
-    const body = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method)
+    const body = ["POST", "PUT", "DELETE"].includes(req.method)
       ? await readBody(req)
       : null;
     try {

@@ -5,6 +5,7 @@ import {
   TruckIcon, MinusCircleIcon, ShoppingCartIcon, HistoryIcon,
   BellIcon, SearchIcon, RefreshCwIcon, XCircleIcon, Trash2Icon,
   ChefHatIcon, PlusIcon, MinusIcon, ClipboardListIcon,
+  ChevronDownIcon, ChevronUpIcon,
 } from "lucide-react";
 
 import { Button }   from "@/components/ui/button";
@@ -36,6 +37,10 @@ function useToast() {
     setTimeout(() => setToast(null), 4000);
   };
   return { toast, show };
+}
+
+function isManagerOrAdmin(user) {
+  return user?.role === "manager" || user?.role === "admin";
 }
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
@@ -119,7 +124,259 @@ function LoadingRows({ count = 5 }) {
   );
 }
 
-// ─── Use Menu Item Dialog (NEW) ───────────────────────────────────────────────
+// ─── Receive Order Dialog ─────────────────────────────────────────────────────
+// Shown when a manager/admin clicks "Receive" on a pending supply order.
+function ReceiveOrderDialog({ order, open, onOpenChange, onConfirm, loading }) {
+  const [received, setReceived] = useState({});
+  const [itemsExpanded, setItemsExpanded] = useState(true);
+
+  // Pre-fill with quantity_ordered each time a new order is opened
+  useEffect(() => {
+    if (open && order) {
+      const initial = {};
+      for (const item of order.items) {
+        initial[item.poItemId] = item.quantityOrdered;
+      }
+      setReceived(initial);
+    }
+  }, [open, order]);
+
+  if (!order) return null;
+
+  const handleQtyChange = (poItemId, value) => {
+    const num = parseFloat(value);
+    setReceived((prev) => ({ ...prev, [poItemId]: isNaN(num) ? 0 : num }));
+  };
+
+  const handleConfirm = () => {
+    const items = order.items.map((item) => ({
+      poItemId:         item.poItemId,
+      ingredientId:     item.ingredientId,
+      quantityReceived: received[item.poItemId] ?? 0,
+    }));
+    onConfirm({ poId: order.poId, items });
+  };
+
+  const totalReceived = Object.values(received)
+    .reduce((sum, v) => sum + (parseFloat(v) || 0), 0);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <PackageIcon className="size-5 text-emerald-600" />
+            Receive Supply Order — PO-{order.poId}
+          </DialogTitle>
+          <DialogDescription>
+            Confirm the quantities actually delivered. Truck inventory will be
+            restocked immediately and any open reorder alerts will be resolved.
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Order meta */}
+        <div className="rounded-lg border bg-muted/40 divide-y text-sm">
+          {[
+            { label: "Supplier",   value: order.supplierName },
+            { label: "Created by", value: order.createdBy },
+            { label: "Status",     value: order.status },
+            { label: "Total cost", value: `$${fmt(order.totalCost)}` },
+          ].map(({ label, value }) => (
+            <div key={label} className="flex justify-between px-3 py-2">
+              <span className="text-muted-foreground">{label}</span>
+              <span className="font-medium capitalize">{value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Line items */}
+        <div className="grid gap-1.5">
+          <button
+            type="button"
+            className="flex items-center justify-between text-sm font-semibold hover:text-foreground/80 transition-colors"
+            onClick={() => setItemsExpanded((e) => !e)}
+          >
+            <span>Items to receive ({order.items.length})</span>
+            {itemsExpanded
+              ? <ChevronUpIcon className="size-4" />
+              : <ChevronDownIcon className="size-4" />}
+          </button>
+
+          {itemsExpanded && (
+            <div className="rounded-lg border divide-y max-h-56 overflow-y-auto">
+              {/* Column headers */}
+              <div className="grid grid-cols-[1fr_auto_auto] gap-2 px-3 py-2 bg-muted/60 text-xs text-muted-foreground font-medium">
+                <span>Ingredient</span>
+                <span className="text-right">Ordered</span>
+                <span className="text-right w-24">Qty Received</span>
+              </div>
+
+              {order.items.map((item) => (
+                <div
+                  key={item.poItemId}
+                  className="grid grid-cols-[1fr_auto_auto] items-center gap-2 px-3 py-2.5 text-sm"
+                >
+                  <div>
+                    <p className="font-medium">{item.ingredientName}</p>
+                    <p className="text-xs text-muted-foreground">{item.unitOfMeasure}</p>
+                  </div>
+                  <span className="tabular-nums text-muted-foreground text-right">
+                    {fmt(item.quantityOrdered)}
+                  </span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={received[item.poItemId] ?? ""}
+                    onChange={(e) => handleQtyChange(item.poItemId, e.target.value)}
+                    className="w-24 text-right h-8 text-sm"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Restock summary */}
+        <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm flex justify-between items-center">
+          <span className="text-emerald-800 font-medium">Total units being restocked</span>
+          <span className="text-emerald-700 font-bold tabular-nums">{fmt(totalReceived)}</span>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={loading || totalReceived <= 0}
+            className="gap-2"
+          >
+            <CheckCircle2Icon className="size-4" />
+            {loading ? "Processing…" : "Confirm Receipt & Restock"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Pending Supply Orders Banner (managers / admins only) ────────────────────
+function PendingSupplyOrdersBanner({ selectedTruck, onOrderReceived, showToast }) {
+  const user = useSelector((s) => s.auth.user);
+  const [orders,         setOrders]         = useState([]);
+  const [bannerLoading,  setBannerLoading]  = useState(false);
+  const [activeOrder,    setActiveOrder]    = useState(null);
+  const [receiveLoading, setReceiveLoading] = useState(false);
+
+  const loadPendingOrders = useCallback(async () => {
+    if (!isManagerOrAdmin(user) || !selectedTruck) return;
+    setBannerLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `/api/inventory/pending-orders?licensePlate=${encodeURIComponent(selectedTruck)}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch {
+      setOrders([]);
+    }
+    setBannerLoading(false);
+  }, [selectedTruck, user]);
+
+  useEffect(() => {
+    loadPendingOrders();
+  }, [loadPendingOrders]);
+
+  const handleConfirmReceive = async ({ poId, items }) => {
+    setReceiveLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/inventory/receive-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ poId, licensePlate: selectedTruck, items }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Request failed");
+
+      showToast(`✓ PO-${poId} received — inventory restocked and alerts resolved.`);
+      setActiveOrder(null);
+      await loadPendingOrders(); // refresh banner
+      onOrderReceived();         // refresh parent inventory table
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+    setReceiveLoading(false);
+  };
+
+  if (!isManagerOrAdmin(user) || bannerLoading || orders.length === 0) return null;
+
+  return (
+    <>
+      <div className="rounded-xl border border-blue-200 bg-blue-50 dark:border-blue-800/40 dark:bg-blue-950/25 px-5 py-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <TruckIcon className="size-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-blue-900 dark:text-blue-200 leading-tight">
+              {orders.length} pending supply order{orders.length > 1 ? "s" : ""} awaiting receipt
+            </p>
+            <p className="text-sm text-blue-700 dark:text-blue-400 mt-0.5">
+              Confirm delivery quantities to restock inventory and resolve reorder alerts automatically.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {orders.map((order) => (
+            <div
+              key={order.poId}
+              className="flex items-center justify-between gap-3 rounded-lg bg-white/70 dark:bg-white/5 border border-blue-100 dark:border-blue-800/30 px-4 py-3"
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-sm">PO-{order.poId}</span>
+                  <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">
+                    {order.status}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">{order.supplierName}</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {order.items.length} ingredient{order.items.length !== 1 ? "s" : ""}
+                  {" · "}${fmt(order.totalCost)}
+                  {" · "}ordered by {order.createdBy}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                className="shrink-0 gap-1.5"
+                onClick={() => setActiveOrder(order)}
+              >
+                <PackageIcon className="size-3.5" />
+                Receive
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <ReceiveOrderDialog
+        order={activeOrder}
+        open={!!activeOrder}
+        onOpenChange={(o) => { if (!o) setActiveOrder(null); }}
+        onConfirm={handleConfirmReceive}
+        loading={receiveLoading}
+      />
+    </>
+  );
+}
+
+// ─── Use Menu Item Dialog ─────────────────────────────────────────────────────
 function UseMenuItemDialog({ open, onOpenChange, menuItems, inventory, onConfirm, loading }) {
   const [selectedMenuItemId, setSelectedMenuItemId] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -127,7 +384,6 @@ function UseMenuItemDialog({ open, onOpenChange, menuItems, inventory, onConfirm
   const [recipeLoading, setRecipeLoading] = useState(false);
   const [shortages, setShortages] = useState([]);
 
-  // Reset when dialog opens
   useEffect(() => {
     if (open) {
       setSelectedMenuItemId("");
@@ -137,7 +393,6 @@ function UseMenuItemDialog({ open, onOpenChange, menuItems, inventory, onConfirm
     }
   }, [open]);
 
-  // Load recipe preview when menu item changes
   useEffect(() => {
     if (!selectedMenuItemId) {
       setRecipe([]);
@@ -157,7 +412,6 @@ function UseMenuItemDialog({ open, onOpenChange, menuItems, inventory, onConfirm
       .catch(() => setRecipeLoading(false));
   }, [selectedMenuItemId]);
 
-  // Check for shortages whenever recipe, quantity, or inventory changes
   useEffect(() => {
     if (!recipe.length) { setShortages([]); return; }
     const problems = [];
@@ -195,7 +449,6 @@ function UseMenuItemDialog({ open, onOpenChange, menuItems, inventory, onConfirm
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
-          {/* Menu Item Selector */}
           <div className="grid gap-1.5">
             <label className="text-sm font-medium">Menu Item</label>
             <Select value={selectedMenuItemId} onValueChange={setSelectedMenuItemId}>
@@ -212,7 +465,6 @@ function UseMenuItemDialog({ open, onOpenChange, menuItems, inventory, onConfirm
             </Select>
           </div>
 
-          {/* Quantity */}
           {selectedMenuItemId && (
             <div className="grid gap-1.5">
               <label className="text-sm font-medium">Quantity to Prepare</label>
@@ -250,7 +502,6 @@ function UseMenuItemDialog({ open, onOpenChange, menuItems, inventory, onConfirm
             </div>
           )}
 
-          {/* Recipe Preview */}
           {selectedMenuItemId && (
             <div className="grid gap-1.5">
               <label className="text-sm font-medium">
@@ -303,7 +554,6 @@ function UseMenuItemDialog({ open, onOpenChange, menuItems, inventory, onConfirm
             </div>
           )}
 
-          {/* Shortage Warning */}
           {shortages.length > 0 && (
             <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 space-y-1">
               <p className="text-sm font-semibold text-destructive">
@@ -338,16 +588,15 @@ function UseMenuItemDialog({ open, onOpenChange, menuItems, inventory, onConfirm
   );
 }
 
-// ─── Daily Production Log Dialog (NEW) ────────────────────────────────────────
+// ─── Daily Production Log Dialog ──────────────────────────────────────────────
 function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onConfirm, loading, selectedTruck }) {
-  const [productions, setProductions] = useState({}); // { menuItemId: quantity }
-  const [recipesData, setRecipesData] = useState({}); // { menuItemId: [recipe] }
+  const [productions, setProductions] = useState({});
+  const [recipesData, setRecipesData] = useState({});
   const [recipesLoading, setRecipesLoading] = useState(false);
-  const [aggregatedIngredients, setAggregatedIngredients] = useState({}); // { ingredientId: { name, unit, total, available } }
+  const [aggregatedIngredients, setAggregatedIngredients] = useState({});
   const [shortages, setShortages] = useState([]);
-  const [todaysSales, setTodaysSales] = useState({}); // { menuItemId: quantity }
+  const [todaysSales, setTodaysSales] = useState({});
 
-  // Reset and load today's sales when dialog opens
   useEffect(() => {
     if (open && selectedTruck) {
       setProductions({});
@@ -355,15 +604,13 @@ function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onCon
       setAggregatedIngredients({});
       setShortages([]);
       setTodaysSales({});
-      
-      // Load all recipes and today's sales in parallel
+
       setRecipesLoading(true);
       Promise.all([
         fetch(`/api/recipes`).then((r) => r.json()),
         fetch(`/api/inventory/today-sales?licensePlate=${encodeURIComponent(selectedTruck)}`).then((r) => r.json()),
       ])
         .then(([recipes, sales]) => {
-          // Process recipes into map
           const byMenuItem = {};
           if (Array.isArray(recipes)) {
             recipes.forEach((r) => {
@@ -374,7 +621,6 @@ function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onCon
           }
           setRecipesData(byMenuItem);
 
-          // Process today's sales into map and pre-populate productions
           const salesMap = {};
           const productsMap = {};
           if (Array.isArray(sales)) {
@@ -385,14 +631,13 @@ function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onCon
             });
           }
           setTodaysSales(salesMap);
-          setProductions(productsMap); // Pre-populate with today's sales
+          setProductions(productsMap);
           setRecipesLoading(false);
         })
         .catch(() => setRecipesLoading(false));
     }
   }, [open, selectedTruck]);
 
-  // Recalculate aggregated ingredients and check for shortages
   useEffect(() => {
     const aggregated = {};
     const hasShortage = [];
@@ -415,7 +660,6 @@ function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onCon
       });
     });
 
-    // Find inventory levels
     Object.entries(aggregated).forEach(([ingId, ing]) => {
       const invItem = inventory.find((i) => i.ingredientId === parseInt(ingId));
       if (invItem) {
@@ -472,7 +716,6 @@ function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onCon
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
-          {/* Menu Items Section */}
           <div className="grid gap-2">
             <h3 className="text-sm font-semibold">Menu Items Prepared</h3>
             {recipesLoading ? (
@@ -545,7 +788,6 @@ function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onCon
             )}
           </div>
 
-          {/* Summary */}
           {totalItems > 0 && (
             <div className="rounded-lg border bg-muted/50 p-3">
               <p className="text-sm font-semibold">
@@ -554,7 +796,6 @@ function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onCon
             </div>
           )}
 
-          {/* Aggregated Ingredients Preview */}
           {Object.keys(aggregatedIngredients).length > 0 && (
             <div className="grid gap-2">
               <h3 className="text-sm font-semibold">Ingredients to Deduct</h3>
@@ -592,7 +833,6 @@ function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onCon
             </div>
           )}
 
-          {/* Shortage Warning */}
           {shortages.length > 0 && (
             <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 space-y-1">
               <p className="text-sm font-semibold text-destructive">⚠ Insufficient stock:</p>
@@ -618,7 +858,7 @@ function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onCon
   );
 }
 
-// ─── Expire Confirmation Dialog (NEW) ─────────────────────────────────────────
+// ─── Expire Confirmation Dialog ───────────────────────────────────────────────
 function ExpireDialog({ open, onOpenChange, expiredItems, onConfirm, loading }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -676,7 +916,7 @@ function ExpireDialog({ open, onOpenChange, expiredItems, onConfirm, loading }) 
   );
 }
 
-// ─── Manual Adjust Dialog (existing, kept for individual ingredient tweaks) ───
+// ─── Manual Adjust Dialog ─────────────────────────────────────────────────────
 function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
   const [qty,    setQty]    = useState("");
   const [type,   setType]   = useState("waste");
@@ -838,29 +1078,45 @@ function InventoryPage() {
   const [reorderItem,             setReorderItem]             = useState(null);
   const [useMenuItemOpen,         setUseMenuItemOpen]         = useState(false);
   const [dailyProductionOpen,     setDailyProductionOpen]     = useState(false);
-  const [expireItems,             setExpireItems]             = useState(null); // null = not open, [] = open
+  const [expireItems,             setExpireItems]             = useState(null);
   const [hasShownWarningForTruck, setHasShownWarningForTruck] = useState(null);
   const [modalLoading,            setModalLoading]            = useState(false);
   const [expireLoading,           setExpireLoading]           = useState(false);
   const [productionLoading,       setProductionLoading]       = useState(false);
 
+  // Pending supply orders notice (manager/admin only)
+  const [pendingOrders,             setPendingOrders]             = useState([]);
+  const [pendingOrdersNotice,       setPendingOrdersNotice]       = useState(null);
+  const [hasShownPendingForTruck,   setHasShownPendingForTruck]   = useState(null);
+  const [pendingActiveOrder,        setPendingActiveOrder]        = useState(null);
+  const [pendingReceiveLoading,     setPendingReceiveLoading]     = useState(false);
+
   const { toast, show: showToast } = useToast();
 
   // Load trucks + menu items on mount
   useEffect(() => {
-    fetch("/api/trucks")
-      .then((r) => r.json())
-      .then((data) => {
-        setTrucks(data);
-        if (data.length > 0) setSelectedTruck(data[0].license_plate);
-      })
-      .catch(() => showToast("Failed to load trucks", "error"));
-
+    if (authUser?.role === "admin") {
+      fetch("/api/trucks")
+        .then((r) => r.json())
+        .then((data) => {
+          setTrucks(data);
+          if (data.length > 0) setSelectedTruck(data[0].license_plate);
+        })
+        .catch(() => showToast("Failed to load trucks", "error"));
+    } else if (authUser?.license_plate) {
+      // For manager/employee, use their assigned truck
+      setTrucks([{ license_plate: authUser.license_plate, truck_name: `Truck ${authUser.license_plate}` }]);
+      setSelectedTruck(authUser.license_plate);
+    } else {
+      setTrucks([]);
+      setSelectedTruck("");
+      showToast("No truck assigned to this user.", "error");
+    }
     fetch("/api/menu-items")
       .then((r) => r.json())
       .then((data) => setMenuItems(Array.isArray(data) ? data : []))
       .catch(() => {});
-  }, []);
+  }, [authUser]);
 
   const loadData = useCallback(async (lp) => {
     if (!lp) return;
@@ -882,26 +1138,61 @@ function InventoryPage() {
 
   useEffect(() => { loadData(selectedTruck); }, [selectedTruck, loadData]);
 
-  // ── Auto-detect expired items and show warning dialog ─────────────────────
+  // Auto-detect expired items
   useEffect(() => {
     if (inventory.length === 0 || loading) return;
-    
     const expiredItems = inventory.filter((item) => {
       if (!item.expirationDate || item.quantityOnHand <= 0) return false;
       return new Date(item.expirationDate) < new Date();
     });
-
-    // Automatically open the dialog only if:
-    // 1. Expired items exist
-    // 2. Dialog is not already open (expireItems is null)
-    // 3. We haven't already shown the warning for this truck (to avoid re-opening when user closes it)
     if (expiredItems.length > 0 && expireItems === null && hasShownWarningForTruck !== selectedTruck) {
       setExpireItems(expiredItems);
       setHasShownWarningForTruck(selectedTruck);
     }
   }, [inventory, loading, selectedTruck, expireItems, hasShownWarningForTruck]);
 
-  // ── Handle "Use Menu Item" ────────────────────────────────────────────────
+  // Fetch pending supply orders for manager/admin
+  useEffect(() => {
+    if (!isManagerOrAdmin(authUser) || !selectedTruck) return;
+    const token = localStorage.getItem("token");
+    fetch(`/api/inventory/pending-orders?licensePlate=${encodeURIComponent(selectedTruck)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => setPendingOrders(Array.isArray(data) ? data : []))
+      .catch(() => setPendingOrders([]));
+  }, [selectedTruck, authUser]);
+
+  // Auto-open pending supply orders notice (mirrors expired-items pattern)
+  useEffect(() => {
+    if (!isManagerOrAdmin(authUser) || loading || pendingOrders.length === 0) return;
+    if (pendingOrdersNotice === null && hasShownPendingForTruck !== selectedTruck) {
+      setPendingOrdersNotice(pendingOrders);
+      setHasShownPendingForTruck(selectedTruck);
+    }
+  }, [pendingOrders, loading, selectedTruck, authUser, pendingOrdersNotice, hasShownPendingForTruck]);
+
+  const handlePendingReceive = async ({ poId, items }) => {
+    setPendingReceiveLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/inventory/receive-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ poId, licensePlate: selectedTruck, items }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Request failed");
+      showToast(`✓ PO-${poId} received — inventory restocked.`);
+      setPendingActiveOrder(null);
+      setPendingOrders((prev) => prev.filter((o) => o.poId !== poId));
+      loadData(selectedTruck);
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+    setPendingReceiveLoading(false);
+  };
+
   const handleUseMenuItem = async ({ menuItemId, menuItemName, quantity }) => {
     setModalLoading(true);
     try {
@@ -925,9 +1216,7 @@ function InventoryPage() {
       const alertMsg = data.alertsCreated?.length
         ? ` Reorder alerts created for: ${data.alertsCreated.join(", ")}.`
         : "";
-      showToast(
-        `✓ Deducted ingredients for ${quantity}x ${menuItemName || "item"}.${alertMsg}`
-      );
+      showToast(`✓ Deducted ingredients for ${quantity}x ${menuItemName || "item"}.${alertMsg}`);
       setUseMenuItemOpen(false);
       loadData(selectedTruck);
     } catch (err) {
@@ -936,7 +1225,6 @@ function InventoryPage() {
     setModalLoading(false);
   };
 
-  // ── Handle manual adjust ─────────────────────────────────────────────────
   const handleAdjust = async ({ qty, type, reason }) => {
     setModalLoading(true);
     try {
@@ -966,7 +1254,6 @@ function InventoryPage() {
     setModalLoading(false);
   };
 
-  // ── Handle reorder ───────────────────────────────────────────────────────
   const handleReorder = async ({ qty }) => {
     setModalLoading(true);
     try {
@@ -991,9 +1278,7 @@ function InventoryPage() {
     setModalLoading(false);
   };
 
-  // ── Handle "Check & Expire" ───────────────────────────────────────────────
   const handleOpenExpire = () => {
-    // Show expired items from current inventory state immediately
     const expired = inventory.filter((item) => {
       if (!item.expirationDate || item.quantityOnHand <= 0) return false;
       return new Date(item.expirationDate) < new Date();
@@ -1007,10 +1292,7 @@ function InventoryPage() {
       const res = await fetch("/api/inventory/expire", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          licensePlate: selectedTruck,
-          adjustedBy: currentUser,
-        }),
+        body: JSON.stringify({ licensePlate: selectedTruck, adjustedBy: currentUser }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -1021,7 +1303,6 @@ function InventoryPage() {
           : "No expired items found."
       );
       setExpireItems(null);
-      // Reset the flag so the warning shows again if expired items appear in the future
       setHasShownWarningForTruck(null);
       loadData(selectedTruck);
     } catch (err) {
@@ -1030,9 +1311,7 @@ function InventoryPage() {
     setExpireLoading(false);
   };
 
-  // ── Handle Daily Production ──────────────────────────────────────────────
   const handleDailyProduction = async (productions) => {
-    // productions is { menuItemId: quantity }
     const productionArray = Object.entries(productions).map(([menuItemId, qty]) => ({
       menuItemId: parseInt(menuItemId),
       quantity: qty,
@@ -1055,14 +1334,11 @@ function InventoryPage() {
         showToast("Operation failed. Please try again.", "error");
         return;
       }
-      
       const totalItems = productionArray.reduce((sum, p) => sum + p.quantity, 0);
       const alertMsg = data.alertsCreated?.length
         ? ` Reorder alerts created for: ${data.alertsCreated.join(", ")}.`
         : "";
-      showToast(
-        `✓ Deducted ingredients for ${totalItems} item${totalItems === 1 ? "" : "s"} prepared.${alertMsg}`
-      );
+      showToast(`✓ Deducted ingredients for ${totalItems} item${totalItems === 1 ? "" : "s"} prepared.${alertMsg}`);
       setDailyProductionOpen(false);
       loadData(selectedTruck);
     } catch (err) {
@@ -1105,7 +1381,6 @@ function InventoryPage() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* ── NEW: Use by Menu Item ── */}
             <Button
               variant="default"
               size="sm"
@@ -1117,7 +1392,6 @@ function InventoryPage() {
               Use by Menu Item
             </Button>
 
-            {/* ── NEW: Daily Production Log ── */}
             <Button
               variant="default"
               size="sm"
@@ -1129,7 +1403,6 @@ function InventoryPage() {
               Daily Production
             </Button>
 
-            {/* ── NEW: Expire Outdated ── */}
             <Button
               variant="outline"
               size="sm"
@@ -1156,24 +1429,35 @@ function InventoryPage() {
               Refresh
             </Button>
 
-            <Select value={selectedTruck} onValueChange={setSelectedTruck}>
-              <SelectTrigger className="w-56">
-                <TruckIcon className="size-4 text-muted-foreground" />
-                <SelectValue placeholder="Select food truck" />
-              </SelectTrigger>
-              <SelectContent>
-                {trucks.map((t) => (
-                  <SelectItem key={t.license_plate} value={t.license_plate}>
-                    {t.truck_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Only show truck switcher for admins */}
+            {authUser?.role === "admin" && (
+              <Select value={selectedTruck} onValueChange={setSelectedTruck}>
+                <SelectTrigger className="w-56">
+                  <TruckIcon className="size-4 text-muted-foreground" />
+                  <SelectValue placeholder="Select food truck" />
+                </SelectTrigger>
+                <SelectContent>
+                  {trucks.map((t) => (
+                    <SelectItem key={t.license_plate} value={t.license_plate}>
+                      {t.truck_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto w-full px-6 py-6 flex flex-col gap-6">
+
+        {/* ── Pending Supply Orders Banner (managers / admins only) ── */}
+        <PendingSupplyOrdersBanner
+          selectedTruck={selectedTruck}
+          onOrderReceived={() => loadData(selectedTruck)}
+          showToast={showToast}
+        />
+
         {/* ── Stat Cards ────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard icon={PackageIcon}       label="Total Ingredients" value={inventory.length} />
@@ -1315,7 +1599,6 @@ function InventoryPage() {
                                   variant="outline"
                                   disabled={item.quantityOnHand === 0}
                                   onClick={() => setAdjustItem(item)}
-                                  title="Manual deduction (waste, correction, etc.)"
                                 >
                                   <MinusCircleIcon className="size-3.5" />
                                   Adjust
@@ -1324,11 +1607,6 @@ function InventoryPage() {
                                   size="sm"
                                   disabled={!item.needsReorder}
                                   onClick={() => setReorderItem(item)}
-                                  title={
-                                    item.needsReorder
-                                      ? "Place a reorder"
-                                      : `Reorder only available when below threshold (${fmt(item.reorderThreshold)} ${item.unitOfMeasure})`
-                                  }
                                 >
                                   <ShoppingCartIcon className="size-3.5" />
                                   Reorder
@@ -1510,6 +1788,69 @@ function InventoryPage() {
         expiredItems={expireItems ?? []}
         onConfirm={handleConfirmExpire}
         loading={expireLoading}
+      />
+
+      {/* ── Pending Supply Orders Notice (auto-opens for managers/admins) ── */}
+      <Dialog open={pendingOrdersNotice !== null} onOpenChange={(o) => { if (!o) setPendingOrdersNotice(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center justify-center size-9 rounded-full bg-amber-100 dark:bg-amber-900/40">
+                <PackageIcon className="size-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <DialogTitle className="text-base">
+                {(pendingOrdersNotice ?? []).length} Supply Order{(pendingOrdersNotice ?? []).length !== 1 ? "s" : ""} Awaiting Receipt
+              </DialogTitle>
+            </div>
+            <DialogDescription>
+              The following supply orders have been placed and are ready to be received.
+              Confirm delivery to restock inventory automatically.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 my-1">
+            {(pendingOrdersNotice ?? []).map((order) => (
+              <div
+                key={order.poId}
+                className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm">PO-{order.poId}</span>
+                    <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 dark:text-amber-400">
+                      {order.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {order.supplierName} · {order.items.length} ingredient{order.items.length !== 1 ? "s" : ""} · ${fmt(order.totalCost)}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50 dark:text-amber-400"
+                  onClick={() => { setPendingOrdersNotice(null); setPendingActiveOrder(order); }}
+                >
+                  Receive
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setPendingOrdersNotice(null)}>
+              Dismiss
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ReceiveOrderDialog
+        order={pendingActiveOrder}
+        open={!!pendingActiveOrder}
+        onOpenChange={(o) => { if (!o) setPendingActiveOrder(null); }}
+        onConfirm={handlePendingReceive}
+        loading={pendingReceiveLoading}
       />
 
       <AdjustDialog
