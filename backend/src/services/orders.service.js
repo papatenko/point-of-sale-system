@@ -12,9 +12,10 @@ export async function getOrderById(db, url) {
 
 export async function listOrders(db, req, url) {
   const { searchParams } = new URL(url, "http://localhost");
-  const status = searchParams.get("status");
-  const search = searchParams.get("search");
+  const status   = searchParams.get("status");
+  const search   = searchParams.get("search");
   const truckParam = searchParams.get("truck");
+  const date     = searchParams.get("date"); // YYYY-MM-DD
 
   // Extract JWT payload for role + license_plate
   const authHeader = req?.headers?.authorization ?? "";
@@ -26,7 +27,7 @@ export async function listOrders(db, req, url) {
   // Only admin can switch trucks via ?truck= param
   const effectiveTruck = (role === "admin" && truckParam) ? truckParam : jwtLicensePlate;
 
-  // Promote eligible pending orders → preparing (runs on every current-orders poll)
+  // Promote eligible pending orders → preparing
   if (effectiveTruck && status?.includes("pending")) {
     await db.query(
       `UPDATE checkout
@@ -41,6 +42,7 @@ export async function listOrders(db, req, url) {
   let query = `SELECT c.checkout_id, c.order_number, c.order_type, c.order_status,
                       c.total_price, c.payment_method, c.customer_email,
                       c.scheduled_time, c.license_plate,
+                      c.date_created,
                       u.phone_number AS customer_phone,
                       GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ', ') AS items
                FROM checkout c
@@ -62,14 +64,21 @@ export async function listOrders(db, req, url) {
   }
 
   if (search) {
-    query += ` AND c.order_number LIKE ?`;
-    params.push(`%${search}%`);
+    // Search by order number OR checkout_id
+    query += ` AND (c.order_number LIKE ? OR c.checkout_id LIKE ?)`;
+    params.push(`%${search}%`, `%${search}%`);
   }
 
-  // Group to collapse joined item rows, then sort: ready first, then preparing, then pending
+  if (date) {
+    // Filter by the date of created_at (aliased as date_created)
+    query += ` AND DATE(c.date_created) = ?`;
+    params.push(date);
+  }
+
+  // Group then sort: ready → preparing → pending → newest first for past
   query += ` GROUP BY c.checkout_id
              ORDER BY FIELD(c.order_status, 'ready', 'preparing', 'pending', 'completed', 'cancelled'),
-                      c.checkout_id ASC`;
+                      c.checkout_id DESC`;
 
   const [rows] = await db.query(query, params);
   return rows;

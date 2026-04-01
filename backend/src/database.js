@@ -20,6 +20,7 @@ export async function getDatabase() {
       connectionLimit: 10,
       queueLimit: 0,
     });
+
   }
   return pool;
 }

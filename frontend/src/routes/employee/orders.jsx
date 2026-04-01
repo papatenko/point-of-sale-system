@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, RefreshCw, Truck } from "lucide-react";
+import { Search, RefreshCw, Truck, Calendar } from "lucide-react";
 import { useOrders } from "@/hooks/useOrders";
 
 export const Route = createFileRoute("/employee/orders")({
@@ -19,6 +19,15 @@ const STATUS_COLORS = {
   cancelled: "bg-red-100 text-red-700 border-red-200",
 };
 
+function formatDateTime(raw) {
+  if (!raw) return null;
+  const d = new Date(raw);
+  return d.toLocaleString([], {
+    month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
 function OrdersPage() {
   const token = localStorage.getItem("token");
 
@@ -31,7 +40,6 @@ function OrdersPage() {
   const [trucks, setTrucks] = useState([]);
   const [selectedTruck, setSelectedTruck] = useState(null);
 
-  // Admin fetches all trucks and can switch between them
   useEffect(() => {
     if (role !== "admin") return;
     fetch("/api/trucks", { headers: { Authorization: `Bearer ${token}` } })
@@ -44,8 +52,15 @@ function OrdersPage() {
       .catch(() => {});
   }, [role]);
 
-  const { currentOrders, pastOrders, search, setSearch, loading, refreshCurrent, refreshPast } =
-    useOrders({ token, selectedTruck });
+  const {
+    currentOrders, scheduledOrders, pastOrders,
+    search, setSearch,
+    filterDate, setFilterDate,
+    showCompleted, setShowCompleted,
+    showCancelled, setShowCancelled,
+    loading,
+    refreshCurrent, refreshPast,
+  } = useOrders({ token, selectedTruck });
 
   return (
     <div className="p-6 max-w-4xl">
@@ -79,9 +94,18 @@ function OrdersPage() {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="scheduled">
+            Scheduled
+            {scheduledOrders.length > 0 && (
+              <span className="ml-2 bg-yellow-500 text-white text-xs rounded-full px-1.5 py-0.5">
+                {scheduledOrders.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="past">Past Orders</TabsTrigger>
         </TabsList>
 
+        {/* ── Current Orders ── */}
         <TabsContent value="current">
           <div className="flex items-center gap-1.5 mb-3 text-xs text-gray-400">
             <RefreshCw size={11} />
@@ -97,16 +121,69 @@ function OrdersPage() {
           />
         </TabsContent>
 
-        <TabsContent value="past">
-          <div className="relative mb-4">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search by order number..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+        {/* ── Scheduled Orders ── */}
+        <TabsContent value="scheduled">
+          <div className="flex items-center gap-1.5 mb-3 text-xs text-gray-400">
+            <RefreshCw size={11} />
+            Auto-refreshes every 10s
           </div>
+          <OrderList
+            orders={scheduledOrders}
+            loading={loading}
+            showActions
+            token={token}
+            refreshCurrent={refreshCurrent}
+            refreshPast={refreshPast}
+          />
+        </TabsContent>
+
+        {/* ── Past Orders ── */}
+        <TabsContent value="past">
+          {/* Filters row */}
+          <div className="flex flex-wrap gap-3 mb-4 items-center">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[180px]">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Search by order # or transaction ID..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {/* Date picker */}
+            <div className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-1.5 bg-white">
+              <Calendar size={14} className="text-gray-400" />
+              <input
+                type="date"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                className="text-sm focus:outline-none bg-transparent"
+              />
+            </div>
+
+            {/* Status checkboxes */}
+            <label className="flex items-center gap-1.5 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showCompleted}
+                onChange={(e) => setShowCompleted(e.target.checked)}
+                className="accent-green-600 w-4 h-4"
+              />
+              <span className="text-gray-600">Completed</span>
+            </label>
+            <label className="flex items-center gap-1.5 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showCancelled}
+                onChange={(e) => setShowCancelled(e.target.checked)}
+                className="accent-red-500 w-4 h-4"
+              />
+              <span className="text-gray-600">Cancelled</span>
+            </label>
+          </div>
+
           <OrderList orders={pastOrders} loading={loading} />
         </TabsContent>
       </Tabs>
@@ -144,6 +221,8 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
     ? new Date(order.scheduled_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     : null;
 
+  const createdLabel = formatDateTime(order.date_created);
+
   const handleUpdate = async (newStatus) => {
     setUpdating(true);
     try {
@@ -155,8 +234,8 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
         },
         body: JSON.stringify({ status: newStatus }),
       });
-      refreshCurrent();
-      if (newStatus === "completed" || newStatus === "cancelled") refreshPast();
+      refreshCurrent?.();
+      if (newStatus === "completed" || newStatus === "cancelled") refreshPast?.();
     } finally {
       setUpdating(false);
     }
@@ -170,10 +249,25 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
       }`}
     >
       <CardHeader className="py-3 px-4 flex flex-row items-center justify-between space-y-0">
-        <div className="flex items-center gap-2">
-          <CardTitle className="text-sm font-semibold">
-            #{order.order_number}
-          </CardTitle>
+        <div className="flex items-center gap-3 flex-wrap">
+          <div>
+            <p className="text-xs text-gray-400 leading-none mb-0.5">Transaction ID</p>
+            <CardTitle className="text-sm font-semibold">#{order.checkout_id}</CardTitle>
+          </div>
+          <div className="w-px h-6 bg-gray-200" />
+          <div>
+            <p className="text-xs text-gray-400 leading-none mb-0.5">Order #</p>
+            <p className="text-sm font-semibold">{order.order_number}</p>
+          </div>
+          {createdLabel && (
+            <>
+              <div className="w-px h-6 bg-gray-200" />
+              <div>
+                <p className="text-xs text-gray-400 leading-none mb-0.5">Date & Time</p>
+                <p className="text-sm font-medium text-gray-600">{createdLabel}</p>
+              </div>
+            </>
+          )}
           {(isReady || isPreparing) && (
             <span className={`text-xs font-medium flex items-center gap-1 ${isReady ? "text-green-600" : "text-blue-500"}`}>
               ● {isReady ? "Ready" : "Priority"}
@@ -186,7 +280,7 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
       </CardHeader>
 
       <CardContent className="py-2 px-4 text-sm text-gray-600">
-        {/* Order items — shown first, large and clear for cooks */}
+        {/* Order items — large and clear for cooks */}
         {order.items && (
           <ul className="mb-4 space-y-1">
             {order.items.split(", ").map((item, i) => {
@@ -203,7 +297,7 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
           </ul>
         )}
 
-        {/* Order meta — separated by a divider */}
+        {/* Order meta */}
         <div className="flex gap-4 flex-wrap pt-1 border-t border-gray-100 text-gray-500">
           <span className="capitalize">{order.order_type?.replace("-", " ")}</span>
           <span className="font-medium text-gray-700">${parseFloat(order.total_price).toFixed(2)}</span>
