@@ -26,9 +26,7 @@ export async function createMenuItem(db, data) {
   };
 }
 
-export async function deleteMenuItem(db, data) {
-  const { menu_item_id } = data;
-
+export async function deleteMenuItem(db, menu_item_id) {
   if (!menu_item_id) {
     return { error: "menu_item_id is required" };
   }

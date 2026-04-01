@@ -51,9 +51,7 @@ export async function createEmployee(db, data) {
   };
 }
 
-export async function deleteEmployee(db, data) {
-  const { email } = data;
-
+export async function deleteEmployee(db, email) {
   if (!email) {
     return { error: "email is required" };
   }

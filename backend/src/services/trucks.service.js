@@ -49,9 +49,7 @@ export async function updateTruck(db, data) {
   };
 }
 
-export async function deleteTruck(db, data) {
-  const { license_plate } = data;
-
+export async function deleteTruck(db, license_plate) {
   if (!license_plate) {
     return { error: "license_plate is required" };
   }

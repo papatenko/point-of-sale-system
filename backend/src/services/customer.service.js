@@ -34,9 +34,7 @@ export async function createCustomer(db, data) {
   };
 }
 
-export async function deleteCustomer(db, data) {
-  const { email } = data;
-
+export async function deleteCustomer(db, email) {
   if (!email) {
     return { error: "email is required" };
   }

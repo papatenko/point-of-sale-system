@@ -59,13 +59,6 @@ export const DATABASE_MANAGEMENT_ROUTES = [
     category: "people",
   },
   {
-    name: "Users",
-    url: "/employee/database/users",
-    icon: UserCircle,
-    roles: ["admin"],
-    category: "people",
-  },
-  {
     name: "Customers",
     url: "/employee/database/customers",
     icon: UserCircle,
