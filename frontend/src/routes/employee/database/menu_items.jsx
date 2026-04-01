@@ -4,6 +4,11 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
 import { CreateForm } from "@/components/database/create-form";
 import { Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/employee/database/menu_items")({
   component: MenuItemsDatabaseComponent,
@@ -12,6 +17,27 @@ export const Route = createFileRoute("/employee/database/menu_items")({
 const COLUMNS = [
   { key: "menu_item_id", label: "ID" },
   { key: "item_name", label: "Name" },
+  {
+    key: "image_url",
+    label: "Image",
+    format: (v) =>
+      v ? (
+        <Dialog>
+          <DialogTrigger asChild>
+            <img
+              src={v}
+              alt="menu item"
+              className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80"
+            />
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <img src={v} alt="menu item" className="w-full h-auto rounded" />
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <span className="text-muted-foreground">No image</span>
+      ),
+  },
   { key: "category_name", label: "Category" },
   { key: "price", label: "Price", format: (v) => `$${v}` },
 ];
@@ -26,6 +52,7 @@ const CREATE_FIELDS = [
     required: true,
   },
   { name: "description", label: "Description", type: "text" },
+  { name: "image_url", label: "Image URL", type: "url", required: true },
 ];
 
 function MenuItemsDatabaseComponent() {
@@ -70,6 +97,7 @@ function MenuItemsDatabaseComponent() {
           item_name: formData.item_name,
           price: parseFloat(formData.price),
           description: formData.description || null,
+          image_url: formData.image_url,
         }),
       });
       const data = await res.json();
