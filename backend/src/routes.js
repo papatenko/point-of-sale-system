@@ -13,17 +13,18 @@ import * as CustomerService from "./services/customer.service.js";
 import * as CheckoutService from "./services/checkout.service.js";
 import * as ReportModel from "./models/report.model.js";
 import { login, register } from "./auth/auth.js";
+import * as SearchService from "./services/searchService.js";
 
 const router = createRouter();
 
 // Auth
 router.post("/api/login", async (body) => login(body.email, body.password));
 router.post("/api/register", async (body) => {
-  const { email, password, first_name, last_name } = body;
-  if (!email || !password || !first_name || !last_name) {
+  const { email, password, first_name, last_name, phone_number} = body;
+  if (!email || !password || !first_name || !last_name || !phone_number) {
     return { error: "All fields are required" };
   }
-  await register(email, password, first_name, last_name);
+  await register(email, password, first_name, last_name, phone_number);
   return await login(email, password);
 });
 
@@ -215,6 +216,20 @@ router.get("/api/employee/pos", async (_, db) => {
 router.get("/api/trucks/for-user", async (_, db, req) =>
   TruckService.getTruckForUser(db, req),
 );
+
+//search
+router.get("/api/search", async (_, db, _req, url) => {
+  const params = new URLSearchParams(url.split("?")[1]);
+
+  const table = params.get("table");
+  const q = params.get("q");
+
+  if (!table || !q) {
+    return { error: "Missing table or query" };
+  }
+
+  return await SearchService.search(db, table, q);
+});
 
 export async function handleRoute(url, body, method, req, res, db) {
   const basePath = url.split("?")[0];

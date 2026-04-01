@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { CheckCircle, ArrowRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import QRCode from "qrcode";
 
 export const Route = createFileRoute("/confirmation/$orderId")({
   component: ConfirmationPage,
@@ -11,6 +12,38 @@ function ConfirmationPage() {
   const { orderId } = Route.useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const handleDownloadQR = async () => {
+  if (!order) return;
+
+  const ticketData = {
+    orderId: orderId,
+    orderNumber: order.orderNumber,
+    items: order.items.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: parseFloat(item.lineTotal).toFixed(2),
+    })),
+    total: parseFloat(order.totalPrice).toFixed(2),
+    orderType: order.orderType,
+    payment: paymentLabels[order.paymentMethod] ?? order.paymentMethod,
+    status: order.orderStatus,
+    email: order.customerEmail ?? "",
+  };
+
+  const qrString = JSON.stringify(ticketData, null, 2);
+
+  try {
+    const url = await QRCode.toDataURL(qrString);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `ticket-${order.orderNumber}.png`;
+    link.click();
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   useEffect(() => {
     fetch(`/api/orders/${orderId}`)
@@ -131,7 +164,12 @@ function ConfirmationPage() {
             </div>
           )}
         </div>
-
+          <Button
+          onClick={handleDownloadQR}
+          className="w-full bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center gap-2 mb-4"
+        >
+          Download Ticket
+        </Button>
         <Link to="/order">
           <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center gap-2">
             Order Again

@@ -38,7 +38,7 @@ export async function login(email, password) {
 }
 
 // --- Register function ---
-export async function register(email, password, first_name, last_name) {
+export async function register(email, password, first_name, last_name, phone_number) {
   const db = await getDatabase();
 
   const [users] = await db.query("SELECT email FROM users WHERE email = ?", [
@@ -47,8 +47,8 @@ export async function register(email, password, first_name, last_name) {
   if (users.length > 0) throw new Error("User already exists");
 
   await db.query(
-    "INSERT INTO users (email, password, first_name, last_name, user_type) VALUES (?, ?, ?, ?, 'customer')",
-    [email, password, first_name, last_name],
+    "INSERT INTO users (email, password, first_name, last_name, phone_number, user_type) VALUES (?, ?, ?, ?, ?, 'customer')",
+    [email, password, first_name, last_name, phone_number],
   );
 
   return { message: "User created successfully" };

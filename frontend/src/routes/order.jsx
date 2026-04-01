@@ -5,6 +5,7 @@ import { addItem, updateQuantity } from "@/redux/cartSlice";
 import { MenuCard } from "@/components/order/menu-card";
 import { CartPanel } from "@/components/order/cart-panel";
 import { X } from "lucide-react";
+import SearchPage from "./../components/search";
 
 export const Route = createFileRoute("/order")({
   component: OrderPage,
@@ -72,6 +73,7 @@ function OrderPage() {
           {/* Menu */}
           <div className="flex-1 min-w-0">
             <h1 className="text-3xl font-bold mb-2">Our Menu</h1>
+            <SearchPage tabla="menu_items" />
             <p className="text-gray-500 mb-8">
               Order online for pickup — fresh and made to order.
             </p>

@@ -5,6 +5,12 @@ export function MenuCard({ item, qty, onAdd, onQty }) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex justify-between items-start gap-4 hover:shadow-md transition-shadow">
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-gray-900">{item.item_name}</h3>
+         {item.image_url && (
+        <img
+          src={item.image_url}
+          alt={item.item_name}
+          className="w-full h-40 object-cover rounded-md mb-4"
+        /> )}
         {item.description && (
           <p className="text-sm text-gray-500 mt-1 line-clamp-2 leading-relaxed">
             {item.description}
