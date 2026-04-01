@@ -8,18 +8,18 @@ import { motion, useScroll, useTransform } from "framer-motion";
 // import imgAmigos from "./../img/j.png";
 // import imgChica from "./../img/pink.png";
 
-import imgCamion from "./../img/1.png";    // Quitamos el doble punto ".."
-import imgChef from "./../img/2.png";          // Corregido .pgn -> .png y doble slash //
-import imgEstudiante from "./../img/3.png";    // Añadida extensión .png necesaria
-import imgAmigos from "./../img/4.png";
-import imgChica from "./../img/5.png";
+import imgCamion from "./../img/8.png";    // Quitamos el doble punto ".."
+import imgChef from "./../img/9.png";          // Corregido .pgn -> .png y doble slash //
+import imgEstudiante from "./../img/10.png";    // Añadida extensión .png necesaria
+import imgAmigos from "./../img/11.png";
+import imgChica from "./../img/12.png";
 
 const layers = [
-  { id: 1, img: imgCamion, x: "0%", yStart: "100vh", size: "w-[85%]", z: 10 }, // El camión, más al fondo
-  { id: 2, img: imgChef, x: "17%", yStart: "120vh", size: "w-[105%]", z: 30 }, // El chef con falafel, más arriba
-  { id: 3, img: imgEstudiante, x: "-30%", yStart: "130vh", size: "w-[105%]", z: 25 }, // Estudiante con laptop
-  { id: 4, img: imgAmigos, x: "15%", yStart: "140vh", size: "w-[105%]", z: 35 }, // Amigos y perro, los más adelantados
-  { id: 5, img: imgChica, x: "5%", yStart: "150vh", size: "w-[105%]", z: 40 }, // Chica de rosa, siempre al frente
+  { id: 1, img: imgCamion, x: "0%", yStart: "100vh", size: "w-[105%]", z: 10 }, // El camión, más al fondo
+  { id: 2, img: imgChef, x: "0%", yStart: "110vh", size: "w-[105%]", z: 30 }, // El chef con falafel, más arriba
+  { id: 3, img: imgEstudiante, x: "0", yStart: "130vh", size: "w-[105%]", z: 25 }, // Estudiante con laptop
+  { id: 4, img: imgAmigos, x: "0%", yStart: "140vh", size: "w-[105%]", z: 35 }, // Amigos y perro, los más adelantados
+  { id: 5, img: imgChica, x: "0%", yStart: "150vh", size: "w-[105%]", z: 40 }, // Chica de rosa, siempre al frente
 ];
 
 const HeroScene = () => {
