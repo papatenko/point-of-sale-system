@@ -38,6 +38,10 @@ function OrderPage() {
     return acc;
   }, {});
 
+  const [filteredItems, setFilteredItems] = useState(null);
+
+  const itemsToShow = filteredItems ?? menu;
+
   const categoryOrder = [
     "Entrees",
     "Sides",
@@ -73,7 +77,28 @@ function OrderPage() {
           {/* Menu */}
           <div className="flex-1 min-w-0">
             <h1 className="text-3xl font-bold mb-2">Our Menu</h1>
-            <SearchPage tabla="menu_items" />
+            {/* <SearchPage tabla="menu_items" /> */}
+            <SearchPage
+              tabla="menu_items"
+              onSelect={(items) => {
+              if (!items || items.length === 0) {
+                setFilteredItems(null);
+                return;
+              }
+
+              const ids = items.map((i) => i.menu_item_id);
+
+             const match = menu.filter((m) =>
+              items.some(
+                (i) =>
+                  i.item_name &&
+                  m.item_name.toLowerCase() === i.item_name.toLowerCase()
+              )
+            );
+
+              setFilteredItems(match);
+            }}
+                  />
             <p className="text-gray-500 mb-8">
               Order online for pickup — fresh and made to order.
             </p>
@@ -82,7 +107,20 @@ function OrderPage() {
               <div className="text-gray-400 py-12 text-center">
                 Loading menu...
               </div>
-            ) : (
+            ) : filteredItems ? (
+            //  CUANDO HAY SEARCH → SOLO mostrar resultados
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {filteredItems.map((item) => (
+                    <MenuCard
+                      key={item.menu_item_id}
+                      item={item}
+                      qty={getQty(item.menu_item_id)}
+                      onAdd={() => handleAdd(item)}
+                      onQty={(q) => handleQty(item.menu_item_id, q)}
+                    />
+                  ))}
+                </div>
+              ) : (
               sortedCategories.map((category) => (
                 <section key={category} className="mb-10">
                   <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-200 text-gray-700">
