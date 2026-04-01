@@ -23,7 +23,7 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-amber-50">
-      <HeroCarousel/>
+      {/* <HeroCarousel/> */}
       {/* Hero */}
       <section className="bg-amber-600 text-white py-24 px-4 text-center">
         <div className="flex items-center justify-center gap-3 mb-4">
