@@ -37,9 +37,24 @@ function getAvailableTimeSlots() {
   return slots;
 }
 
-function isAfterClosing() {
-  const now = new Date();
-  return now.getHours() >= 22;
+function isOutsideHours() {
+  const h = new Date().getHours();
+  return h < 10 || h >= 22;
+}
+
+function getTomorrowTimeSlots() {
+  const slots = [];
+  for (let h = 10; h <= 22; h++) {
+    for (const min of [0, 30]) {
+      if (h === 22 && min === 30) continue;
+      const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+      const ampm = h >= 12 ? "PM" : "AM";
+      const label = `Tomorrow ${displayH}:${min.toString().padStart(2, "0")} ${ampm}`;
+      const value = `TOMORROW:${h.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
+      slots.push({ value, label });
+    }
+  }
+  return slots;
 }
 
 export const Route = createFileRoute("/checkout")({
@@ -61,11 +76,14 @@ function CheckoutPage() {
     }
   }, [token]);
 
-  const timeSlots = getAvailableTimeSlots();
-  const closed = isAfterClosing();
+  const outsideHours = isOutsideHours();
+  // Generate slots for tomorrow if currently outside hours
+  const timeSlots = outsideHours ? getTomorrowTimeSlots() : getAvailableTimeSlots();
 
   const [paymentMethod, setPaymentMethod] = useState("credit");
   const [licensePlate, setLicensePlate] = useState("");
+  // Outside hours: scheduling is mandatory (toggle locked on)
+  const [scheduleEnabled, setScheduleEnabled] = useState(outsideHours);
   const [scheduledTime, setScheduledTime] = useState(
     timeSlots.length > 0 ? timeSlots[0].value : "",
   );
@@ -101,22 +119,6 @@ function CheckoutPage() {
     );
   }
 
-  if (closed) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center space-y-3">
-          <p className="text-xl font-semibold text-gray-800">We're closed</p>
-          <p className="text-gray-500 text-sm">
-            Online ordering is available 10:00 AM – 10:00 PM.
-          </p>
-          <Link to="/order">
-            <Button variant="outline" className="mt-2">Back to Menu</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -132,7 +134,11 @@ function CheckoutPage() {
           customerEmail: user?.email ?? null,
           paymentMethod,
           licensePlate,
-          scheduledTime,
+          scheduledTime: scheduleEnabled
+            ? (scheduledTime.startsWith("TOMORROW:")
+                ? scheduledTime.replace("TOMORROW:", "")
+                : scheduledTime)
+            : null,
           items: cartItems.map((i) => ({
             menuItemId: i.menuItemId,
             quantity: i.quantity,
@@ -218,18 +224,37 @@ function CheckoutPage() {
 
             {/* Scheduled Pickup Time */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
-              <h2 className="text-base font-semibold mb-1 flex items-center gap-2">
-                <Clock size={16} className="text-amber-600" />
-                Pickup Time
-              </h2>
-              <p className="text-xs text-gray-400 mb-4">
-                Select your preferred pickup time (10:00 AM – 10:00 PM).
-              </p>
-              {timeSlots.length === 0 ? (
-                <p className="text-sm text-red-500">
-                  No available times today. We close at 10:00 PM.
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-base font-semibold flex items-center gap-2">
+                  <Clock size={16} className="text-amber-600" />
+                  {outsideHours ? "Schedule Pickup (Required)" : "Schedule for Later"}
+                </h2>
+                {!outsideHours && (
+                  <button
+                    type="button"
+                    onClick={() => setScheduleEnabled((v) => !v)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                      scheduleEnabled ? "bg-amber-600" : "bg-gray-200"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                        scheduleEnabled ? "translate-x-4" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                )}
+              </div>
+              {outsideHours ? (
+                <p className="text-xs text-amber-600 mb-3">
+                  We're currently closed. Orders placed now will be scheduled for tomorrow.
                 </p>
               ) : (
+                <p className="text-xs text-gray-400 mb-3">
+                  Leave off to pick up as soon as your order is ready.
+                </p>
+              )}
+              {scheduleEnabled && (
                 <select
                   value={scheduledTime}
                   onChange={(e) => setScheduledTime(e.target.value)}
@@ -282,7 +307,7 @@ function CheckoutPage() {
 
             <Button
               type="submit"
-              disabled={submitting || timeSlots.length === 0}
+              disabled={submitting}
               className="w-full bg-amber-600 hover:bg-amber-700 text-white py-6 text-base font-semibold disabled:opacity-60"
             >
               {submitting
