@@ -191,7 +191,7 @@ function EmployeesDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={employees}
-        limit={5}
+        pageSize={10}
         searchKeys={["first_name", "last_name", "email", "role"]}
         deleteIdKey="email"
         onDelete={handleDelete}

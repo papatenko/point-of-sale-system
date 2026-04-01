@@ -18,7 +18,12 @@ const COLUMNS = [
 ];
 
 const CREATE_FIELDS = [
-  { name: "supplier_name", label: "Supplier Name", type: "text", required: true },
+  {
+    name: "supplier_name",
+    label: "Supplier Name",
+    type: "text",
+    required: true,
+  },
   { name: "contact_person", label: "Contact Person", type: "text" },
   { name: "email", label: "Email", type: "email" },
   { name: "phone_number", label: "Phone", type: "text" },
@@ -121,7 +126,7 @@ function SuppliersDatabaseComponent() {
           <p className="text-muted-foreground">Manage your supplier contacts</p>
         </div>
         <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 size-4" />
           {showCreateForm ? "Cancel" : "Add Supplier"}
         </Button>
       </div>
@@ -144,7 +149,7 @@ function SuppliersDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={suppliers}
-        limit={5}
+        pageSize={10}
         searchKeys={["supplier_name", "contact_person", "email"]}
         deleteIdKey="supplier_id"
         onDelete={handleDelete}

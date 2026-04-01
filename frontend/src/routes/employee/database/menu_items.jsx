@@ -18,7 +18,13 @@ const COLUMNS = [
 
 const CREATE_FIELDS = [
   { name: "item_name", label: "Item Name", type: "text", required: true },
-  { name: "price", label: "Price ($)", type: "number", step: "0.01", required: true },
+  {
+    name: "price",
+    label: "Price ($)",
+    type: "number",
+    step: "0.01",
+    required: true,
+  },
   { name: "description", label: "Description", type: "text" },
 ];
 
@@ -116,7 +122,7 @@ function MenuItemsDatabaseComponent() {
           <p className="text-muted-foreground">Manage your menu</p>
         </div>
         <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 size-4" />
           {showCreateForm ? "Cancel" : "Add Menu Item"}
         </Button>
       </div>
@@ -139,7 +145,7 @@ function MenuItemsDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={menuItems}
-        limit={5}
+        pageSize={10}
         searchKeys={["item_name", "category_name"]}
         deleteIdKey="menu_item_id"
         onDelete={handleDelete}

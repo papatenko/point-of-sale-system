@@ -19,8 +19,20 @@ const COLUMNS = [
 
 const CREATE_FIELDS = [
   { name: "ingredient_name", label: "Name", type: "text", required: true },
-  { name: "unit_of_measure", label: "Unit", type: "select", options: UNIT_OPTIONS, required: true },
-  { name: "current_unit_cost", label: "Unit Cost ($)", type: "number", step: "0.01", required: true },
+  {
+    name: "unit_of_measure",
+    label: "Unit",
+    type: "select",
+    options: UNIT_OPTIONS,
+    required: true,
+  },
+  {
+    name: "current_unit_cost",
+    label: "Unit Cost ($)",
+    type: "number",
+    step: "0.01",
+    required: true,
+  },
 ];
 
 function IngredientsDatabaseComponent() {
@@ -119,7 +131,7 @@ function IngredientsDatabaseComponent() {
           </p>
         </div>
         <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 size-4" />
           {showCreateForm ? "Cancel" : "Add Ingredient"}
         </Button>
       </div>
@@ -142,7 +154,7 @@ function IngredientsDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={ingredients}
-        limit={5}
+        pageSize={10}
         searchKeys={["ingredient_name"]}
         deleteIdKey="ingredient_id"
         onDelete={handleDelete}

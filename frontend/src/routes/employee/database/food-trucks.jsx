@@ -14,13 +14,22 @@ const COLUMNS = [
   { key: "truck_name", label: "Truck Name" },
   { key: "current_location", label: "Location" },
   { key: "phone_number", label: "Phone" },
-  { key: "accepts_online_orders", label: "Online Orders", format: (v) => v ? "Yes" : "No" },
+  {
+    key: "accepts_online_orders",
+    label: "Online Orders",
+    format: (v) => (v ? "Yes" : "No"),
+  },
   { key: "operating_hours_start", label: "Opens" },
   { key: "operating_hours_end", label: "Closes" },
 ];
 
 const CREATE_FIELDS = [
-  { name: "license_plate", label: "License Plate", type: "text", required: true },
+  {
+    name: "license_plate",
+    label: "License Plate",
+    type: "text",
+    required: true,
+  },
   { name: "truck_name", label: "Truck Name", type: "text", required: true },
   { name: "current_location", label: "Location", type: "text" },
   { name: "phone_number", label: "Phone", type: "text" },
@@ -126,7 +135,7 @@ function FoodTrucksDatabaseComponent() {
           <p className="text-muted-foreground">Manage your food truck fleet</p>
         </div>
         <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 size-4" />
           {showCreateForm ? "Cancel" : "Add Truck"}
         </Button>
       </div>
@@ -149,7 +158,7 @@ function FoodTrucksDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={trucks}
-        limit={5}
+        pageSize={10}
         searchKeys={["truck_name", "license_plate", "current_location"]}
         deleteIdKey="license_plate"
         onDelete={handleDelete}

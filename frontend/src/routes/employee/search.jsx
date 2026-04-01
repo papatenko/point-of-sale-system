@@ -2,7 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Search, ChevronDown, Check } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,7 +51,9 @@ function RouteComponent() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Search Screen</h1>
-          <p className="text-muted-foreground">Search across menu items, ingredients, employees, and suppliers.</p>
+          <p className="text-muted-foreground">
+            Search across menu items, ingredients, employees, and suppliers.
+          </p>
         </div>
       </div>
 
@@ -59,7 +68,7 @@ function RouteComponent() {
               className="max-w-md"
             />
             <Button onClick={handleSearch}>
-              <Search className="mr-2 h-4 w-4" />
+              <Search className="mr-2 size-4" />
               Search
             </Button>
             <DropdownMenu>
@@ -72,7 +81,9 @@ function RouteComponent() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuCheckboxItem
                   checked={allSelected}
-                  onCheckedChange={() => allSelected ? deselectAll() : selectAll()}
+                  onCheckedChange={() =>
+                    allSelected ? deselectAll() : selectAll()
+                  }
                   onSelect={(e) => e.preventDefault()}
                   className="font-medium"
                 >
@@ -99,9 +110,14 @@ function RouteComponent() {
           ) : loading ? (
             <p className="text-muted-foreground">Searching...</p>
           ) : !hasSearched ? (
-            <p className="text-muted-foreground">Enter a search term and click Search to find items across all data.</p>
+            <p className="text-muted-foreground">
+              Enter a search term and click Search to find items across all
+              data.
+            </p>
           ) : searchResults.length === 0 ? (
-            <p className="text-muted-foreground">No results found for "{searchTerm}".</p>
+            <p className="text-muted-foreground">
+              No results found for "{searchTerm}".
+            </p>
           ) : (
             <div className="rounded-md border">
               <Table>
@@ -115,9 +131,13 @@ function RouteComponent() {
                 <TableBody>
                   {searchResults.map((r) => (
                     <TableRow key={`${r.type}-${r.id}`}>
-                      <TableCell className="whitespace-nowrap text-sm">{r.type}</TableCell>
+                      <TableCell className="whitespace-nowrap text-sm">
+                        {r.type}
+                      </TableCell>
                       <TableCell className="text-sm">{r.title}</TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{r.details || "-"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {r.details || "-"}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

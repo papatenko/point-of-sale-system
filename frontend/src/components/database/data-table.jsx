@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Search, Pencil } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Search, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -15,7 +15,7 @@ import { Trash2 } from "lucide-react";
 export function DataTable({
   columns,
   data,
-  limit,
+  pageSize = 10,
   searchKeys,
   deleteIdKey,
   onDelete,
@@ -24,19 +24,40 @@ export function DataTable({
   emptyMessage = "No items found",
 }) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredData = useMemo(() => {
-    const dataToFilter = limit ? data.slice(0, limit) : data;
-    if (!searchTerm.trim()) return dataToFilter;
+    if (!searchTerm.trim()) return data;
 
     const term = searchTerm.toLowerCase();
-    return dataToFilter.filter((item) =>
+    return data.filter((item) =>
       searchKeys.some((key) => {
         const value = item[key];
         return value?.toString().toLowerCase().includes(term);
       }),
     );
-  }, [data, searchTerm, searchKeys, limit]);
+  }, [data, searchTerm, searchKeys]);
+
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, filteredData.length);
+  const paginatedData = filteredData.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "ArrowLeft" && currentPage > 1) {
+        setCurrentPage((p) => p - 1);
+      } else if (e.key === "ArrowRight" && currentPage < totalPages) {
+        setCurrentPage((p) => p + 1);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentPage, totalPages]);
 
   const handleDelete = (id) => {
     if (confirm("Are you sure you want to delete this item?")) {
@@ -50,9 +71,9 @@ export function DataTable({
   };
 
   return (
-    <div className="flex flex-col gap-4 w-full">
+    <div className="flex flex-col gap-4 w-full min-h-full">
       <div className="flex items-center gap-2">
-        <Search className="h-4 w-4 text-muted-foreground" />
+        <Search className="size-4 text-muted-foreground" />
         <Input
           placeholder="Search..."
           value={searchTerm}
@@ -68,7 +89,9 @@ export function DataTable({
               {columns.map((col) => (
                 <TableHead key={col.key}>{col.label}</TableHead>
               ))}
-              <TableHead className={onEdit ? "w-[150px]" : "w-[100px]"}>Actions</TableHead>
+              <TableHead className={onEdit ? "w-[150px]" : "w-[100px]"}>
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -81,7 +104,7 @@ export function DataTable({
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : filteredData.length === 0 ? (
+            ) : paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={columns.length + 1}
@@ -91,7 +114,7 @@ export function DataTable({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredData.map((item, index) => (
+              paginatedData.map((item, index) => (
                 <TableRow key={item[deleteIdKey] || index}>
                   {columns.map((col) => (
                     <TableCell key={col.key}>
@@ -106,7 +129,7 @@ export function DataTable({
                           size="sm"
                           onClick={() => onEdit(item)}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="size-4" />
                         </Button>
                       )}
                       <Button
@@ -114,7 +137,7 @@ export function DataTable({
                         size="sm"
                         onClick={() => handleDelete(item[deleteIdKey])}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="size-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -125,10 +148,33 @@ export function DataTable({
         </Table>
       </div>
 
-      {limit && data.length > limit && (
-        <p className="text-sm text-muted-foreground">
-          Showing {filteredData.length} of {data.length} total items
-        </p>
+      {filteredData.length > pageSize && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {startIndex + 1}-{endIndex} of {filteredData.length} items
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => p - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => p + 1)}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );
