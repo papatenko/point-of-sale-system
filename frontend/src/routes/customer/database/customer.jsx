@@ -26,7 +26,12 @@ const CREATE_FIELDS = [
   { name: "phone_number", label: "Phone", type: "text" },
   { name: "default_address", label: "Default Address", type: "text" },
   { name: "gender", label: "Gender", type: "select", options: GENDER_OPTIONS },
-  { name: "ethnicity", label: "Ethnicity", type: "select", options: ETHNICITY_OPTIONS },
+  {
+    name: "ethnicity",
+    label: "Ethnicity",
+    type: "select",
+    options: ETHNICITY_OPTIONS,
+  },
 ];
 
 function CustomersDatabaseComponent() {
@@ -85,17 +90,20 @@ function CustomersDatabaseComponent() {
         throw new Error(userData.error);
       }
 
-      const customerResponse = await fetch("http://localhost:3000/api/customers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const customerResponse = await fetch(
+        "http://localhost:3000/api/customers",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            default_address: formData.default_address || null,
+          }),
         },
-        body: JSON.stringify({
-          email: formData.email,
-          default_address: formData.default_address || null,
-        }),
-      });
+      );
 
       const customerData = await customerResponse.json();
       if (!customerResponse.ok) {
@@ -146,7 +154,7 @@ function CustomersDatabaseComponent() {
           <p className="text-muted-foreground">Manage your customer records</p>
         </div>
         <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 size-4" />
           {showCreateForm ? "Cancel" : "Add Customer"}
         </Button>
       </div>

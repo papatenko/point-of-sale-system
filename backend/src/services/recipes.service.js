@@ -61,9 +61,7 @@ export async function updateRecipe(db, data) {
   };
 }
 
-export async function deleteRecipe(db, data) {
-  const { recipe_id } = data;
-
+export async function deleteRecipe(db, recipe_id) {
   if (!recipe_id) {
     return { error: "recipe_id is required" };
   }

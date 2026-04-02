@@ -30,9 +30,7 @@ export async function createIngredient(db, data) {
   };
 }
 
-export async function deleteIngredient(db, data) {
-  const { ingredient_id } = data;
-
+export async function deleteIngredient(db, ingredient_id) {
   if (!ingredient_id) {
     return { error: "ingredient_id is required" };
   }

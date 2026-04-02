@@ -22,9 +22,7 @@ export async function createSupplier(db, data) {
   };
 }
 
-export async function deleteSupplier(db, data) {
-  const { supplier_id } = data;
-
+export async function deleteSupplier(db, supplier_id) {
   if (!supplier_id) {
     return { error: "supplier_id is required" };
   }

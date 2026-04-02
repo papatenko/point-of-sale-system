@@ -14,6 +14,7 @@ function SignupComponent() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [error, setError] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
 
@@ -42,6 +43,7 @@ function SignupComponent() {
           password,
           first_name: firstName,
           last_name: lastName,
+          phone_number: phoneNumber,
         }),
       });
 
@@ -131,6 +133,29 @@ function SignupComponent() {
           }}
             className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             autoComplete="family-name"
+            required
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="phone"
+            className="block mb-1 text-sm font-medium text-gray-700"
+          >
+            Phone Number
+          </label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            placeholder="1234567890"
+            value={phoneNumber}
+            onChange={(e) => {
+              const value = e.target.value;
+              const onlyNumbers = value.replace(/[^0-9]/g, "");
+              setPhoneNumber(onlyNumbers);
+            }}
+            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
             required
           />
         </div>

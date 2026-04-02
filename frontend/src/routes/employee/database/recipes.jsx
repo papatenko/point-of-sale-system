@@ -29,7 +29,13 @@ const COLUMNS = [
 const CREATE_FIELDS = [
   { name: "menu_item_id", label: "Menu Item", type: "text" },
   { name: "ingredient_id", label: "Ingredient", type: "text" },
-  { name: "quantity_needed", label: "Quantity Needed", type: "number", step: "0.01", required: true },
+  {
+    name: "quantity_needed",
+    label: "Quantity Needed",
+    type: "number",
+    step: "0.01",
+    required: true,
+  },
   { name: "instructions", label: "Instructions", type: "text" },
 ];
 
@@ -126,7 +132,12 @@ function RecipesDatabaseComponent() {
       const data = await res.json();
 
       if (res.ok) {
-        setForm({ menu_item_id: "", ingredient_id: "", quantity_needed: "", instructions: "" });
+        setForm({
+          menu_item_id: "",
+          ingredient_id: "",
+          quantity_needed: "",
+          instructions: "",
+        });
         setShowCreateForm(false);
         fetchRecipes();
       } else {
@@ -194,10 +205,12 @@ function RecipesDatabaseComponent() {
       <div className="flex justify-between items-center w-full">
         <div>
           <h1 className="text-2xl font-bold">Recipes</h1>
-          <p className="text-muted-foreground">Manage menu item ingredients and quantities</p>
+          <p className="text-muted-foreground">
+            Manage menu item ingredients and quantities
+          </p>
         </div>
         <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 size-4" />
           {showCreateForm ? "Cancel" : "Add Recipe"}
         </Button>
       </div>
@@ -242,7 +255,9 @@ function RecipesDatabaseComponent() {
                   </Label>
                   <Select
                     value={form.ingredient_id}
-                    onValueChange={(v) => handleSelectChange("ingredient_id", v)}
+                    onValueChange={(v) =>
+                      handleSelectChange("ingredient_id", v)
+                    }
                     required
                   >
                     <SelectTrigger>
@@ -293,7 +308,12 @@ function RecipesDatabaseComponent() {
                   onClick={() => {
                     setShowCreateForm(false);
                     setError(null);
-                    setForm({ menu_item_id: "", ingredient_id: "", quantity_needed: "", instructions: "" });
+                    setForm({
+                      menu_item_id: "",
+                      ingredient_id: "",
+                      quantity_needed: "",
+                      instructions: "",
+                    });
                   }}
                   disabled={isSubmitting}
                 >
@@ -311,7 +331,7 @@ function RecipesDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={enrichedRecipes}
-        limit={5}
+        pageSize={10}
         searchKeys={["menu_item_name", "ingredient_name", "instructions"]}
         deleteIdKey="recipe_id"
         onDelete={handleDelete}
