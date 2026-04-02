@@ -33,6 +33,21 @@ export function parseReportDateRange(url) {
   return { start, end };
 }
 
+/** Optional: restrict "Users by ethnicity" to customers who placed an order at this truck (`checkout.license_plate`). */
+function parseEthnicityTruckFilter(url) {
+  if (!url || typeof url !== "string") return null;
+  const q = url.indexOf("?");
+  if (q === -1) return null;
+  const params = new URLSearchParams(url.slice(q));
+  const raw = params.get("ethnicityTruck");
+  if (raw == null || String(raw).trim() === "") return null;
+  const licensePlate = String(raw).trim();
+  if (licensePlate.length > 32) {
+    return { error: "Invalid truck filter" };
+  }
+  return { licensePlate };
+}
+
 function splitCsv(value) {
   if (!value || typeof value !== "string") return [];
   return value
@@ -55,6 +70,23 @@ export async function getReportStats(db, url) {
   const range = parseReportDateRange(url);
   if (range?.error) {
     return { error: range.error };
+  }
+
+  const truckFilter = parseEthnicityTruckFilter(url);
+  if (truckFilter?.error) {
+    return { error: truckFilter.error };
+  }
+
+  let ethnicityTruckPlate = null;
+  if (truckFilter?.licensePlate) {
+    const [[ft]] = await db.query(
+      "SELECT license_plate FROM food_trucks WHERE license_plate = ? LIMIT 1",
+      [truckFilter.licensePlate],
+    );
+    if (!ft) {
+      return { error: "Unknown food truck license plate" };
+    }
+    ethnicityTruckPlate = truckFilter.licensePlate;
   }
 
   const placed = checkoutPlacedAtSql("c");
@@ -104,7 +136,36 @@ export async function getReportStats(db, url) {
     range ? [range.start, range.end, range.start, range.end, range.start, range.end] : [],
   );
 
-  const [ethnicityRows] = await db.query(`
+  const ethnicityDateOnCheckout = range
+    ? ` AND DATE(${placed}) BETWEEN ? AND ?`
+    : "";
+
+  const ethnicityTruckParams = ethnicityTruckPlate
+    ? range
+      ? [ethnicityTruckPlate, range.start, range.end]
+      : [ethnicityTruckPlate]
+    : [];
+
+  const [ethnicityRows] = ethnicityTruckPlate
+    ? await db.query(
+        `
+    SELECT
+      rl.race_id AS raceId,
+      rl.race AS race,
+      (
+        SELECT COUNT(DISTINCT u.email)
+        FROM users u
+        INNER JOIN checkout c ON c.customer_email = u.email
+          AND c.license_plate = ?
+          ${ethnicityDateOnCheckout}
+        WHERE u.ethnicity = rl.race_id
+      ) AS total
+    FROM race_lookup rl
+    ORDER BY rl.race_id
+    `,
+        ethnicityTruckParams,
+      )
+    : await db.query(`
     SELECT rl.race_id AS raceId, rl.race AS race, COUNT(u.email) AS total
     FROM race_lookup rl
     LEFT JOIN users u ON u.ethnicity = rl.race_id
@@ -112,7 +173,19 @@ export async function getReportStats(db, url) {
     ORDER BY rl.race_id
   `);
 
-  const [[{ unspecified }]] = await db.query(`
+  const [[{ unspecified }]] = ethnicityTruckPlate
+    ? await db.query(
+        `
+    SELECT COUNT(DISTINCT u.email) AS unspecified
+    FROM users u
+    INNER JOIN checkout c ON c.customer_email = u.email
+      AND c.license_plate = ?
+      ${ethnicityDateOnCheckout}
+    WHERE u.ethnicity IS NULL
+    `,
+        ethnicityTruckParams,
+      )
+    : await db.query(`
     SELECT COUNT(*) AS unspecified FROM users WHERE ethnicity IS NULL
   `);
 
@@ -358,16 +431,12 @@ export async function getReportStats(db, url) {
       total: Number(r.total) || 0,
       details: splitCsv(r.details),
     })),
-    filters: range
-      ? {
-          startDate: range.start,
-          endDate: range.end,
-          orderMetricsFiltered: true,
-        }
-      : {
-          startDate: null,
-          endDate: null,
-          orderMetricsFiltered: false,
-        },
+    filters: {
+      startDate: range?.start ?? null,
+      endDate: range?.end ?? null,
+      orderMetricsFiltered: Boolean(range),
+      ethnicityTruck: ethnicityTruckPlate,
+      ethnicityUsesOrderDates: Boolean(ethnicityTruckPlate && range),
+    },
   };
 }

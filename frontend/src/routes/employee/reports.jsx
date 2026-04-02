@@ -175,6 +175,31 @@ function RouteComponent() {
   const [pendingEnd, setPendingEnd] = useState("");
   const [reportPickerValue, setReportPickerValue] = useState("");
   const [activeReport, setActiveReport] = useState(null);
+  const [ethnicityTruckPlate, setEthnicityTruckPlate] = useState("");
+  const [trucks, setTrucks] = useState([]);
+
+  useEffect(() => {
+    if (activeReport !== "usersByEthnicity") {
+      setEthnicityTruckPlate("");
+      return;
+    }
+    let cancelled = false;
+    const token = localStorage.getItem("token");
+    fetch("/api/trucks", {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        setTrucks(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setTrucks([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeReport]);
 
   useEffect(() => {
     let cancelled = false;
@@ -186,6 +211,9 @@ function RouteComponent() {
         if (appliedFilter) {
           params.set("start", appliedFilter.start);
           params.set("end", appliedFilter.end);
+        }
+        if (ethnicityTruckPlate) {
+          params.set("ethnicityTruck", ethnicityTruckPlate);
         }
         const qs = params.toString();
         const token = localStorage.getItem("token");
@@ -208,7 +236,7 @@ function RouteComponent() {
     return () => {
       cancelled = true;
     };
-  }, [appliedFilter]);
+  }, [appliedFilter, ethnicityTruckPlate]);
 
   const handleApplyFilter = useCallback(() => {
     if (!pendingStart || !pendingEnd) {
@@ -305,10 +333,15 @@ function RouteComponent() {
   }, [stats]);
 
   const orderFilterActive = Boolean(stats?.filters?.orderMetricsFiltered);
+  const ethnicityTruckActive = Boolean(stats?.filters?.ethnicityTruck);
+  const ethnicityUsesOrderDates = Boolean(stats?.filters?.ethnicityUsesOrderDates);
   const activeReportIsOrderBased =
     activeReport === "ordersByType" ||
     activeReport === "itemsSoldByCategory" ||
     activeReport === "ordersByTruck";
+  const showOrderDateRangeCard =
+    activeReportIsOrderBased ||
+    (activeReport === "usersByEthnicity" && Boolean(ethnicityTruckPlate));
 
   const reportOptions = useMemo(
     () => [
@@ -399,13 +432,16 @@ function RouteComponent() {
           </CardContent>
         </Card>
 
-        {activeReportIsOrderBased && (
+        {showOrderDateRangeCard && (
           <Card className="border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Order date range</CardTitle>
               <CardDescription>
                 Filters order-based charts (orders, revenue, items sold, order
-                type, truck order counts). Catalog totals stay all-time.
+                type, truck order counts). When you filter{" "}
+                <strong>Users by ethnicity</strong> by truck, this range also
+                limits which checkouts count for that breakdown. Catalog totals
+                stay all-time.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap items-end gap-3">
@@ -451,17 +487,72 @@ function RouteComponent() {
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Users by ethnicity</CardTitle>
               <CardDescription>
-                Summary: <strong>{stats?.totalUsers ?? 0}</strong> users.{" "}
-                <strong>{usersWithEthnicity}</strong> with a recorded ethnicity
-                {stats?.ethnicityUnspecified > 0 && (
+                {ethnicityTruckActive ? (
                   <>
-                    ; <strong>{stats.ethnicityUnspecified}</strong> not specified
+                    Filtered to customers who placed at least one order at truck{" "}
+                    <strong>{stats.filters.ethnicityTruck}</strong>
+                    {ethnicityUsesOrderDates ? (
+                      <>
+                        , using only checkouts in the active{" "}
+                        <strong>order date range</strong> above.
+                      </>
+                    ) : (
+                      <> (all time for that truck).</>
+                    )}{" "}
+                    Bars count <strong>distinct customer emails</strong> by
+                    ethnicity.
+                  </>
+                ) : (
+                  <>
+                    Summary: <strong>{stats?.totalUsers ?? 0}</strong> users.{" "}
+                    <strong>{usersWithEthnicity}</strong> with a recorded
+                    ethnicity
+                    {stats?.ethnicityUnspecified > 0 && (
+                      <>
+                        ; <strong>{stats.ethnicityUnspecified}</strong> not
+                        specified
+                      </>
+                    )}
+                    .
                   </>
                 )}
-                .
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/30 p-3">
+                <div className="grid min-w-[220px] flex-1 gap-1.5">
+                  <Label>Then filter by truck (optional)</Label>
+                  <Select
+                    value={ethnicityTruckPlate || "__all__"}
+                    onValueChange={(v) =>
+                      setEthnicityTruckPlate(v === "__all__" ? "" : v)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All trucks" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">All trucks</SelectItem>
+                      {trucks.map((t) => (
+                        <SelectItem
+                          key={t.license_plate}
+                          value={t.license_plate}
+                        >
+                          {(t.truck_name || "").trim() || t.license_plate}{" "}
+                          <span className="text-muted-foreground">
+                            ({t.license_plate})
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="text-xs text-muted-foreground max-w-md">
+                  Cross-filter: pick a truck to show only ethnicities of users
+                  who ordered from that location. Apply an order date range
+                  (above) to limit which checkouts count.
+                </p>
+              </div>
               <div className="w-full h-[min(420px,70vh)] min-h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
