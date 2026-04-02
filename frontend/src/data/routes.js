@@ -25,13 +25,13 @@ export const EMPLOYEE_ROUTES = [
     icon: ShoppingCart,
   },
   {
-    name: "Current Orders",
+    name: "Orders",
     url: "/employee/orders",
     roles: ["cashier", "cook", "manager", "admin"],
     icon: ClipboardList,
   },
   {
-    name: "Stats",
+    name: "Reports",
     url: "/employee/reports",
     roles: ["manager", "admin"],
     icon: BarChart3,
