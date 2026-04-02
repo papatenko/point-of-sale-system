@@ -292,6 +292,15 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
               </div>
             </>
           )}
+          {order.truck_location && (
+            <>
+              <div className="w-px h-6 bg-gray-200" />
+              <div>
+                <p className="text-xs text-gray-400 leading-none mb-0.5">Location</p>
+                <p className="text-sm font-medium text-gray-600">{order.truck_location}</p>
+              </div>
+            </>
+          )}
           {(isReady || isPreparing) && (
             <span className={`text-xs font-medium flex items-center gap-1 ${isReady ? "text-green-600" : "text-blue-500"}`}>
               ● {isReady ? "Ready" : "Priority"}

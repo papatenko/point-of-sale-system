@@ -85,11 +85,13 @@ export async function listOrders(db, req, url) {
                               c.total_price, c.payment_method, c.customer_email,
                               c.scheduled_time, c.license_plate, c.date_created,
                               u.phone_number AS customer_phone,
+                              ft.current_location AS truck_location,
                               GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ', ') AS items
                        FROM checkout c
                        LEFT JOIN order_items oi ON oi.order_id = c.checkout_id
                        LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
                        LEFT JOIN users u ON u.email = c.customer_email
+                       LEFT JOIN food_trucks ft ON ft.license_plate = c.license_plate
                        ${where}
                        GROUP BY c.checkout_id
                        ${orderBy}
@@ -103,11 +105,13 @@ export async function listOrders(db, req, url) {
                             c.total_price, c.payment_method, c.customer_email,
                             c.scheduled_time, c.license_plate, c.date_created,
                             u.phone_number AS customer_phone,
+                            ft.current_location AS truck_location,
                             GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ', ') AS items
                      FROM checkout c
                      LEFT JOIN order_items oi ON oi.order_id = c.checkout_id
                      LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
                      LEFT JOIN users u ON u.email = c.customer_email
+                     LEFT JOIN food_trucks ft ON ft.license_plate = c.license_plate
                      ${where}
                      GROUP BY c.checkout_id
                      ${orderBy}`;
