@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
 import { CreateForm } from "@/components/database/create-form";
-import { Plus } from "lucide-react";
+import { AddButton } from "@/components/database/add-button";
 import { GENDER_OPTIONS } from "@/data/gender";
 import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
 
@@ -167,10 +166,11 @@ function EmployeesDatabaseComponent() {
           <h1 className="text-2xl font-bold">Employees</h1>
           <p className="text-muted-foreground">Manage your employee records</p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {showCreateForm ? "Cancel" : "Add Employee"}
-        </Button>
+        <AddButton
+          showForm={showCreateForm}
+          onToggle={() => setShowCreateForm(!showCreateForm)}
+          addLabel="Add Employee"
+        />
       </div>
 
       {showCreateForm && (

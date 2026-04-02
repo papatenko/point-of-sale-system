@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
 import { CreateForm } from "@/components/database/create-form";
-import { Plus } from "lucide-react";
+import { AddButton } from "@/components/database/add-button";
 import {
   Select,
   SelectContent,
@@ -209,10 +209,11 @@ function RecipesDatabaseComponent() {
             Manage menu item ingredients and quantities
           </p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 size-4" />
-          {showCreateForm ? "Cancel" : "Add Recipe"}
-        </Button>
+        <AddButton
+          showForm={showCreateForm}
+          onToggle={() => setShowCreateForm(!showCreateForm)}
+          addLabel="Add Recipe"
+        />
       </div>
 
       {showCreateForm && (

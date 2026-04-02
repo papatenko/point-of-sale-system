@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
 import { CreateForm } from "@/components/database/create-form";
-import { Plus } from "lucide-react";
+import { AddButton } from "@/components/database/add-button";
 import { UNIT_OPTIONS } from "@/data/units";
 
 export const Route = createFileRoute("/employee/database/ingredients")({
@@ -130,10 +129,11 @@ function IngredientsDatabaseComponent() {
             Manage your ingredient inventory
           </p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 size-4" />
-          {showCreateForm ? "Cancel" : "Add Ingredient"}
-        </Button>
+        <AddButton
+          showForm={showCreateForm}
+          onToggle={() => setShowCreateForm(!showCreateForm)}
+          addLabel="Add Ingredient"
+        />
       </div>
 
       {showCreateForm && (

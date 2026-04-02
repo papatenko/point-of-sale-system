@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
 import { CreateForm } from "@/components/database/create-form";
-import { Plus } from "lucide-react";
+import { AddButton } from "@/components/database/add-button";
 
 export const Route = createFileRoute("/employee/database/suppliers")({
   component: SuppliersDatabaseComponent,
@@ -125,10 +124,11 @@ function SuppliersDatabaseComponent() {
           <h1 className="text-2xl font-bold">Suppliers</h1>
           <p className="text-muted-foreground">Manage your supplier contacts</p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 size-4" />
-          {showCreateForm ? "Cancel" : "Add Supplier"}
-        </Button>
+        <AddButton
+          showForm={showCreateForm}
+          onToggle={() => setShowCreateForm(!showCreateForm)}
+          addLabel="Add Supplier"
+        />
       </div>
 
       {showCreateForm && (
