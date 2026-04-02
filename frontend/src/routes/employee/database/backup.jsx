@@ -97,7 +97,7 @@ function BackupPage() {
           {message && (
             <p
               className={`text-sm ${
-                message.type === "success" ? "text-green-600" : "text-red-600"
+                message.type === "success" ? "text-green-600 dark:text-green-400" : "text-destructive"
               }`}
             >
               {message.text}

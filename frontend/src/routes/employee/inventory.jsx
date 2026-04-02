@@ -48,7 +48,7 @@ function StatusBadge({ item }) {
   if (item.quantityOnHand === 0)
     return <Badge variant="destructive">Out of Stock</Badge>;
   if (item.needsReorder)
-    return <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-500">Below Threshold</Badge>;
+    return <Badge variant="destructive" className="bg-orange-500 dark:bg-orange-600 hover:bg-orange-500 dark:hover:bg-orange-600">Below Threshold</Badge>;
   const ratio = item.reorderThreshold > 0 ? item.quantityOnHand / item.reorderThreshold : 2;
   if (ratio < 1.5)
     return <Badge variant="warning">Running Low</Badge>;
@@ -60,7 +60,7 @@ function ExpiryBadge({ date }) {
   if (!date) return <span className="text-muted-foreground text-xs">—</span>;
   const days = Math.floor((new Date(date) - new Date()) / 86_400_000);
   if (days < 0)  return <Badge variant="destructive">Expired</Badge>;
-  if (days <= 3) return <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-500">{days}d left</Badge>;
+  if (days <= 3) return <Badge variant="destructive" className="bg-orange-500 dark:bg-orange-600 hover:bg-orange-500 dark:hover:bg-orange-600">{days}d left</Badge>;
   if (days <= 7) return <Badge variant="warning">{days}d left</Badge>;
   return <span className="text-xs text-muted-foreground">{new Date(date).toLocaleDateString()}</span>;
 }
@@ -72,9 +72,9 @@ function QuantityBar({ item }) {
     : 1;
   const fillColor =
     item.quantityOnHand === 0 ? "bg-destructive"
-    : item.needsReorder       ? "bg-orange-500"
-    : ratio < 0.75            ? "bg-yellow-500"
-    : "bg-emerald-500";
+    : item.needsReorder       ? "bg-orange-500 dark:bg-orange-600"
+    : ratio < 0.75            ? "bg-yellow-500 dark:bg-yellow-600"
+    : "bg-emerald-500 dark:bg-emerald-600";
   return (
     <div className="flex flex-col gap-1 min-w-[120px]">
       <span className="font-semibold tabular-nums text-sm">
@@ -319,7 +319,7 @@ function PendingSupplyOrdersBanner({ selectedTruck, onOrderReceived, showToast }
 
   return (
     <>
-      <div className="rounded-xl border border-blue-200 bg-blue-50 dark:border-blue-800/40 dark:bg-blue-950/25 px-5 py-4 space-y-3">
+      <div className="rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/25 px-5 py-4 space-y-3">
         <div className="flex items-start gap-3">
           <TruckIcon className="size-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
@@ -340,8 +340,8 @@ function PendingSupplyOrdersBanner({ selectedTruck, onOrderReceived, showToast }
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-sm">PO-{order.poId}</span>
-                  <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">
+                  <span className="font-semibold text-sm text-foreground">PO-{order.poId}</span>
+                  <Badge variant="outline" className="text-xs border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300">
                     {order.status}
                   </Badge>
                   <span className="text-xs text-muted-foreground">{order.supplierName}</span>
@@ -742,10 +742,10 @@ function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onCon
                         <div className="flex-1">
                           <p className="font-medium">{item.item_name}</p>
                           {!hasRecipe && (
-                            <p className="text-xs text-orange-600">No recipe configured</p>
+                            <p className="text-xs text-orange-600 dark:text-orange-400">No recipe configured</p>
                           )}
                           {hasSalesData && (
-                            <p className="text-xs text-emerald-600 font-medium">
+                            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                               Today's sales: {salesQty} {salesQty === 1 ? "item" : "items"}
                             </p>
                           )}
@@ -1020,9 +1020,9 @@ function ReorderDialog({ item, open, onOpenChange, onConfirm, loading }) {
         <div className="grid gap-4 py-2">
           <div className="rounded-lg border bg-muted/50 divide-y">
             {[
-              { label: "Current stock",       val: `${fmt(item?.quantityOnHand)} ${item?.unitOfMeasure}`,   cls: "text-orange-600" },
+              { label: "Current stock",       val: `${fmt(item?.quantityOnHand)} ${item?.unitOfMeasure}`,   cls: "text-orange-600 dark:text-orange-400" },
               { label: "Reorder threshold",   val: `${fmt(item?.reorderThreshold)} ${item?.unitOfMeasure}` },
-              { label: "Suggested order qty", val: `${suggested} ${item?.unitOfMeasure}`,                   cls: "text-blue-600" },
+              { label: "Suggested order qty", val: `${suggested} ${item?.unitOfMeasure}`,                   cls: "text-blue-600 dark:text-blue-400" },
             ].map(({ label, val, cls }) => (
               <div key={label} className="flex items-center justify-between px-3 py-2.5 text-sm">
                 <span className="text-muted-foreground">{label}</span>
@@ -1468,7 +1468,7 @@ function InventoryPage() {
 
         {/* ── Banners ───────────────────────────────────────────── */}
         {expiredCount > 0 && (
-          <div className="flex gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-900 dark:border-red-800/40 dark:bg-red-900/20 dark:text-red-300">
+          <div className="flex gap-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-red-900 dark:text-red-300">
             <Trash2Icon className="size-4 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium leading-none mb-1">
@@ -1482,7 +1482,7 @@ function InventoryPage() {
         )}
 
         {activeAlertCount > 0 && (
-          <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
+          <div className="flex gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-amber-900 dark:text-amber-300">
             <AlertTriangleIcon className="size-4 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium leading-none mb-1">
@@ -1660,7 +1660,7 @@ function InventoryPage() {
                             <TableCell className="font-semibold">{a.ingredientName}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1.5 tabular-nums text-sm">
-                                <span className="text-orange-600 font-semibold">{fmt(a.currentActualQty)}</span>
+                                <span className="text-orange-600 dark:text-orange-400 font-semibold">{fmt(a.currentActualQty)}</span>
                                 <span className="text-muted-foreground">/</span>
                                 <span>{fmt(a.reorderThreshold)}</span>
                                 <span className="text-muted-foreground">{a.unitOfMeasure}</span>
@@ -1726,10 +1726,10 @@ function InventoryPage() {
                     <TableBody>
                       {history.map((h) => {
                         const typeMeta = {
-                          waste:             { label: "Waste",      cls: "bg-red-100 text-red-800" },
-                          "order-deduction": { label: "Used",       cls: "bg-indigo-100 text-indigo-800" },
-                          restock:           { label: "Restock",    cls: "bg-emerald-100 text-emerald-800" },
-                          correction:        { label: "Correction", cls: "bg-amber-100 text-amber-800" },
+                          waste:             { label: "Waste",      cls: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300" },
+                          "order-deduction": { label: "Used",       cls: "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300" },
+                          restock:           { label: "Restock",    cls: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300" },
+                          correction:        { label: "Correction", cls: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300" },
                         };
                         const meta = typeMeta[h.adjustmentType] ?? { label: h.adjustmentType, cls: "" };
                         return (
@@ -1737,13 +1737,13 @@ function InventoryPage() {
                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                               {new Date(h.adjustmentDate).toLocaleString()}
                             </TableCell>
-                            <TableCell className="font-medium">{h.ingredientName}</TableCell>
+                            <TableCell className="font-medium text-foreground">{h.ingredientName}</TableCell>
                             <TableCell>
                               <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${meta.cls}`}>
                                 {meta.label}
                               </span>
                             </TableCell>
-                            <TableCell className={`tabular-nums font-semibold ${h.quantityChange < 0 ? "text-destructive" : "text-emerald-600"}`}>
+                            <TableCell className={`tabular-nums font-semibold ${h.quantityChange < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
                               {h.quantityChange > 0 ? "+" : ""}{fmt(h.quantityChange)} {h.unitOfMeasure}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">

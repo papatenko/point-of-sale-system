@@ -2,9 +2,9 @@ import { Plus, Minus } from "lucide-react";
 
 export function MenuCard({ item, qty, onAdd, onQty }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex justify-between items-start gap-4 hover:shadow-md transition-shadow">
+    <div className="bg-background rounded-xl shadow-sm border border-border p-4 flex justify-between items-start gap-4 hover:shadow-md transition-shadow">
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-gray-900">{item.item_name}</h3>
+        <h3 className="font-semibold text-foreground">{item.item_name}</h3>
          {item.image_url && (
         <img
           src={item.image_url}
@@ -12,11 +12,11 @@ export function MenuCard({ item, qty, onAdd, onQty }) {
           className="w-full h-40 object-cover rounded-md mb-4"
         /> )}
         {item.description && (
-          <p className="text-sm text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
             {item.description}
           </p>
         )}
-        <p className="mt-3 font-bold text-amber-600">
+        <p className="mt-3 font-bold text-amber-600 dark:text-amber-400">
           ${parseFloat(item.price).toFixed(2)}
         </p>
       </div>
@@ -32,11 +32,11 @@ export function MenuCard({ item, qty, onAdd, onQty }) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => onQty(qty - 1)}
-              className="w-8 h-8 rounded-full border border-gray-300 hover:bg-gray-100 flex items-center justify-center transition-colors"
+              className="w-8 h-8 rounded-full border border-input hover:bg-muted flex items-center justify-center transition-colors"
             >
               <Minus size={14} />
             </button>
-            <span className="text-sm font-bold w-5 text-center">{qty}</span>
+            <span className="text-sm font-bold w-5 text-center text-foreground">{qty}</span>
             <button
               onClick={() => onQty(qty + 1)}
               className="w-8 h-8 rounded-full bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center transition-colors"

@@ -72,15 +72,15 @@ function SignupComponent() {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-50">
+    <div className="flex justify-center items-center h-screen bg-background">
       <form
         onSubmit={handleSignup}
-        className="p-8 bg-white shadow-md rounded-xl w-96 space-y-4"
+        className="p-8 bg-background shadow-md rounded-xl w-96 space-y-4 border border-border"
       >
-        <h2 className="text-2xl font-bold mb-2">Create Account</h2>
+        <h2 className="text-2xl font-bold mb-2 text-foreground">Create Account</h2>
 
         {error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
             {error}
           </p>
         )}
@@ -88,7 +88,7 @@ function SignupComponent() {
         <div>
           <label
             htmlFor="firstName"
-            className="block mb-1 text-sm font-medium text-gray-700"
+            className="block mb-1 text-sm font-medium text-foreground"
           >
             First Name
           </label>
@@ -105,7 +105,7 @@ function SignupComponent() {
 
               setFirstName(onlyLetters);
             }}
-            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
             autoComplete="given-name"
             required
           />
@@ -114,7 +114,7 @@ function SignupComponent() {
         <div>
           <label
             htmlFor="lastName"
-            className="block mb-1 text-sm font-medium text-gray-700"
+            className="block mb-1 text-sm font-medium text-foreground"
           >
             Last Name
           </label>
@@ -131,7 +131,7 @@ function SignupComponent() {
 
             setLastName(onlyLetters);
           }}
-            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
             autoComplete="family-name"
             required
           />
@@ -140,7 +140,7 @@ function SignupComponent() {
         <div>
           <label
             htmlFor="phone"
-            className="block mb-1 text-sm font-medium text-gray-700"
+            className="block mb-1 text-sm font-medium text-foreground"
           >
             Phone Number
           </label>
@@ -155,7 +155,7 @@ function SignupComponent() {
               const onlyNumbers = value.replace(/[^0-9]/g, "");
               setPhoneNumber(onlyNumbers);
             }}
-            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
             required
           />
         </div>
@@ -163,7 +163,7 @@ function SignupComponent() {
         <div>
           <label
             htmlFor="email"
-            className="block mb-1 text-sm font-medium text-gray-700"
+            className="block mb-1 text-sm font-medium text-foreground"
           >
             Email
           </label>
@@ -174,7 +174,7 @@ function SignupComponent() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
             autoComplete="email"
             required
           />
@@ -183,7 +183,7 @@ function SignupComponent() {
         <div>
           <label
             htmlFor="password"
-            className="block mb-1 text-sm font-medium text-gray-700"
+            className="block mb-1 text-sm font-medium text-foreground"
           >
             Password
           </label>
@@ -194,7 +194,7 @@ function SignupComponent() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
             autoComplete="new-password"
             required
           />
@@ -208,7 +208,7 @@ function SignupComponent() {
           {loading ? "Creating account..." : "Sign Up"}
         </button>
 
-        <p className="text-sm text-center text-gray-600">
+        <p className="text-sm text-center text-muted-foreground">
           Already have an account?{" "}
           <Link to="/auth/login" className="text-amber-600 hover:underline">
             Sign in

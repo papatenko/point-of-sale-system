@@ -217,18 +217,18 @@ export default function SearchPage({ tabla, onSelect }) {
         value={query}
         onChange={(e) => handleSearch(e.target.value)}
         placeholder={`Search in ${tabla}...`}
-        className="w-full p-2 border rounded mb-2"
+        className="w-full p-2 border border-input rounded bg-background text-foreground mb-2"
       />
 
-      {loading && <p className="text-sm text-gray-400">Searching...</p>}
+      {loading && <p className="text-sm text-muted-foreground">Searching...</p>}
 
       {results.length > 0 && (
-        <div className="border rounded bg-white shadow-sm max-h-60 overflow-y-auto">
+        <div className="border border-border rounded bg-background shadow-sm max-h-60 overflow-y-auto">
           {results.map((item, i) => (
             <div
               key={i}
               onClick={() => handleSelect(item)}
-              className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+              className="p-2 hover:bg-muted cursor-pointer text-sm text-foreground"
             >
               {item.item_name && (
                 <p className="font-medium">{item.item_name}</p>

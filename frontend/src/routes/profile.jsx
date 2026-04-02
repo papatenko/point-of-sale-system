@@ -124,33 +124,33 @@ if (
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Loading profile...</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading profile...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-md mx-auto">
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h1 className="text-2xl font-bold mb-6">Profile Settings</h1>
+        <div className="bg-background rounded-xl shadow-sm border p-6">
+          <h1 className="text-2xl font-bold mb-6 text-foreground">Profile Settings</h1>
 
           {message && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+            <div className="mb-4 p-3 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-300">
               {message}
             </div>
           )}
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 First Name
               </label>
               <input
@@ -164,13 +164,13 @@ if (
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, first_name: e.target.value }))
                 }
-                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Last Name
               </label>
               <input
@@ -184,13 +184,13 @@ if (
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, last_name: e.target.value }))
                 }
-                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Phone Number
               </label>
               <input
@@ -204,13 +204,13 @@ if (
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, phone_number: e.target.value }))
                 }
-                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
                 placeholder="Optional"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Gender
               </label>
               <select
@@ -218,7 +218,7 @@ if (
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, gender: e.target.value }))
                 }
-                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
               >
                 <option value="">Select gender (optional)</option>
                 {GENDER_OPTIONS.map((opt) => (
@@ -230,7 +230,7 @@ if (
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Ethnicity
               </label>
               <select
@@ -238,7 +238,7 @@ if (
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, ethnicity: e.target.value }))
                 }
-                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
               >
                 <option value="">Select ethnicity (optional)</option>
                 {ETHNICITY_OPTIONS.map((opt) => (
@@ -249,8 +249,8 @@ if (
               </select>
             </div>
 
-            <div className="pt-4 border-t">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="pt-4 border-t border-border">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 New Password
               </label>
               <input
@@ -259,10 +259,10 @@ if (
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, password: e.target.value }))
                 }
-                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
                 placeholder="Leave blank to keep current password"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Only fill this if you want to change your password
               </p>
             </div>

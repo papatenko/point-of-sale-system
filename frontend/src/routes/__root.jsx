@@ -23,7 +23,10 @@ import {
   ShoppingBag,
   Truck,
   Home,
+  Moon,
+  Sun,
 } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 function ProfileDropdown({ user, onLogout }) {
   const [open, setOpen] = useState(false);
@@ -51,15 +54,15 @@ function ProfileDropdown({ user, onLogout }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+        <div className="absolute right-0 mt-2 w-52 bg-background rounded-xl shadow-lg border border-border py-1 z-50">
           {/* User info header */}
-          <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-semibold text-gray-900">
+          <div className="px-4 py-3 border-b border-border">
+            <p className="text-sm font-semibold text-foreground">
               {user.first_name}
             </p>
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
+            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
             {user.role && (
-              <span className="inline-block mt-1 text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full capitalize">
+              <span className="inline-block mt-1 text-xs bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-300 px-2 py-0.5 rounded-full capitalize">
                 {user.role}
               </span>
             )}
@@ -70,29 +73,29 @@ function ProfileDropdown({ user, onLogout }) {
               <Link
                 to="/employee"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
               >
-                <LayoutDashboard size={15} className="text-gray-400" />
+                <LayoutDashboard size={15} className="text-muted-foreground" />
                 Employee Dashboard
               </Link>
               <Link
                 to="/order"
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
               >
-                <ShoppingBag size={15} className="text-gray-400" />
+                <ShoppingBag size={15} className="text-muted-foreground" />
                 Customer Site
               </Link>
-              <div className="border-t border-gray-100 my-1" />
+              <div className="border-t border-border my-1" />
             </>
           )}
 
           <Link
             to="/profile"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
           >
-            <User size={15} className="text-gray-400" />
+            <User size={15} className="text-muted-foreground" />
             Profile Settings
           </Link>
 
@@ -101,7 +104,7 @@ function ProfileDropdown({ user, onLogout }) {
               setOpen(false);
               onLogout();
             }}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
           >
             <LogOut size={15} />
             Sign Out
@@ -118,6 +121,7 @@ function RootLayout() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isEmployeeRoute = pathname.startsWith("/employee");
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -130,7 +134,7 @@ function RootLayout() {
     <>
       {/* Only show public navbar outside the employee dashboard */}
       {!isEmployeeRoute && (
-        <div className="w-full p-2 flex justify-between items-center border-b border-gray-100">
+        <div className="w-full p-2 flex justify-between items-center border-b border-border">
           <div className="flex items-center gap-2">
             <Truck className="size-6 text-amber-600" />
             <span className="text-xl font-bold text-amber-600">
@@ -159,12 +163,23 @@ function RootLayout() {
           </div>
 
           <div className="flex items-center gap-4">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "light" ? (
+                <Moon className="size-5 text-muted-foreground" />
+              ) : (
+                <Sun className="size-5 text-muted-foreground" />
+              )}
+            </button>
             {user ? (
               <ProfileDropdown user={user} onLogout={handleLogout} />
             ) : (
               <Link
                 to="/auth/login"
-                className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors"
               >
                 <User size={14} />
                 Sign In

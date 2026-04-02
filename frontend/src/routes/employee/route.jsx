@@ -4,7 +4,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setLogout } from "@/redux/authSlice";
-import { LogOut, ShoppingBag, LayoutDashboard } from "lucide-react";
+import { LogOut, ShoppingBag, LayoutDashboard, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 export const Route = createFileRoute("/employee")({
   component: EmployeeLayoutComponent,
@@ -43,11 +44,11 @@ function EmployeeProfileDropdown({ user, onLogout }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-semibold text-gray-900">{user?.first_name}</p>
-            <p className="text-xs text-gray-400 truncate">{user?.email}</p>
-            <span className="inline-block mt-1 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+        <div className="absolute right-0 mt-2 w-52 bg-background rounded-xl shadow-lg border border-border py-1 z-50">
+          <div className="px-4 py-3 border-b border-border">
+            <p className="text-sm font-semibold text-foreground">{user?.first_name}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            <span className="inline-block mt-1 text-xs bg-amber-100 dark:bg-amber-900 dark:text-amber-300 text-amber-700 px-2 py-0.5 rounded-full">
               {roleLabel}
             </span>
           </div>
@@ -55,25 +56,25 @@ function EmployeeProfileDropdown({ user, onLogout }) {
           <Link
             to="/employee"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
           >
-            <LayoutDashboard size={15} className="text-gray-400" />
+            <LayoutDashboard size={15} className="text-muted-foreground" />
             Employee Dashboard
           </Link>
           <Link
             to="/order"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
           >
-            <ShoppingBag size={15} className="text-gray-400" />
+            <ShoppingBag size={15} className="text-muted-foreground" />
             Customer Site
           </Link>
 
-          <div className="border-t border-gray-100 my-1" />
+          <div className="border-t border-border my-1" />
 
           <button
             onClick={() => { setOpen(false); onLogout(); }}
-            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
           >
             <LogOut size={15} />
             Sign Out
@@ -88,6 +89,7 @@ function EmployeeLayoutComponent() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((s) => s.auth.user);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -118,17 +120,30 @@ function EmployeeLayoutComponent() {
       <SidebarProvider className="absolute left-0 top-0 h-full min-h-full">
         <AppSidebar />
         <main className="flex min-h-screen flex-1 flex-col">
-          <header className="flex h-14 shrink-0 items-center justify-between border-b px-4">
+          <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
             <div className="flex items-center gap-3">
               <SidebarTrigger />
-              <span className="font-semibold text-gray-800">Shako Kabob</span>
-              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+              <span className="font-semibold text-foreground">Shako Kabob</span>
+              <span className="text-xs bg-amber-100 dark:bg-amber-900 dark:text-amber-300 text-amber-700 px-2 py-0.5 rounded-full">
                 {roleLabel}
               </span>
             </div>
-            {user && (
-              <EmployeeProfileDropdown user={user} onLogout={handleLogout} />
-            )}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-md hover:bg-muted transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === "light" ? (
+                  <Moon className="size-4" />
+                ) : (
+                  <Sun className="size-4" />
+                )}
+              </button>
+              {user && (
+                <EmployeeProfileDropdown user={user} onLogout={handleLogout} />
+              )}
+            </div>
           </header>
           <div className="flex-1">
             <Outlet />

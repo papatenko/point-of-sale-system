@@ -22,10 +22,10 @@ function Index() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-amber-50">
+    <div className="min-h-screen bg-amber-50 dark:bg-amber-950/20">
       {/* <HeroCarousel/> */}
       {/* Hero */}
-      <section className="bg-amber-600 text-white py-24 px-4 text-center">
+      <section className="bg-amber-600 dark:bg-amber-700 text-white py-24 px-4 text-center">
         <div className="flex items-center justify-center gap-3 mb-4">
           <Truck size={40} />
           <h1 className="text-5xl font-extrabold tracking-tight">
@@ -38,7 +38,7 @@ function Index() {
         <Link to="/order">
           <Button
             size="lg"
-            className="bg-white text-amber-700 hover:bg-amber-50 font-bold px-8 text-base"
+            className="bg-white text-amber-700 hover:bg-amber-50 dark:bg-amber-100 dark:text-amber-800 font-bold px-8 text-base"
           >
             Order Now <ChevronRight size={18} className="ml-1" />
           </Button>
@@ -48,7 +48,7 @@ function Index() {
       {/* Featured items */}
       {featured.length > 0 && (
         <section className="max-w-5xl mx-auto px-4 py-16">
-          <h2 className="text-2xl font-bold mb-8 text-gray-800">
+          <h2 className="text-2xl font-bold mb-8 text-foreground">
             Customer Favorites
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -58,13 +58,13 @@ function Index() {
                 className="shadow-sm hover:shadow-md transition-shadow"
               >
                 <CardContent className="p-4">
-                  <h3 className="font-semibold text-gray-900">{item.item_name}</h3>
+                  <h3 className="font-semibold text-foreground">{item.item_name}</h3>
                   {item.description && (
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
                       {item.description}
                     </p>
                   )}
-                  <p className="mt-3 font-bold text-amber-600">
+                  <p className="mt-3 font-bold text-amber-600 dark:text-amber-400">
                     ${parseFloat(item.price).toFixed(2)}
                   </p>
                 </CardContent>
@@ -73,7 +73,7 @@ function Index() {
           </div>
           <div className="text-center mt-10">
             <Link to="/order">
-              <Button className="bg-amber-600 hover:bg-amber-700 text-white px-8">
+              <Button className="bg-amber-600 hover:bg-amber-700 text-white dark:bg-amber-600 dark:hover:bg-amber-500 px-8">
                 View Full Menu
               </Button>
             </Link>
