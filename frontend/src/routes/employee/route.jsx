@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { setLogout } from "@/redux/authSlice";
-import { LogOut, ShoppingBag, LayoutDashboard, Moon, Sun } from "lucide-react";
+import { LogOut, ShoppingBag, LayoutDashboard, Moon, Sun, User } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 
 export const Route = createFileRoute("/employee")({
@@ -71,6 +71,15 @@ function EmployeeProfileDropdown({ user, onLogout }) {
           </Link>
 
           <div className="border-t border-border my-1" />
+
+          <Link
+            to="/profile"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+          >
+            <User size={15} className="text-muted-foreground" />
+            Profile Settings
+          </Link>
 
           <button
             onClick={() => { setOpen(false); onLogout(); }}
