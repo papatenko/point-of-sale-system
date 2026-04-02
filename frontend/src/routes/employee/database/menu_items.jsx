@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
-import { CreateForm } from "@/components/database/create-form";
-import { AddButton } from "@/components/database/add-button";
+import { AddDialog } from "@/components/database/add-dialog";
 import {
   Dialog,
   DialogContent,
@@ -58,7 +56,6 @@ const CREATE_FIELDS = [
 function MenuItemsDatabaseComponent() {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -103,16 +100,14 @@ function MenuItemsDatabaseComponent() {
       const data = await res.json();
 
       if (res.ok) {
-        setShowCreateForm(false);
         fetchMenuItems();
       } else {
         setError(data.error || "Failed to create menu item");
-        throw new Error(data.error);
+        return false;
       }
     } catch (err) {
-      if (!err.message.includes("Failed to create")) {
-        setError("Failed to create menu item");
-      }
+      setError("Failed to create menu item");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -137,7 +132,7 @@ function MenuItemsDatabaseComponent() {
         const data = await res.json();
         alert(data.error || "Failed to delete menu item");
       }
-    } catch (err) {
+    } catch {
       alert("Failed to delete menu item");
     }
   };
@@ -149,27 +144,16 @@ function MenuItemsDatabaseComponent() {
           <h1 className="text-2xl font-bold">Menu Items</h1>
           <p className="text-muted-foreground">Manage your menu</p>
         </div>
-        <AddButton
-          showForm={showCreateForm}
-          onToggle={() => setShowCreateForm(!showCreateForm)}
-          addLabel="Add Menu Item"
-        />
-      </div>
-
-      {showCreateForm && (
-        <CreateForm
+        <AddDialog
+          triggerLabel="Add Menu Item"
           title="Add New Menu Item"
           fields={CREATE_FIELDS}
           onSubmit={handleCreateSubmit}
-          onCancel={() => {
-            setShowCreateForm(false);
-            setError(null);
-          }}
           isSubmitting={isSubmitting}
           error={error}
-          submitLabel="Create Menu Item"
+          submitLabel="Create"
         />
-      )}
+      </div>
 
       <DataTable
         columns={COLUMNS}

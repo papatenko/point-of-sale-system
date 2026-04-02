@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { DataTable } from "@/components/database/data-table";
-import { CreateForm } from "@/components/database/create-form";
-import { AddButton } from "@/components/database/add-button";
+import { AddDialog } from "@/components/database/add-dialog";
 import { UNIT_OPTIONS } from "@/data/units";
 
 export const Route = createFileRoute("/employee/database/ingredients")({
@@ -37,7 +36,6 @@ const CREATE_FIELDS = [
 function IngredientsDatabaseComponent() {
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -81,16 +79,14 @@ function IngredientsDatabaseComponent() {
       const data = await res.json();
 
       if (res.ok) {
-        setShowCreateForm(false);
         fetchIngredients();
       } else {
         setError(data.error || "Failed to create ingredient");
-        throw new Error(data.error);
+        return false;
       }
-    } catch (err) {
-      if (!err.message.includes("Failed to create")) {
-        setError("Failed to create ingredient");
-      }
+    } catch {
+      setError("Failed to create ingredient");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -115,7 +111,7 @@ function IngredientsDatabaseComponent() {
         const data = await res.json();
         alert(data.error || "Failed to delete ingredient");
       }
-    } catch (err) {
+    } catch {
       alert("Failed to delete ingredient");
     }
   };
@@ -129,27 +125,16 @@ function IngredientsDatabaseComponent() {
             Manage your ingredient inventory
           </p>
         </div>
-        <AddButton
-          showForm={showCreateForm}
-          onToggle={() => setShowCreateForm(!showCreateForm)}
-          addLabel="Add Ingredient"
-        />
-      </div>
-
-      {showCreateForm && (
-        <CreateForm
+        <AddDialog
+          triggerLabel="Add Ingredient"
           title="Add New Ingredient"
           fields={CREATE_FIELDS}
           onSubmit={handleCreateSubmit}
-          onCancel={() => {
-            setShowCreateForm(false);
-            setError(null);
-          }}
           isSubmitting={isSubmitting}
           error={error}
-          submitLabel="Create Ingredient"
+          submitLabel="Create"
         />
-      )}
+      </div>
 
       <DataTable
         columns={COLUMNS}

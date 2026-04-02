@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { DataTable } from "@/components/database/data-table";
-import { CreateForm } from "@/components/database/create-form";
-import { AddButton } from "@/components/database/add-button";
+import { AddDialog } from "@/components/database/add-dialog";
 
 export const Route = createFileRoute("/employee/database/food-trucks")({
   component: FoodTrucksDatabaseComponent,
@@ -39,7 +38,6 @@ const CREATE_FIELDS = [
 function FoodTrucksDatabaseComponent() {
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -87,16 +85,14 @@ function FoodTrucksDatabaseComponent() {
       const data = await res.json();
 
       if (res.ok) {
-        setShowCreateForm(false);
         fetchTrucks();
       } else {
         setError(data.error || "Failed to create truck");
-        throw new Error(data.error);
+        return false;
       }
-    } catch (err) {
-      if (!err.message.includes("Failed to create")) {
-        setError("Failed to create truck");
-      }
+    } catch {
+      setError("Failed to create truck");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -121,7 +117,7 @@ function FoodTrucksDatabaseComponent() {
         const data = await res.json();
         alert(data.error || "Failed to delete truck");
       }
-    } catch (err) {
+    } catch {
       alert("Failed to delete truck");
     }
   };
@@ -133,27 +129,16 @@ function FoodTrucksDatabaseComponent() {
           <h1 className="text-2xl font-bold">Food Trucks</h1>
           <p className="text-muted-foreground">Manage your food truck fleet</p>
         </div>
-        <AddButton
-          showForm={showCreateForm}
-          onToggle={() => setShowCreateForm(!showCreateForm)}
-          addLabel="Add Truck"
-        />
-      </div>
-
-      {showCreateForm && (
-        <CreateForm
+        <AddDialog
+          triggerLabel="Add Truck"
           title="Add New Truck"
           fields={CREATE_FIELDS}
           onSubmit={handleCreateSubmit}
-          onCancel={() => {
-            setShowCreateForm(false);
-            setError(null);
-          }}
           isSubmitting={isSubmitting}
           error={error}
-          submitLabel="Create Truck"
+          submitLabel="Create"
         />
-      )}
+      </div>
 
       <DataTable
         columns={COLUMNS}
