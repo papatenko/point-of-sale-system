@@ -20,7 +20,7 @@ const router = createRouter();
 // Auth
 router.post("/api/login", async (body) => login(body.email, body.password));
 router.post("/api/register", async (body) => {
-  const { email, password, first_name, last_name, phone_number} = body;
+  const { email, password, first_name, last_name, phone_number } = body;
   if (!email || !password || !first_name || !last_name || !phone_number) {
     return { error: "All fields are required" };
   }
@@ -178,7 +178,7 @@ router.post("/api/inventory/receive-order", async (body, db, req) =>
 );
 
 // Backup
-router.get("/api/backup", async (_, db) => BackupService.createBackup());
+router.get("/api/backup", async () => BackupService.createBackup());
 
 // Customers
 router.get("/api/customers", async (_, db) =>
@@ -194,7 +194,11 @@ router.delete("/api/customers", async (body, db) => {
 
 // Checkout — customer online orders
 router.post("/api/checkout", async (body, db, req) =>
-  CheckoutService.createCheckout(db, { ...body, orderType: "online-pickup" }, req),
+  CheckoutService.createCheckout(
+    db,
+    { ...body, orderType: "online-pickup" },
+    req,
+  ),
 );
 
 // POS checkout — walk-in orders, truck auto-assigned from JWT

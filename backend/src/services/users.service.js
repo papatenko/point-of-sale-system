@@ -1,5 +1,5 @@
 import * as UserModel from "../models/users.model.js";
-import { verifyToken, signEmployeeToken } from "../auth/jwt.js";
+import { verifyToken } from "../auth/jwt.js";
 
 function getAuthEmail(req) {
   const header = req?.headers?.authorization;
@@ -13,13 +13,16 @@ export async function getMyProfile(req, db) {
   const email = getAuthEmail(req);
   if (!email) return { error: "Unauthorized" };
 
-  const [[row]] = await db.query(`
+  const [[row]] = await db.query(
+    `
     SELECT u.email, u.first_name, u.last_name, u.phone_number, u.gender, u.ethnicity,
            g.gender AS gender_name, r.race AS race_name
     FROM users u
     LEFT JOIN gender_lookup g ON u.gender = g.gender_id
     LEFT JOIN race_lookup r ON u.ethnicity = r.race_id
-    WHERE u.email = ?`, [email]);
+    WHERE u.email = ?`,
+    [email],
+  );
 
   if (!row) return { error: "User not found" };
   return row;
@@ -29,24 +32,48 @@ export async function updateMyProfile(req, body, db) {
   const email = getAuthEmail(req);
   if (!email) return { error: "Unauthorized" };
 
-  const { first_name, last_name, phone_number, gender, ethnicity, password } = body || {};
-  if (!first_name || !last_name) return { error: "first_name and last_name are required" };
+  const { first_name, last_name, phone_number, gender, ethnicity, password } =
+    body || {};
+  if (!first_name || !last_name)
+    return { error: "first_name and last_name are required" };
 
-  const [[existing]] = await db.query("SELECT email FROM users WHERE email = ?", [email]);
+  const [[existing]] = await db.query(
+    "SELECT email FROM users WHERE email = ?",
+    [email],
+  );
   if (!existing) return { error: "User not found" };
 
-  const g = gender != null && gender !== "" ? parseInt(String(gender), 10) : null;
-  const e = ethnicity != null && ethnicity !== "" ? parseInt(String(ethnicity), 10) : null;
+  const g =
+    gender != null && gender !== "" ? parseInt(String(gender), 10) : null;
+  const e =
+    ethnicity != null && ethnicity !== ""
+      ? parseInt(String(ethnicity), 10)
+      : null;
 
   if (password) {
     await db.query(
       `UPDATE users SET first_name = ?, last_name = ?, phone_number = ?, gender = ?, ethnicity = ?, password = ? WHERE email = ?`,
-      [first_name, last_name, phone_number || null, Number.isNaN(g) ? null : g, Number.isNaN(e) ? null : e, password, email]
+      [
+        first_name,
+        last_name,
+        phone_number || null,
+        Number.isNaN(g) ? null : g,
+        Number.isNaN(e) ? null : e,
+        password,
+        email,
+      ],
     );
   } else {
     await db.query(
       `UPDATE users SET first_name = ?, last_name = ?, phone_number = ?, gender = ?, ethnicity = ? WHERE email = ?`,
-      [first_name, last_name, phone_number || null, Number.isNaN(g) ? null : g, Number.isNaN(e) ? null : e, email]
+      [
+        first_name,
+        last_name,
+        phone_number || null,
+        Number.isNaN(g) ? null : g,
+        Number.isNaN(e) ? null : e,
+        email,
+      ],
     );
   }
 
@@ -58,7 +85,15 @@ export async function getAllUsers(db) {
 }
 
 export async function createUser(db, data) {
-  const { email, first_name, last_name, password, phone_number, gender, ethnicity } = data;
+  const {
+    email,
+    first_name,
+    last_name,
+    password,
+    phone_number,
+    gender,
+    ethnicity,
+  } = data;
 
   if (!email || !first_name || !last_name || !password) {
     return { error: "email, first_name, last_name, and password are required" };

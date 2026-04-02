@@ -1,6 +1,5 @@
-import bcrypt from "bcrypt";
 import { getDatabase } from "../database.js";
-import { signUserToken, verifyToken } from "./jwt.js";
+import { signUserToken } from "./jwt.js";
 
 // --- Login function ---
 export async function login(email, password) {
@@ -23,7 +22,12 @@ export async function login(email, password) {
     throw new Error("Incorrect password");
   }
 
-  const token = signUserToken(user.email, user.user_type, user.role ?? null, user.license_plate ?? null);
+  const token = signUserToken(
+    user.email,
+    user.user_type,
+    user.role ?? null,
+    user.license_plate ?? null,
+  );
 
   return {
     token,
@@ -38,7 +42,13 @@ export async function login(email, password) {
 }
 
 // --- Register function ---
-export async function register(email, password, first_name, last_name, phone_number) {
+export async function register(
+  email,
+  password,
+  first_name,
+  last_name,
+  phone_number,
+) {
   const db = await getDatabase();
 
   const [users] = await db.query("SELECT email FROM users WHERE email = ?", [
@@ -55,15 +65,3 @@ export async function register(email, password, first_name, last_name, phone_num
 }
 
 export { verifyToken, signEmployeeToken } from "./jwt.js";
-
-// verify manager role
-export function verifyManager(token) {
-  try {
-    const payload = verifyToken(token);
-    if (!payload) throw new Error("Invalid token");
-    if (payload.role !== "manager") throw new Error("Not authorized");
-    return payload;
-  } catch (err) {
-    throw new Error("Invalid token or unauthorized");
-  }
-}
