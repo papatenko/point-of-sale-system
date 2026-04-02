@@ -56,21 +56,21 @@ function LoginComponent() {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-50">
+    <div className="flex justify-center items-center h-screen bg-background">
       <form
         onSubmit={handleLogin}
-        className="p-8 bg-white shadow-md rounded-xl w-96 space-y-4"
+        className="p-8 bg-background shadow-md rounded-xl w-96 space-y-4 border border-border"
       >
-        <h2 className="text-2xl font-bold mb-2">Sign In</h2>
+        <h2 className="text-2xl font-bold mb-2 text-foreground">Sign In</h2>
 
         {error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
             {error}
           </p>
         )}
 
         <div>
-          <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="block mb-1 text-sm font-medium text-foreground">
             Email
           </label>
           <input
@@ -80,14 +80,14 @@ function LoginComponent() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
             autoComplete="email"
             required
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block mb-1 text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="block mb-1 text-sm font-medium text-foreground">
             Password
           </label>
           <input
@@ -97,7 +97,7 @@ function LoginComponent() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+            className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
             autoComplete="current-password"
             required
           />
@@ -111,7 +111,7 @@ function LoginComponent() {
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
 
-        <p className="text-sm text-center text-gray-600">
+        <p className="text-sm text-center text-muted-foreground">
           Don't have an account?{' '}
           <Link to="/auth/signup" className="text-amber-600 hover:underline">
             Sign up

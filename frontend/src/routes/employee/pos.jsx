@@ -104,17 +104,17 @@ function PosScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex gap-8">
           {/* Menu */}
           <div className="flex-1 min-w-0">
             {loading ? (
-              <div className="text-gray-400 py-12 text-center">Loading menu...</div>
+              <div className="text-muted-foreground py-12 text-center">Loading menu...</div>
             ) : (
               sortedCategories.map((category) => (
                 <section key={category} className="mb-10">
-                  <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-200 text-gray-700">
+                  <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-border text-foreground">
                     {category}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -137,7 +137,7 @@ function PosScreen() {
           <div className="hidden lg:flex flex-col w-80 flex-shrink-0 gap-4">
             {/* Truck badge */}
             {licensePlate && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
                 <span className="font-semibold">Truck:</span> {licensePlate}
               </div>
             )}
@@ -152,8 +152,8 @@ function PosScreen() {
             />
 
             {/* Payment Method */}
-            <div className="bg-white rounded-xl shadow-sm border p-5">
-              <h2 className="text-sm font-semibold mb-3">Payment Method</h2>
+            <div className="bg-background rounded-xl shadow-sm border p-5">
+              <h2 className="text-sm font-semibold mb-3 text-foreground">Payment Method</h2>
               <div className="space-y-2">
                 {[
                   { value: "cash", label: "Cash" },
@@ -164,8 +164,8 @@ function PosScreen() {
                     key={opt.value}
                     className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                       paymentMethod === opt.value
-                        ? "border-amber-500 bg-amber-50"
-                        : "border-gray-200 hover:bg-gray-50"
+                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                        : "border-border hover:bg-muted"
                     }`}
                   >
                     <input
@@ -176,14 +176,14 @@ function PosScreen() {
                       onChange={() => setPaymentMethod(opt.value)}
                       className="accent-amber-600"
                     />
-                    <span className="text-sm font-medium">{opt.label}</span>
+                    <span className="text-sm font-medium text-foreground">{opt.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             {error && (
-              <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <p className="text-destructive text-xs bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
@@ -214,12 +214,12 @@ function PosScreen() {
             className="absolute inset-0 bg-black/50"
             onClick={() => setCartOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 max-h-[85vh] overflow-y-auto">
+          <div className="absolute bottom-0 left-0 right-0 bg-background rounded-t-2xl p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Cart</h2>
+              <h2 className="text-xl font-bold text-foreground">Cart</h2>
               <button
                 onClick={() => setCartOpen(false)}
-                className="p-1 hover:bg-gray-100 rounded-full"
+                className="p-1 hover:bg-muted rounded-full"
               >
                 <X size={20} />
               </button>
@@ -227,7 +227,7 @@ function PosScreen() {
 
             {/* Payment method in mobile drawer */}
             <div className="mb-4">
-              <p className="text-sm font-semibold mb-2">Payment</p>
+              <p className="text-sm font-semibold mb-2 text-foreground">Payment</p>
               <div className="flex gap-2">
                 {["cash", "credit", "debit"].map((opt) => (
                   <button
@@ -236,8 +236,8 @@ function PosScreen() {
                     onClick={() => setPaymentMethod(opt)}
                     className={`flex-1 py-2 text-xs rounded-lg border transition-colors capitalize ${
                       paymentMethod === opt
-                        ? "border-amber-500 bg-amber-50 text-amber-700 font-semibold"
-                        : "border-gray-200 text-gray-600"
+                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 font-semibold"
+                        : "border-border text-foreground"
                     }`}
                   >
                     {opt}
@@ -256,7 +256,7 @@ function PosScreen() {
             />
 
             {error && (
-              <p className="text-red-600 text-xs mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <p className="text-destructive text-xs mt-3 bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
@@ -267,13 +267,13 @@ function PosScreen() {
       {/* Success modal */}
       {successOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
-            <CheckCircle size={52} className="text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-1">Order Placed!</h2>
+          <div className="bg-background rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center border border-border">
+            <CheckCircle size={52} className="text-green-500 dark:text-green-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-1 text-foreground">Order Placed!</h2>
             <p className="text-5xl font-black text-amber-600 my-4">
               #{successOrder.orderNumber}
             </p>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               Order ID: {successOrder.orderId}
             </p>
             <button

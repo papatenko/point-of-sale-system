@@ -73,7 +73,7 @@ function CustomersDatabaseComponent() {
       <DataTable
         columns={COLUMNS}
         data={customers}
-        limit={5}
+        pageSize={10}
         searchKeys={["email", "first_name", "last_name", "default_address", "phone_number"]}
         deleteIdKey="email"
         onDelete={handleDelete}

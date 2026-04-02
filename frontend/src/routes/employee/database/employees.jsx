@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
-import { CreateForm } from "@/components/database/create-form";
-import { Plus } from "lucide-react";
+import { AddDialog } from "@/components/database/add-dialog";
 import { GENDER_OPTIONS } from "@/data/gender";
 import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
 
@@ -41,7 +39,6 @@ function EmployeesDatabaseComponent() {
   const [employees, setEmployees] = useState([]);
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -101,7 +98,7 @@ function EmployeesDatabaseComponent() {
       const userData = await userResponse.json();
       if (!userResponse.ok) {
         setError(userData.error || "Error creating user");
-        throw new Error(userData.error);
+        return false;
       }
 
       const employeeResponse = await fetch("/api/employees", {
@@ -122,15 +119,13 @@ function EmployeesDatabaseComponent() {
       const employeeData = await employeeResponse.json();
       if (!employeeResponse.ok) {
         setError(employeeData.error || "Error creating employee");
-        throw new Error(employeeData.error);
+        return false;
       }
 
-      setShowCreateForm(false);
       fetchEmployees();
-    } catch (err) {
-      if (!err.message.includes("Error creating")) {
-        setError("Failed to create employee");
-      }
+    } catch {
+      setError("Failed to create employee");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -155,7 +150,7 @@ function EmployeesDatabaseComponent() {
         const data = await res.json();
         alert(data.error || "Failed to delete employee");
       }
-    } catch (err) {
+    } catch {
       alert("Failed to delete employee");
     }
   };
@@ -167,31 +162,21 @@ function EmployeesDatabaseComponent() {
           <h1 className="text-2xl font-bold">Employees</h1>
           <p className="text-muted-foreground">Manage your employee records</p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {showCreateForm ? "Cancel" : "Add Employee"}
-        </Button>
-      </div>
-
-      {showCreateForm && (
-        <CreateForm
+        <AddDialog
+          triggerLabel="Add Employee"
           title="Add New Employee"
           fields={CREATE_FIELDS}
           onSubmit={handleCreateSubmit}
-          onCancel={() => {
-            setShowCreateForm(false);
-            setError(null);
-          }}
           isSubmitting={isSubmitting}
           error={error}
-          submitLabel="Create Employee"
+          submitLabel="Create"
         />
-      )}
+      </div>
 
       <DataTable
         columns={COLUMNS}
         data={employees}
-        limit={5}
+        pageSize={10}
         searchKeys={["first_name", "last_name", "email", "role"]}
         deleteIdKey="email"
         onDelete={handleDelete}

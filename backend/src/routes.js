@@ -13,17 +13,18 @@ import * as CustomerService from "./services/customer.service.js";
 import * as CheckoutService from "./services/checkout.service.js";
 import * as ReportModel from "./models/report.model.js";
 import { login, register } from "./auth/auth.js";
+import * as SearchService from "./services/searchService.js";
 
 const router = createRouter();
 
 // Auth
 router.post("/api/login", async (body) => login(body.email, body.password));
 router.post("/api/register", async (body) => {
-  const { email, password, first_name, last_name } = body;
-  if (!email || !password || !first_name || !last_name) {
+  const { email, password, first_name, last_name, phone_number } = body;
+  if (!email || !password || !first_name || !last_name || !phone_number) {
     return { error: "All fields are required" };
   }
-  await register(email, password, first_name, last_name);
+  await register(email, password, first_name, last_name, phone_number);
   return await login(email, password);
 });
 
@@ -129,11 +130,14 @@ router.delete("/api/recipes", async (body, db) => {
 });
 
 // Orders
-router.get("/api/orders", async (_, db, _req, url) =>
-  OrderService.listOrders(db, url),
+router.get("/api/orders", async (_, db, req, url) =>
+  OrderService.listOrders(db, req, url),
 );
 router.get("/api/orders/:id", async (_, db, _req, url) =>
   OrderService.getOrderById(db, url),
+);
+router.patch("/api/orders/:id/status", async (body, db, _req, _url, params) =>
+  OrderService.updateOrderStatus(db, params.id, body.status),
 );
 
 // Inventory
@@ -174,7 +178,7 @@ router.post("/api/inventory/receive-order", async (body, db, req) =>
 );
 
 // Backup
-router.get("/api/backup", async (_, db) => BackupService.createBackup());
+router.get("/api/backup", async () => BackupService.createBackup());
 
 // Customers
 router.get("/api/customers", async (_, db) =>
@@ -190,7 +194,11 @@ router.delete("/api/customers", async (body, db) => {
 
 // Checkout — customer online orders
 router.post("/api/checkout", async (body, db, req) =>
-  CheckoutService.createCheckout(db, { ...body, orderType: "online-pickup" }, req),
+  CheckoutService.createCheckout(
+    db,
+    { ...body, orderType: "online-pickup" },
+    req,
+  ),
 );
 
 // POS checkout — walk-in orders, truck auto-assigned from JWT
@@ -215,6 +223,20 @@ router.get("/api/employee/pos", async (_, db) => {
 router.get("/api/trucks/for-user", async (_, db, req) =>
   TruckService.getTruckForUser(db, req),
 );
+
+//search
+router.get("/api/search", async (_, db, _req, url) => {
+  const params = new URLSearchParams(url.split("?")[1]);
+
+  const table = params.get("table");
+  const q = params.get("q");
+
+  if (!table || !q) {
+    return { error: "Missing table or query" };
+  }
+
+  return await SearchService.search(db, table, q);
+});
 
 export async function handleRoute(url, body, method, req, res, db) {
   const basePath = url.split("?")[0];

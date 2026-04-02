@@ -1,18 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/employee/")({
-  component: RouteComponent,
+  beforeLoad: () => {
+    throw redirect({ to: "/employee/orders" });
+  },
 });
-
-function RouteComponent() {
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    fetch("/api/employee")
-      .then((res) => res.text())
-      .then((data) => setData(data));
-  }, []);
-
-  return <div>{data}</div>;
-}

@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
-import { CreateForm } from "@/components/database/create-form";
-import { Plus } from "lucide-react";
+import { AddDialog } from "@/components/database/add-dialog";
 
 export const Route = createFileRoute("/employee/database/food-trucks")({
   component: FoodTrucksDatabaseComponent,
@@ -14,13 +12,22 @@ const COLUMNS = [
   { key: "truck_name", label: "Truck Name" },
   { key: "current_location", label: "Location" },
   { key: "phone_number", label: "Phone" },
-  { key: "accepts_online_orders", label: "Online Orders", format: (v) => v ? "Yes" : "No" },
+  {
+    key: "accepts_online_orders",
+    label: "Online Orders",
+    format: (v) => (v ? "Yes" : "No"),
+  },
   { key: "operating_hours_start", label: "Opens" },
   { key: "operating_hours_end", label: "Closes" },
 ];
 
 const CREATE_FIELDS = [
-  { name: "license_plate", label: "License Plate", type: "text", required: true },
+  {
+    name: "license_plate",
+    label: "License Plate",
+    type: "text",
+    required: true,
+  },
   { name: "truck_name", label: "Truck Name", type: "text", required: true },
   { name: "current_location", label: "Location", type: "text" },
   { name: "phone_number", label: "Phone", type: "text" },
@@ -31,7 +38,6 @@ const CREATE_FIELDS = [
 function FoodTrucksDatabaseComponent() {
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -79,16 +85,14 @@ function FoodTrucksDatabaseComponent() {
       const data = await res.json();
 
       if (res.ok) {
-        setShowCreateForm(false);
         fetchTrucks();
       } else {
         setError(data.error || "Failed to create truck");
-        throw new Error(data.error);
+        return false;
       }
-    } catch (err) {
-      if (!err.message.includes("Failed to create")) {
-        setError("Failed to create truck");
-      }
+    } catch {
+      setError("Failed to create truck");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -113,7 +117,7 @@ function FoodTrucksDatabaseComponent() {
         const data = await res.json();
         alert(data.error || "Failed to delete truck");
       }
-    } catch (err) {
+    } catch {
       alert("Failed to delete truck");
     }
   };
@@ -125,31 +129,21 @@ function FoodTrucksDatabaseComponent() {
           <h1 className="text-2xl font-bold">Food Trucks</h1>
           <p className="text-muted-foreground">Manage your food truck fleet</p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {showCreateForm ? "Cancel" : "Add Truck"}
-        </Button>
-      </div>
-
-      {showCreateForm && (
-        <CreateForm
+        <AddDialog
+          triggerLabel="Add Truck"
           title="Add New Truck"
           fields={CREATE_FIELDS}
           onSubmit={handleCreateSubmit}
-          onCancel={() => {
-            setShowCreateForm(false);
-            setError(null);
-          }}
           isSubmitting={isSubmitting}
           error={error}
-          submitLabel="Create Truck"
+          submitLabel="Create"
         />
-      )}
+      </div>
 
       <DataTable
         columns={COLUMNS}
         data={trucks}
-        limit={5}
+        pageSize={10}
         searchKeys={["truck_name", "license_plate", "current_location"]}
         deleteIdKey="license_plate"
         onDelete={handleDelete}

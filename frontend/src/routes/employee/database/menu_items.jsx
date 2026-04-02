@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
-import { CreateForm } from "@/components/database/create-form";
-import { Plus } from "lucide-react";
+import { AddDialog } from "@/components/database/add-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/employee/database/menu_items")({
   component: MenuItemsDatabaseComponent,
@@ -12,20 +15,47 @@ export const Route = createFileRoute("/employee/database/menu_items")({
 const COLUMNS = [
   { key: "menu_item_id", label: "ID" },
   { key: "item_name", label: "Name" },
+  {
+    key: "image_url",
+    label: "Image",
+    format: (v) =>
+      v ? (
+        <Dialog>
+          <DialogTrigger asChild>
+            <img
+              src={v}
+              alt="menu item"
+              className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80"
+            />
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <img src={v} alt="menu item" className="w-full h-auto rounded" />
+          </DialogContent>
+        </Dialog>
+      ) : (
+        <span className="text-muted-foreground">No image</span>
+      ),
+  },
   { key: "category_name", label: "Category" },
   { key: "price", label: "Price", format: (v) => `$${v}` },
 ];
 
 const CREATE_FIELDS = [
   { name: "item_name", label: "Item Name", type: "text", required: true },
-  { name: "price", label: "Price ($)", type: "number", step: "0.01", required: true },
+  {
+    name: "price",
+    label: "Price ($)",
+    type: "number",
+    step: "0.01",
+    required: true,
+  },
   { name: "description", label: "Description", type: "text" },
+  { name: "image_url", label: "Image URL", type: "url", required: true },
 ];
 
 function MenuItemsDatabaseComponent() {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -64,21 +94,20 @@ function MenuItemsDatabaseComponent() {
           item_name: formData.item_name,
           price: parseFloat(formData.price),
           description: formData.description || null,
+          image_url: formData.image_url,
         }),
       });
       const data = await res.json();
 
       if (res.ok) {
-        setShowCreateForm(false);
         fetchMenuItems();
       } else {
         setError(data.error || "Failed to create menu item");
-        throw new Error(data.error);
+        return false;
       }
     } catch (err) {
-      if (!err.message.includes("Failed to create")) {
-        setError("Failed to create menu item");
-      }
+      setError("Failed to create menu item");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -103,7 +132,7 @@ function MenuItemsDatabaseComponent() {
         const data = await res.json();
         alert(data.error || "Failed to delete menu item");
       }
-    } catch (err) {
+    } catch {
       alert("Failed to delete menu item");
     }
   };
@@ -115,31 +144,21 @@ function MenuItemsDatabaseComponent() {
           <h1 className="text-2xl font-bold">Menu Items</h1>
           <p className="text-muted-foreground">Manage your menu</p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {showCreateForm ? "Cancel" : "Add Menu Item"}
-        </Button>
-      </div>
-
-      {showCreateForm && (
-        <CreateForm
+        <AddDialog
+          triggerLabel="Add Menu Item"
           title="Add New Menu Item"
           fields={CREATE_FIELDS}
           onSubmit={handleCreateSubmit}
-          onCancel={() => {
-            setShowCreateForm(false);
-            setError(null);
-          }}
           isSubmitting={isSubmitting}
           error={error}
-          submitLabel="Create Menu Item"
+          submitLabel="Create"
         />
-      )}
+      </div>
 
       <DataTable
         columns={COLUMNS}
         data={menuItems}
-        limit={5}
+        pageSize={10}
         searchKeys={["item_name", "category_name"]}
         deleteIdKey="menu_item_id"
         onDelete={handleDelete}

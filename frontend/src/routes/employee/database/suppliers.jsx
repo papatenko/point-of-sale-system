@@ -1,9 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
-import { CreateForm } from "@/components/database/create-form";
-import { Plus } from "lucide-react";
+import { AddDialog } from "@/components/database/add-dialog";
 
 export const Route = createFileRoute("/employee/database/suppliers")({
   component: SuppliersDatabaseComponent,
@@ -18,7 +16,12 @@ const COLUMNS = [
 ];
 
 const CREATE_FIELDS = [
-  { name: "supplier_name", label: "Supplier Name", type: "text", required: true },
+  {
+    name: "supplier_name",
+    label: "Supplier Name",
+    type: "text",
+    required: true,
+  },
   { name: "contact_person", label: "Contact Person", type: "text" },
   { name: "email", label: "Email", type: "email" },
   { name: "phone_number", label: "Phone", type: "text" },
@@ -28,7 +31,6 @@ const CREATE_FIELDS = [
 function SuppliersDatabaseComponent() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -74,16 +76,14 @@ function SuppliersDatabaseComponent() {
       const data = await res.json();
 
       if (res.ok) {
-        setShowCreateForm(false);
         fetchSuppliers();
       } else {
         setError(data.error || "Failed to create supplier");
-        throw new Error(data.error);
+        return false;
       }
-    } catch (err) {
-      if (!err.message.includes("Failed to create")) {
-        setError("Failed to create supplier");
-      }
+    } catch {
+      setError("Failed to create supplier");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +108,7 @@ function SuppliersDatabaseComponent() {
         const data = await res.json();
         alert(data.error || "Failed to delete supplier");
       }
-    } catch (err) {
+    } catch {
       alert("Failed to delete supplier");
     }
   };
@@ -120,31 +120,21 @@ function SuppliersDatabaseComponent() {
           <h1 className="text-2xl font-bold">Suppliers</h1>
           <p className="text-muted-foreground">Manage your supplier contacts</p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {showCreateForm ? "Cancel" : "Add Supplier"}
-        </Button>
-      </div>
-
-      {showCreateForm && (
-        <CreateForm
+        <AddDialog
+          triggerLabel="Add Supplier"
           title="Add New Supplier"
           fields={CREATE_FIELDS}
           onSubmit={handleCreateSubmit}
-          onCancel={() => {
-            setShowCreateForm(false);
-            setError(null);
-          }}
           isSubmitting={isSubmitting}
           error={error}
-          submitLabel="Create Supplier"
+          submitLabel="Create"
         />
-      )}
+      </div>
 
       <DataTable
         columns={COLUMNS}
         data={suppliers}
-        limit={5}
+        pageSize={10}
         searchKeys={["supplier_name", "contact_person", "email"]}
         deleteIdKey="supplier_id"
         onDelete={handleDelete}

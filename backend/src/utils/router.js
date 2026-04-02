@@ -17,6 +17,10 @@ export function createRouter() {
     routes.push({ method: "DELETE", path, handler });
   }
 
+  function patch(path, handler) {
+    routes.push({ method: "PATCH", path, handler });
+  }
+
   function matchPath(pattern, path) {
     const patternParts = pattern.split("/");
     const pathParts = path.split("/");
@@ -43,5 +47,5 @@ export function createRouter() {
     return null;
   }
 
-  return { get, post, put, delete: deleteRoute, match };
+  return { get, post, put, patch, delete: deleteRoute, match };
 }

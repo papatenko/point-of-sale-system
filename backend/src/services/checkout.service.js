@@ -37,20 +37,25 @@ export async function createCheckout(db, body, req = null) {
   }
 
   // Determine scheduled datetime
-  let scheduledMysql;
-  if (orderType === "walk-in" || !scheduledTime) {
-    // Use current time for POS or when no time provided
-    scheduledMysql = new Date().toISOString().slice(0, 19).replace("T", " ");
-  } else {
-    // scheduledTime is "HH:MM" — combine with today's date
-    const today = new Date().toISOString().split("T")[0];
-    const dt = new Date(`${today}T${scheduledTime}:00`);
+  let scheduledMysql = null;
+  if (scheduledTime) {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const outsideHours = currentHour < 10 || currentHour >= 22;
+
+    // Use tomorrow's date if ordering after closing or before opening
+    const targetDate = new Date(now);
+    if (outsideHours) targetDate.setDate(targetDate.getDate() + 1);
+    const dateStr = targetDate.toISOString().split("T")[0];
+
+    const dt = new Date(`${dateStr}T${scheduledTime}:00`);
     const h = dt.getHours();
     if (h < 10 || h >= 22) {
       throw new Error("Scheduled time must be between 10:00 AM and 10:00 PM.");
     }
-    scheduledMysql = `${today} ${scheduledTime}:00`;
+    scheduledMysql = `${dateStr} ${scheduledTime}:00`;
   }
+  // Walk-in and unscheduled online orders both use NULL scheduled_time
 
   // Incremental order number per truck per day (resets daily)
   const [[{ nextNum }]] = await db.query(
@@ -59,7 +64,7 @@ export async function createCheckout(db, body, req = null) {
          THEN CAST(order_number AS UNSIGNED) ELSE 0 END
      ), 0) + 1 AS nextNum
      FROM checkout
-     WHERE license_plate = ? AND DATE(scheduled_time) = CURDATE()`,
+     WHERE license_plate = ? AND DATE(COALESCE(scheduled_time, NOW())) = CURDATE()`,
     [licensePlate],
   );
   const orderNumber = String(nextNum);

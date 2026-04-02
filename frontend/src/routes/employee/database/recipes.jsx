@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
+import { AddDialog } from "@/components/database/add-dialog";
 import { CreateForm } from "@/components/database/create-form";
-import { Plus } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -11,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/employee/database/recipes")({
@@ -26,27 +25,13 @@ const COLUMNS = [
   { key: "instructions", label: "Instructions" },
 ];
 
-const CREATE_FIELDS = [
-  { name: "menu_item_id", label: "Menu Item", type: "text" },
-  { name: "ingredient_id", label: "Ingredient", type: "text" },
-  { name: "quantity_needed", label: "Quantity Needed", type: "number", step: "0.01", required: true },
-  { name: "instructions", label: "Instructions", type: "text" },
-];
-
 function RecipesDatabaseComponent() {
   const [recipes, setRecipes] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const [form, setForm] = useState({
-    menu_item_id: "",
-    ingredient_id: "",
-    quantity_needed: "",
-    instructions: "",
-  });
 
   const fetchRecipes = async () => {
     try {
@@ -95,16 +80,7 @@ function RecipesDatabaseComponent() {
     fetchIngredients();
   }, []);
 
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSelectChange = (name, value) => {
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (formData) => {
     setIsSubmitting(true);
     setError(null);
     const token = localStorage.getItem("token");
@@ -117,23 +93,23 @@ function RecipesDatabaseComponent() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          menu_item_id: parseInt(form.menu_item_id),
-          ingredient_id: parseInt(form.ingredient_id),
-          quantity_needed: parseFloat(form.quantity_needed),
-          instructions: form.instructions || null,
+          menu_item_id: parseInt(formData.menu_item_id),
+          ingredient_id: parseInt(formData.ingredient_id),
+          quantity_needed: parseFloat(formData.quantity_needed),
+          instructions: formData.instructions || null,
         }),
       });
       const data = await res.json();
 
       if (res.ok) {
-        setForm({ menu_item_id: "", ingredient_id: "", quantity_needed: "", instructions: "" });
-        setShowCreateForm(false);
         fetchRecipes();
       } else {
         setError(data.error || "Failed to create recipe");
+        return false;
       }
-    } catch (err) {
+    } catch {
       setError("Failed to create recipe");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -158,7 +134,7 @@ function RecipesDatabaseComponent() {
         const data = await res.json();
         alert(data.error || "Failed to delete recipe");
       }
-    } catch (err) {
+    } catch {
       alert("Failed to delete recipe");
     }
   };
@@ -194,124 +170,83 @@ function RecipesDatabaseComponent() {
       <div className="flex justify-between items-center w-full">
         <div>
           <h1 className="text-2xl font-bold">Recipes</h1>
-          <p className="text-muted-foreground">Manage menu item ingredients and quantities</p>
+          <p className="text-muted-foreground">
+            Manage menu item ingredients and quantities
+          </p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {showCreateForm ? "Cancel" : "Add Recipe"}
-        </Button>
+        <AddDialog
+          triggerLabel="Add Recipe"
+          title="Add Recipe Ingredient"
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          error={error}
+          submitLabel="Add"
+        >
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px] space-y-1">
+              <Label>
+                Menu Item <span className="text-destructive"> *</span>
+              </Label>
+              <Select name="menu_item_id" required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select menu item" />
+                </SelectTrigger>
+                <SelectContent>
+                  {menuItemOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 min-w-[200px] space-y-1">
+              <Label>
+                Ingredient <span className="text-destructive"> *</span>
+              </Label>
+              <Select name="ingredient_id" required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select ingredient" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ingredientOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 min-w-[200px] space-y-1">
+              <Label htmlFor="quantity_needed">
+                Quantity Needed <span className="text-destructive"> *</span>
+              </Label>
+              <Input
+                id="quantity_needed"
+                name="quantity_needed"
+                type="number"
+                step="0.01"
+                placeholder="e.g., 100"
+                required
+              />
+            </div>
+            <div className="flex-1 min-w-[200px] space-y-1">
+              <Label htmlFor="instructions">Instructions</Label>
+              <Input
+                id="instructions"
+                name="instructions"
+                type="text"
+                placeholder="Optional preparation notes"
+              />
+            </div>
+          </div>
+        </AddDialog>
       </div>
-
-      {showCreateForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Add Recipe Ingredient</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              {error && (
-                <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                  {error}
-                </div>
-              )}
-              <div className="flex flex-wrap gap-4">
-                <div className="flex-1 min-w-[200px] space-y-1">
-                  <Label>
-                    Menu Item <span className="text-destructive"> *</span>
-                  </Label>
-                  <Select
-                    value={form.menu_item_id}
-                    onValueChange={(v) => handleSelectChange("menu_item_id", v)}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select menu item" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {menuItemOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1 min-w-[200px] space-y-1">
-                  <Label>
-                    Ingredient <span className="text-destructive"> *</span>
-                  </Label>
-                  <Select
-                    value={form.ingredient_id}
-                    onValueChange={(v) => handleSelectChange("ingredient_id", v)}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select ingredient" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ingredientOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1 min-w-[200px] space-y-1">
-                  <Label htmlFor="quantity_needed">
-                    Quantity Needed <span className="text-destructive"> *</span>
-                  </Label>
-                  <input
-                    id="quantity_needed"
-                    name="quantity_needed"
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g., 100"
-                    value={form.quantity_needed}
-                    onChange={handleChange}
-                    required
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                </div>
-                <div className="flex-1 min-w-[200px] space-y-1">
-                  <Label htmlFor="instructions">Instructions</Label>
-                  <input
-                    id="instructions"
-                    name="instructions"
-                    type="text"
-                    placeholder="Optional preparation notes"
-                    value={form.instructions}
-                    onChange={handleChange}
-                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowCreateForm(false);
-                    setError(null);
-                    setForm({ menu_item_id: "", ingredient_id: "", quantity_needed: "", instructions: "" });
-                  }}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Add Recipe"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
 
       <DataTable
         columns={COLUMNS}
         data={enrichedRecipes}
-        limit={5}
+        pageSize={10}
         searchKeys={["menu_item_name", "ingredient_name", "instructions"]}
         deleteIdKey="recipe_id"
         onDelete={handleDelete}

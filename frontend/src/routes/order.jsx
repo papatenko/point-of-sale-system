@@ -5,6 +5,7 @@ import { addItem, updateQuantity } from "@/redux/cartSlice";
 import { MenuCard } from "@/components/order/menu-card";
 import { CartPanel } from "@/components/order/cart-panel";
 import { X } from "lucide-react";
+import SearchPage from "./../components/search";
 
 export const Route = createFileRoute("/order")({
   component: OrderPage,
@@ -37,6 +38,10 @@ function OrderPage() {
     return acc;
   }, {});
 
+  const [filteredItems, setFilteredItems] = useState(null);
+
+  const itemsToShow = filteredItems ?? menu;
+
   const categoryOrder = [
     "Entrees",
     "Sides",
@@ -66,24 +71,59 @@ function OrderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex gap-8">
           {/* Menu */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-3xl font-bold mb-2">Our Menu</h1>
-            <p className="text-gray-500 mb-8">
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Our Menu</h1>
+            {/* <SearchPage tabla="menu_items" /> */}
+            <SearchPage
+              tabla="menu_items"
+              onSelect={(items) => {
+              if (!items || items.length === 0) {
+                setFilteredItems(null);
+                return;
+              }
+
+              const ids = items.map((i) => i.menu_item_id);
+
+             const match = menu.filter((m) =>
+              items.some(
+                (i) =>
+                  i.item_name &&
+                  m.item_name.toLowerCase() === i.item_name.toLowerCase()
+              )
+            );
+
+              setFilteredItems(match);
+            }}
+                  />
+            <p className="text-muted-foreground mb-8">
               Order online for pickup — fresh and made to order.
             </p>
 
             {loading ? (
-              <div className="text-gray-400 py-12 text-center">
+              <div className="text-muted-foreground py-12 text-center">
                 Loading menu...
               </div>
-            ) : (
+            ) : filteredItems ? (
+            //  CUANDO HAY SEARCH → SOLO mostrar resultados
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {filteredItems.map((item) => (
+                    <MenuCard
+                      key={item.menu_item_id}
+                      item={item}
+                      qty={getQty(item.menu_item_id)}
+                      onAdd={() => handleAdd(item)}
+                      onQty={(q) => handleQty(item.menu_item_id, q)}
+                    />
+                  ))}
+                </div>
+              ) : (
               sortedCategories.map((category) => (
                 <section key={category} className="mb-10">
-                  <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-gray-200 text-gray-700">
+                  <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-border text-foreground">
                     {category}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -137,12 +177,12 @@ function OrderPage() {
             className="absolute inset-0 bg-black/50"
             onClick={() => setCartOpen(false)}
           />
-          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 max-h-[85vh] overflow-y-auto">
+          <div className="absolute bottom-0 left-0 right-0 bg-background rounded-t-2xl p-6 max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Your Cart</h2>
+              <h2 className="text-xl font-bold text-foreground">Your Cart</h2>
               <button
                 onClick={() => setCartOpen(false)}
-                className="p-1 hover:bg-gray-100 rounded-full"
+                className="p-1 hover:bg-muted rounded-full"
               >
                 <X size={20} />
               </button>

@@ -37,9 +37,24 @@ function getAvailableTimeSlots() {
   return slots;
 }
 
-function isAfterClosing() {
-  const now = new Date();
-  return now.getHours() >= 22;
+function isOutsideHours() {
+  const h = new Date().getHours();
+  return h < 10 || h >= 22;
+}
+
+function getTomorrowTimeSlots() {
+  const slots = [];
+  for (let h = 10; h <= 22; h++) {
+    for (const min of [0, 30]) {
+      if (h === 22 && min === 30) continue;
+      const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+      const ampm = h >= 12 ? "PM" : "AM";
+      const label = `Tomorrow ${displayH}:${min.toString().padStart(2, "0")} ${ampm}`;
+      const value = `TOMORROW:${h.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
+      slots.push({ value, label });
+    }
+  }
+  return slots;
 }
 
 export const Route = createFileRoute("/checkout")({
@@ -61,11 +76,14 @@ function CheckoutPage() {
     }
   }, [token]);
 
-  const timeSlots = getAvailableTimeSlots();
-  const closed = isAfterClosing();
+  const outsideHours = isOutsideHours();
+  // Generate slots for tomorrow if currently outside hours
+  const timeSlots = outsideHours ? getTomorrowTimeSlots() : getAvailableTimeSlots();
 
   const [paymentMethod, setPaymentMethod] = useState("credit");
   const [licensePlate, setLicensePlate] = useState("");
+  // Outside hours: scheduling is mandatory (toggle locked on)
+  const [scheduleEnabled, setScheduleEnabled] = useState(outsideHours);
   const [scheduledTime, setScheduledTime] = useState(
     timeSlots.length > 0 ? timeSlots[0].value : "",
   );
@@ -88,29 +106,13 @@ function CheckoutPage() {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Your cart is empty.</p>
+          <p className="text-muted-foreground mb-4">Your cart is empty.</p>
           <Link to="/order">
             <Button className="bg-amber-600 hover:bg-amber-700 text-white">
               Browse Menu
             </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (closed) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center space-y-3">
-          <p className="text-xl font-semibold text-gray-800">We're closed</p>
-          <p className="text-gray-500 text-sm">
-            Online ordering is available 10:00 AM – 10:00 PM.
-          </p>
-          <Link to="/order">
-            <Button variant="outline" className="mt-2">Back to Menu</Button>
           </Link>
         </div>
       </div>
@@ -132,7 +134,11 @@ function CheckoutPage() {
           customerEmail: user?.email ?? null,
           paymentMethod,
           licensePlate,
-          scheduledTime,
+          scheduledTime: scheduleEnabled
+            ? (scheduledTime.startsWith("TOMORROW:")
+                ? scheduledTime.replace("TOMORROW:", "")
+                : scheduledTime)
+            : null,
           items: cartItems.map((i) => ({
             menuItemId: i.menuItemId,
             quantity: i.quantity,
@@ -158,28 +164,28 @@ function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4">
         <Link
           to="/order"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-6 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
         >
           <ArrowLeft size={15} />
           Back to Menu
         </Link>
 
-        <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+        <h1 className="text-3xl font-bold mb-8 text-foreground">Checkout</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           {/* Form */}
           <form onSubmit={handleSubmit} className="md:col-span-3 space-y-5">
             {/* Pickup Location */}
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-              <h2 className="text-base font-semibold mb-4">Pickup Location</h2>
+            <div className="bg-background rounded-xl shadow-sm border p-6">
+              <h2 className="text-base font-semibold mb-4 text-foreground">Pickup Location</h2>
               {trucksLoading ? (
-                <p className="text-sm text-gray-400">Loading locations...</p>
+                <p className="text-sm text-muted-foreground">Loading locations...</p>
               ) : trucks.length === 0 ? (
-                <p className="text-sm text-red-500">
+                <p className="text-sm text-destructive">
                   No pickup locations available.
                 </p>
               ) : (
@@ -189,8 +195,8 @@ function CheckoutPage() {
                       key={truck.license_plate}
                       className={`flex items-start gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
                         licensePlate === truck.license_plate
-                          ? "border-amber-500 bg-amber-50"
-                          : "border-gray-200 hover:bg-gray-50"
+                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                          : "border-border hover:bg-muted"
                       }`}
                     >
                       <input
@@ -202,9 +208,9 @@ function CheckoutPage() {
                         className="accent-amber-600 mt-0.5"
                       />
                       <div>
-                        <p className="text-sm font-medium">{truck.truck_name}</p>
+                        <p className="text-sm font-medium text-foreground">{truck.truck_name}</p>
                         {truck.current_location && (
-                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                             <MapPin size={11} />
                             {truck.current_location}
                           </p>
@@ -217,23 +223,42 @@ function CheckoutPage() {
             </div>
 
             {/* Scheduled Pickup Time */}
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-              <h2 className="text-base font-semibold mb-1 flex items-center gap-2">
-                <Clock size={16} className="text-amber-600" />
-                Pickup Time
-              </h2>
-              <p className="text-xs text-gray-400 mb-4">
-                Select your preferred pickup time (10:00 AM – 10:00 PM).
-              </p>
-              {timeSlots.length === 0 ? (
-                <p className="text-sm text-red-500">
-                  No available times today. We close at 10:00 PM.
+            <div className="bg-background rounded-xl shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-base font-semibold flex items-center gap-2 text-foreground">
+                  <Clock size={16} className="text-amber-600" />
+                  {outsideHours ? "Schedule Pickup (Required)" : "Schedule for Later"}
+                </h2>
+                {!outsideHours && (
+                  <button
+                    type="button"
+                    onClick={() => setScheduleEnabled((v) => !v)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                      scheduleEnabled ? "bg-amber-600" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                        scheduleEnabled ? "translate-x-4" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                )}
+              </div>
+              {outsideHours ? (
+                <p className="text-xs text-amber-600 mb-3">
+                  We're currently closed. Orders placed now will be scheduled for tomorrow.
                 </p>
               ) : (
+                <p className="text-xs text-muted-foreground mb-3">
+                  Leave off to pick up as soon as your order is ready.
+                </p>
+              )}
+              {scheduleEnabled && (
                 <select
                   value={scheduledTime}
                   onChange={(e) => setScheduledTime(e.target.value)}
-                  className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                  className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background"
                 >
                   {timeSlots.map((slot) => (
                     <option key={slot.value} value={slot.value}>
@@ -245,8 +270,8 @@ function CheckoutPage() {
             </div>
 
             {/* Payment Method */}
-            <div className="bg-white rounded-xl shadow-sm border p-6">
-              <h2 className="text-base font-semibold mb-4">Payment Method</h2>
+            <div className="bg-background rounded-xl shadow-sm border p-6">
+              <h2 className="text-base font-semibold mb-4 text-foreground">Payment Method</h2>
               <div className="space-y-2.5">
                 {[
                   { value: "credit", label: "Credit Card at Pickup" },
@@ -256,8 +281,8 @@ function CheckoutPage() {
                     key={opt.value}
                     className={`flex items-center gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
                       paymentMethod === opt.value
-                        ? "border-amber-500 bg-amber-50"
-                        : "border-gray-200 hover:bg-gray-50"
+                        ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                        : "border-border hover:bg-muted"
                     }`}
                   >
                     <input
@@ -268,21 +293,21 @@ function CheckoutPage() {
                       onChange={() => setPaymentMethod(opt.value)}
                       className="accent-amber-600"
                     />
-                    <span className="text-sm font-medium">{opt.label}</span>
+                    <span className="text-sm font-medium text-foreground">{opt.label}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             {error && (
-              <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-4 py-3">
+              <p className="text-destructive text-sm bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-3">
                 {error}
               </p>
             )}
 
             <Button
               type="submit"
-              disabled={submitting || timeSlots.length === 0}
+              disabled={submitting}
               className="w-full bg-amber-600 hover:bg-amber-700 text-white py-6 text-base font-semibold disabled:opacity-60"
             >
               {submitting
@@ -293,29 +318,29 @@ function CheckoutPage() {
 
           {/* Order Summary */}
           <div className="md:col-span-2">
-            <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-4">
-              <h2 className="text-base font-semibold mb-4">Order Summary</h2>
+            <div className="bg-background rounded-xl shadow-sm border p-6 sticky top-4">
+              <h2 className="text-base font-semibold mb-4 text-foreground">Order Summary</h2>
               <div className="space-y-3">
                 {cartItems.map((item) => (
                   <div
                     key={item.menuItemId}
                     className="flex justify-between text-sm"
                   >
-                    <span className="text-gray-700">
+                    <span className="text-foreground">
                       {item.name}{" "}
-                      <span className="text-gray-400">×{item.quantity}</span>
+                      <span className="text-muted-foreground">×{item.quantity}</span>
                     </span>
-                    <span className="font-medium">
+                    <span className="font-medium text-foreground">
                       ${(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="border-t mt-4 pt-4 flex justify-between font-bold text-base">
+              <div className="border-t mt-4 pt-4 flex justify-between font-bold text-base text-foreground">
                 <span>Total</span>
                 <span>${cartTotal.toFixed(2)}</span>
               </div>
-              <p className="text-xs text-gray-400 mt-3 leading-relaxed">
+              <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
                 Online Pickup · Payment collected at pickup
               </p>
             </div>

@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Download, Database, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/employee/database/backup")({
@@ -41,7 +47,10 @@ function BackupPage() {
 
       setMessage({ type: "success", text: "Backup downloaded successfully!" });
     } catch (err) {
-      setMessage({ type: "error", text: err.message || "Failed to download backup" });
+      setMessage({
+        type: "error",
+        text: err.message || "Failed to download backup",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +60,9 @@ function BackupPage() {
     <div className="p-6 space-y-6 w-full">
       <div>
         <h1 className="text-2xl font-bold">Database Backup</h1>
-        <p className="text-muted-foreground">Download a complete backup of your database</p>
+        <p className="text-muted-foreground">
+          Download a complete backup of your database
+        </p>
       </div>
 
       <Card className="max-w-md">
@@ -65,15 +76,19 @@ function BackupPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button onClick={handleBackup} disabled={isLoading} className="w-full">
+          <Button
+            onClick={handleBackup}
+            disabled={isLoading}
+            className="w-full"
+          >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 size-4 animate-spin" />
                 Generating Backup...
               </>
             ) : (
               <>
-                <Download className="mr-2 h-4 w-4" />
+                <Download className="mr-2 size-4" />
                 Download Backup
               </>
             )}
@@ -82,7 +97,7 @@ function BackupPage() {
           {message && (
             <p
               className={`text-sm ${
-                message.type === "success" ? "text-green-600" : "text-red-600"
+                message.type === "success" ? "text-green-600 dark:text-green-400" : "text-destructive"
               }`}
             >
               {message.text}

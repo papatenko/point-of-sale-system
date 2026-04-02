@@ -53,15 +53,41 @@ function buildChartRows(
 ) {
   if (!Array.isArray(rows)) return [];
   const base = rows.map((r) => ({
+    ...r,
     name: r[nameKey],
     value: Number(r.total) ?? 0,
+    details: Array.isArray(r.details) ? r.details : [],
   }));
   for (const ex of extras) {
-    if (ex && ex.value > 0) base.push({ name: ex.name, value: ex.value });
+    if (ex && ex.value > 0) {
+      base.push({ name: ex.name, value: ex.value, details: ex.details || [] });
+    }
   }
   return base
     .filter((r) => r.value > 0)
     .sort((a, b) => b.value - a.value);
+}
+
+function renderTooltipDetails(items = []) {
+  const trimmed = items.filter(Boolean);
+  if (trimmed.length === 0) return null;
+  const preview = trimmed.slice(0, 8);
+  const remaining = trimmed.length - preview.length;
+  return (
+    <div className="mt-1 border-t pt-1 text-xs text-muted-foreground">
+      <div className="font-medium">Includes:</div>
+      <ul className="list-disc pl-4">
+        {preview.map((item, i) => (
+          <li key={`${typeof item === "string" ? item : item?.name || "item"}-${i}`}>
+            {typeof item === "string"
+              ? item
+              : `${item?.name || "Item"}: ${item?.quantity ?? 0}`}
+          </li>
+        ))}
+      </ul>
+      {remaining > 0 && <div>+{remaining} more</div>}
+    </div>
+  );
 }
 
 function ReportBarChartCard({
@@ -107,9 +133,19 @@ function ReportBarChartCard({
                   interval={0}
                 />
                 <Tooltip
-                  contentStyle={{ borderRadius: "8px", fontSize: "12px" }}
-                  formatter={(value) => [`${value}`, valueLabel]}
-                  labelFormatter={(label) => label}
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null;
+                    const row = payload[0]?.payload;
+                    return (
+                      <div className="rounded-md border bg-background px-3 py-2 text-xs shadow">
+                        <div className="font-medium">{row?.name}</div>
+                        <div>
+                          {valueLabel}: <span className="font-semibold">{row?.value ?? 0}</span>
+                        </div>
+                        {renderTooltipDetails(row?.details)}
+                      </div>
+                    );
+                  }}
                 />
                 <Bar dataKey="value" name={valueLabel} radius={[0, 4, 4, 0]}>
                   {chartData.map((_, i) => (
@@ -246,6 +282,7 @@ function RouteComponent() {
         {
           name: "Uncategorized",
           value: stats?.itemsSoldUncategorized ?? 0,
+          details: stats?.itemsSoldUncategorizedDetails ?? [],
         },
       ]),
     [stats],
@@ -409,7 +446,6 @@ function RouteComponent() {
               )}
           </Card>
         )}
-
         {activeReport === "usersByEthnicity" && (
           <Card className="mt-2">
             <CardHeader className="pb-2">
