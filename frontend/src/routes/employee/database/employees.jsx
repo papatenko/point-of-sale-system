@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DataTable } from "@/components/database/data-table";
 import { AddDialog } from "@/components/database/add-dialog";
+import { TruckFilter } from "@/components/common/truck-filter";
 import { GENDER_OPTIONS } from "@/data/gender";
 import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
 
@@ -24,20 +25,10 @@ const COLUMNS = [
   { key: "license_plate", label: "Truck" },
 ];
 
-const CREATE_FIELDS = [
-  { name: "email", label: "Email", type: "email", required: true },
-  { name: "first_name", label: "First Name", type: "text", required: true },
-  { name: "last_name", label: "Last Name", type: "text", required: true },
-  { name: "password", label: "Password", type: "password", required: true },
-  { name: "phone_number", label: "Phone", type: "text" },
-  { name: "role", label: "Role", type: "select", options: ROLE_OPTIONS, required: true },
-  { name: "gender", label: "Gender", type: "select", options: GENDER_OPTIONS },
-  { name: "ethnicity", label: "Ethnicity", type: "select", options: ETHNICITY_OPTIONS },
-];
-
 function EmployeesDatabaseComponent() {
   const [employees, setEmployees] = useState([]);
   const [trucks, setTrucks] = useState([]);
+  const [selectedTruck, setSelectedTruck] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -71,6 +62,18 @@ function EmployeesDatabaseComponent() {
     fetchEmployees();
     fetchTrucks();
   }, []);
+
+  const truckOptions = useMemo(() => {
+    return trucks.map((t) => ({
+      value: t.license_plate,
+      label: `${t.truck_name} — ${t.current_location ?? t.license_plate}`,
+    }));
+  }, [trucks]);
+
+  const filteredEmployees = useMemo(() => {
+    if (!selectedTruck) return employees;
+    return employees.filter((e) => e.license_plate === selectedTruck);
+  }, [employees, selectedTruck]);
 
   const handleCreateSubmit = async (formData) => {
     setIsSubmitting(true);
@@ -109,7 +112,7 @@ function EmployeesDatabaseComponent() {
         },
         body: JSON.stringify({
           email: formData.email,
-          license_plate: trucks[0]?.license_plate || "ABC-123",
+          license_plate: formData.license_plate || trucks[0]?.license_plate || "ABC-123",
           role: formData.role,
           hire_date: new Date().toISOString().split("T")[0],
           hourly_rate: null,
@@ -155,6 +158,18 @@ function EmployeesDatabaseComponent() {
     }
   };
 
+  const CREATE_FIELDS = [
+    { name: "email", label: "Email", type: "email", required: true },
+    { name: "first_name", label: "First Name", type: "text", required: true },
+    { name: "last_name", label: "Last Name", type: "text", required: true },
+    { name: "password", label: "Password", type: "password", required: true },
+    { name: "phone_number", label: "Phone", type: "text" },
+    { name: "role", label: "Role", type: "select", options: ROLE_OPTIONS, required: true },
+    { name: "license_plate", label: "Truck", type: "select", options: truckOptions },
+    { name: "gender", label: "Gender", type: "select", options: GENDER_OPTIONS },
+    { name: "ethnicity", label: "Ethnicity", type: "select", options: ETHNICITY_OPTIONS },
+  ];
+
   return (
     <div className="p-6 space-y-6 w-full">
       <div className="flex justify-between items-center w-full">
@@ -173,9 +188,20 @@ function EmployeesDatabaseComponent() {
         />
       </div>
 
+      <div className="flex items-center gap-4">
+        <TruckFilter
+          trucks={trucks}
+          selectedTruck={selectedTruck}
+          onSelect={setSelectedTruck}
+        />
+        <span className="text-sm text-muted-foreground">
+          {filteredEmployees.length} of {employees.length} employees
+        </span>
+      </div>
+
       <DataTable
         columns={COLUMNS}
-        data={employees}
+        data={filteredEmployees}
         pageSize={10}
         searchKeys={["first_name", "last_name", "email", "role"]}
         deleteIdKey="email"
