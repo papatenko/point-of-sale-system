@@ -78,7 +78,11 @@ function renderTooltipDetails(items = []) {
       <div className="font-medium">Includes:</div>
       <ul className="list-disc pl-4">
         {preview.map((item, i) => (
-          <li key={`${item}-${i}`}>{item}</li>
+          <li key={`${typeof item === "string" ? item : item?.name || "item"}-${i}`}>
+            {typeof item === "string"
+              ? item
+              : `${item?.name || "Item"}: ${item?.quantity ?? 0}`}
+          </li>
         ))}
       </ul>
       {remaining > 0 && <div>+{remaining} more</div>}
@@ -278,6 +282,7 @@ function RouteComponent() {
         {
           name: "Uncategorized",
           value: stats?.itemsSoldUncategorized ?? 0,
+          details: stats?.itemsSoldUncategorizedDetails ?? [],
         },
       ]),
     [stats],

@@ -41,6 +41,16 @@ function splitCsv(value) {
     .filter(Boolean);
 }
 
+function toDetailObjects(rows) {
+  return rows
+    .filter((r) => Number(r.quantity) > 0)
+    .sort((a, b) => Number(b.quantity) - Number(a.quantity))
+    .map((r) => ({
+      name: r.itemName,
+      quantity: Number(r.quantity) || 0,
+    }));
+}
+
 export async function getReportStats(db, url) {
   const range = parseReportDateRange(url);
   if (range?.error) {
@@ -220,6 +230,45 @@ export async function getReportStats(db, url) {
     `)
       )[0][0];
 
+  const soldItemDetailRows = range
+    ? (
+        await db.query(
+          `
+      SELECT
+        m.category AS categoryId,
+        m.item_name AS itemName,
+        COALESCE(SUM(oi.quantity), 0) AS quantity
+      FROM menu_items m
+      INNER JOIN order_items oi ON oi.menu_item_id = m.menu_item_id
+      INNER JOIN checkout ch ON ch.checkout_id = oi.order_id
+      WHERE DATE(${placedCh}) BETWEEN ? AND ?
+      GROUP BY m.category, m.menu_item_id, m.item_name
+      ORDER BY m.category, quantity DESC, m.item_name
+    `,
+          [range.start, range.end],
+        )
+      )[0]
+    : (
+        await db.query(`
+      SELECT
+        m.category AS categoryId,
+        m.item_name AS itemName,
+        COALESCE(SUM(oi.quantity), 0) AS quantity
+      FROM menu_items m
+      INNER JOIN order_items oi ON oi.menu_item_id = m.menu_item_id
+      GROUP BY m.category, m.menu_item_id, m.item_name
+      ORDER BY m.category, quantity DESC, m.item_name
+    `)
+      )[0];
+
+  const soldDetailsByCategory = new Map();
+  for (const row of soldItemDetailRows) {
+    const key = row.categoryId == null ? "__uncat__" : String(row.categoryId);
+    const list = soldDetailsByCategory.get(key) || [];
+    list.push(row);
+    soldDetailsByCategory.set(key, list);
+  }
+
   const truckOrderRows = range
     ? (
         await db.query(
@@ -297,9 +346,12 @@ export async function getReportStats(db, url) {
       categoryId: Number(r.categoryId),
       categoryName: r.categoryName,
       total: Number(r.total) || 0,
-      details: splitCsv(r.details),
+      details: toDetailObjects(soldDetailsByCategory.get(String(r.categoryId)) || []),
     })),
     itemsSoldUncategorized: Number(soldUncat?.total) || 0,
+    itemsSoldUncategorizedDetails: toDetailObjects(
+      soldDetailsByCategory.get("__uncat__") || [],
+    ),
     ordersByTruck: truckOrderRows.map((r) => ({
       licensePlate: r.licensePlate,
       truckName: r.truckName,
