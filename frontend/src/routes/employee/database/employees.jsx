@@ -112,7 +112,6 @@ function EmployeesDatabaseComponent() {
           license_plate: trucks[0]?.license_plate || "ABC-123",
           role: formData.role,
           hire_date: new Date().toISOString().split("T")[0],
-          hourly_rate: null,
         }),
       });
 

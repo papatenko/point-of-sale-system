@@ -50,7 +50,6 @@ function CreationComponent() {
     ethnicity: "1",
     license_plate: "",
     hire_date: "",
-    hourly_rate: "",
   });
 
   const licensePlates = trucks.map((t) => t.license_plate);
@@ -332,19 +331,7 @@ function CreationComponent() {
                   />
                 </div>
 
-                {/* Hourly Rate */}
-                <div className="space-y-1">
-                  <Label htmlFor="hourly_rate">Hourly Rate ($)</Label>
-                  <Input
-                    id="hourly_rate"
-                    name="hourly_rate"
-                    type="number"
-                    step="0.01"
-                    placeholder="15.00"
-                    value={form.hourly_rate}
-                    onChange={handleChange}
-                  />
-                </div>
+
               </div>
             </div>
 

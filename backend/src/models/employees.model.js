@@ -27,14 +27,13 @@ export async function emailExistsAsUser(db, email) {
 export async function create(db, data) {
   const [result] = await db.query(
     `INSERT INTO employees 
-     (email, license_plate, role, hire_date, hourly_rate)
-     VALUES (?, ?, ?, ?, ?)`,
+     (email, license_plate, role, hire_date)
+     VALUES (?, ?, ?, ?)`,
     [
       data.email,
       data.license_plate,
       data.role || "cashier",
       data.hire_date || new Date().toISOString().split("T")[0],
-      data.hourly_rate || 15.0,
     ]
   );
   return result;
