@@ -21,14 +21,18 @@ export function AddDialog({
 }) {
   const [open, setOpen] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
+  const handleFormSubmit = async (data) => {
     const result = await onSubmit(data);
     if (result !== false) {
       setOpen(false);
     }
+  };
+
+  const handleSubmitFromEvent = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+    await handleFormSubmit(data);
   };
 
   const handleCancel = () => {
@@ -48,7 +52,7 @@ export function AddDialog({
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         {children ? (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmitFromEvent} className="flex flex-col gap-4">
             {error && (
               <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
                 {error}
@@ -67,7 +71,7 @@ export function AddDialog({
         ) : fields.length > 0 ? (
           <SimpleForm
             fields={fields}
-            onSubmit={handleSubmit}
+            onSubmit={handleFormSubmit}
             onCancel={handleCancel}
             isSubmitting={isSubmitting}
             error={error}
@@ -83,7 +87,8 @@ function SimpleForm({ fields, onSubmit, onCancel, isSubmitting, error, submitLab
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    onSubmit(formData);
+    const data = Object.fromEntries(formData.entries());
+    onSubmit(data);
   };
 
   return (

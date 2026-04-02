@@ -12,7 +12,8 @@
     "lint": "turbo run lint",
     "preview": "turbo run preview",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean",
+    "prepare": "husky"
   },
   "devDependencies": {
     "turbo": "^2.8.12"
