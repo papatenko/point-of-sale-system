@@ -33,6 +33,14 @@ export function parseReportDateRange(url) {
   return { start, end };
 }
 
+function splitCsv(value) {
+  if (!value || typeof value !== "string") return [];
+  return value
+    .split("||")
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
 export async function getReportStats(db, url) {
   const range = parseReportDateRange(url);
   if (range?.error) {
@@ -99,7 +107,11 @@ export async function getReportStats(db, url) {
   `);
 
   const [menuByCatRows] = await db.query(`
-    SELECT c.category_id AS categoryId, c.category_name AS categoryName, COUNT(m.menu_item_id) AS total
+    SELECT
+      c.category_id AS categoryId,
+      c.category_name AS categoryName,
+      COUNT(m.menu_item_id) AS total,
+      GROUP_CONCAT(m.item_name ORDER BY m.item_name SEPARATOR '||') AS details
     FROM menu_category_lookup c
     LEFT JOIN menu_items m ON m.category = c.category_id
     GROUP BY c.category_id, c.category_name
@@ -111,7 +123,10 @@ export async function getReportStats(db, url) {
   `);
 
   const [ingredientCatRows] = await db.query(`
-    SELECT COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized') AS categoryName, COUNT(*) AS total
+    SELECT
+      COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized') AS categoryName,
+      COUNT(*) AS total,
+      GROUP_CONCAT(ingredient_name ORDER BY ingredient_name SEPARATOR '||') AS details
     FROM ingredients
     GROUP BY COALESCE(NULLIF(TRIM(category), ''), 'Uncategorized')
     ORDER BY categoryName
@@ -121,7 +136,10 @@ export async function getReportStats(db, url) {
     ? (
         await db.query(
           `
-      SELECT order_type AS categoryName, COUNT(*) AS total
+      SELECT
+        order_type AS categoryName,
+        COUNT(*) AS total,
+        GROUP_CONCAT(order_number ORDER BY checkout_id DESC SEPARATOR '||') AS details
       FROM checkout c
       WHERE DATE(${placed}) BETWEEN ? AND ?
       GROUP BY order_type
@@ -132,7 +150,10 @@ export async function getReportStats(db, url) {
       )[0]
     : (
         await db.query(`
-      SELECT order_type AS categoryName, COUNT(*) AS total
+      SELECT
+        order_type AS categoryName,
+        COUNT(*) AS total,
+        GROUP_CONCAT(order_number ORDER BY checkout_id DESC SEPARATOR '||') AS details
       FROM checkout
       GROUP BY order_type
       ORDER BY order_type
@@ -143,7 +164,11 @@ export async function getReportStats(db, url) {
     ? (
         await db.query(
           `
-      SELECT mc.category_id AS categoryId, mc.category_name AS categoryName, COALESCE(SUM(oi.quantity), 0) AS total
+      SELECT
+        mc.category_id AS categoryId,
+        mc.category_name AS categoryName,
+        COALESCE(SUM(oi.quantity), 0) AS total,
+        GROUP_CONCAT(DISTINCT m.item_name ORDER BY m.item_name SEPARATOR '||') AS details
       FROM menu_category_lookup mc
       LEFT JOIN menu_items m ON m.category = mc.category_id
       LEFT JOIN (
@@ -160,7 +185,11 @@ export async function getReportStats(db, url) {
       )[0]
     : (
         await db.query(`
-      SELECT c.category_id AS categoryId, c.category_name AS categoryName, COALESCE(SUM(oi.quantity), 0) AS total
+      SELECT
+        c.category_id AS categoryId,
+        c.category_name AS categoryName,
+        COALESCE(SUM(oi.quantity), 0) AS total,
+        GROUP_CONCAT(DISTINCT m.item_name ORDER BY m.item_name SEPARATOR '||') AS details
       FROM menu_category_lookup c
       LEFT JOIN menu_items m ON m.category = c.category_id
       LEFT JOIN order_items oi ON oi.menu_item_id = m.menu_item_id
@@ -195,7 +224,11 @@ export async function getReportStats(db, url) {
     ? (
         await db.query(
           `
-      SELECT ft.license_plate AS licensePlate, ft.truck_name AS truckName, COUNT(c.checkout_id) AS total
+      SELECT
+        ft.license_plate AS licensePlate,
+        ft.truck_name AS truckName,
+        COUNT(c.checkout_id) AS total,
+        GROUP_CONCAT(c.order_number ORDER BY c.checkout_id DESC SEPARATOR '||') AS details
       FROM food_trucks ft
       LEFT JOIN checkout c ON c.license_plate = ft.license_plate AND DATE(${placed}) BETWEEN ? AND ?
       GROUP BY ft.license_plate, ft.truck_name
@@ -206,7 +239,11 @@ export async function getReportStats(db, url) {
       )[0]
     : (
         await db.query(`
-      SELECT ft.license_plate AS licensePlate, ft.truck_name AS truckName, COUNT(c.checkout_id) AS total
+      SELECT
+        ft.license_plate AS licensePlate,
+        ft.truck_name AS truckName,
+        COUNT(c.checkout_id) AS total,
+        GROUP_CONCAT(c.order_number ORDER BY c.checkout_id DESC SEPARATOR '||') AS details
       FROM food_trucks ft
       LEFT JOIN checkout c ON c.license_plate = ft.license_plate
       GROUP BY ft.license_plate, ft.truck_name
@@ -234,11 +271,13 @@ export async function getReportStats(db, url) {
       categoryId: Number(r.categoryId),
       categoryName: r.categoryName,
       total: Number(r.total) || 0,
+      details: splitCsv(r.details),
     })),
     menuItemsUncategorized: Number(menuUncat?.total) || 0,
     ingredientsByCategory: ingredientCatRows.map((r) => ({
       categoryName: r.categoryName,
       total: Number(r.total) || 0,
+      details: splitCsv(r.details),
     })),
     ordersByCategory: orderTypeRows.map((r) => {
       const raw = String(r.categoryName || "");
@@ -248,18 +287,24 @@ export async function getReportStats(db, url) {
           : raw === "online-pickup"
             ? "Online pickup"
             : raw;
-      return { categoryName: label, total: Number(r.total) || 0 };
+      return {
+        categoryName: label,
+        total: Number(r.total) || 0,
+        details: splitCsv(r.details),
+      };
     }),
     itemsSoldByCategory: soldByCatRows.map((r) => ({
       categoryId: Number(r.categoryId),
       categoryName: r.categoryName,
       total: Number(r.total) || 0,
+      details: splitCsv(r.details),
     })),
     itemsSoldUncategorized: Number(soldUncat?.total) || 0,
     ordersByTruck: truckOrderRows.map((r) => ({
       licensePlate: r.licensePlate,
       truckName: r.truckName,
       total: Number(r.total) || 0,
+      details: splitCsv(r.details),
     })),
     filters: range
       ? {
