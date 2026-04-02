@@ -147,12 +147,6 @@ router.get("/api/inventory", async (_, db, _req, url) =>
 router.post("/api/inventory/use", async (body, db) =>
   InventoryService.useInventory(db, body),
 );
-router.post("/api/inventory/use-menu-item", async (body, db) =>
-  InventoryService.useMenuItem(db, body),
-);
-router.post("/api/inventory/use-daily-production", async (body, db) =>
-  InventoryService.useDailyProduction(db, body),
-);
 router.post("/api/inventory/expire", async (body, db) =>
   InventoryService.expireInventory(db, body),
 );

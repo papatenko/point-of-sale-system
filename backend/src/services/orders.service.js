@@ -31,6 +31,9 @@ export async function listOrders(db, req, url) {
 
   // Promote eligible pending orders → preparing
   if (effectiveTruck && status?.includes("pending")) {
+    // Set session var so the deduct_inventory_on_preparing trigger can populate adjusted_by
+    const employeeEmail = payload?.email ?? null;
+    await db.query(`SET @current_employee_email = ?`, [employeeEmail]);
     await db.query(
       `UPDATE checkout
        SET order_status = 'preparing'

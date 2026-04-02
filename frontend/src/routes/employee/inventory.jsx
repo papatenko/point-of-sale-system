@@ -4,7 +4,6 @@ import {
   PackageIcon, AlertTriangleIcon, CheckCircle2Icon,
   TruckIcon, MinusCircleIcon, ShoppingCartIcon, HistoryIcon,
   BellIcon, SearchIcon, RefreshCwIcon, XCircleIcon, Trash2Icon,
-  ChefHatIcon, PlusIcon, MinusIcon, ClipboardListIcon,
   ChevronDownIcon, ChevronUpIcon,
 } from "lucide-react";
 
@@ -72,9 +71,9 @@ function QuantityBar({ item }) {
     : 1;
   const fillColor =
     item.quantityOnHand === 0 ? "bg-destructive"
-    : item.needsReorder       ? "bg-orange-500 dark:bg-orange-600"
-    : ratio < 0.75            ? "bg-yellow-500 dark:bg-yellow-600"
-    : "bg-emerald-500 dark:bg-emerald-600";
+    : item.needsReorder       ? "bg-accent"
+    : ratio < 0.75            ? "bg-primary"
+    : "bg-primary";
   return (
     <div className="flex flex-col gap-1 min-w-[120px]">
       <span className="font-semibold tabular-nums text-sm">
@@ -94,8 +93,8 @@ function StatCard({ icon: Icon, label, value, variant = "default" }) {
   const colorMap = {
     default: "text-foreground",
     danger:  "text-destructive",
-    warning: "text-amber-500",
-    success: "text-emerald-500",
+    warning: "text-accent",
+    success: "text-primary",
   };
   return (
     <Card>
@@ -376,487 +375,7 @@ function PendingSupplyOrdersBanner({ selectedTruck, onOrderReceived, showToast }
   );
 }
 
-// ─── Use Menu Item Dialog ─────────────────────────────────────────────────────
-function UseMenuItemDialog({ open, onOpenChange, menuItems, inventory, onConfirm, loading }) {
-  const [selectedMenuItemId, setSelectedMenuItemId] = useState("");
-  const [quantity, setQuantity] = useState(1);
-  const [recipe, setRecipe] = useState([]);
-  const [recipeLoading, setRecipeLoading] = useState(false);
-  const [shortages, setShortages] = useState([]);
-
-  useEffect(() => {
-    if (open) {
-      setSelectedMenuItemId("");
-      setQuantity(1);
-      setRecipe([]);
-      setShortages([]);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (!selectedMenuItemId) {
-      setRecipe([]);
-      setShortages([]);
-      return;
-    }
-    setRecipeLoading(true);
-    fetch(`/api/recipes`)
-      .then((r) => r.json())
-      .then((data) => {
-        const filtered = Array.isArray(data)
-          ? data.filter((r) => String(r.menu_item_id) === String(selectedMenuItemId))
-          : [];
-        setRecipe(filtered);
-        setRecipeLoading(false);
-      })
-      .catch(() => setRecipeLoading(false));
-  }, [selectedMenuItemId]);
-
-  useEffect(() => {
-    if (!recipe.length) { setShortages([]); return; }
-    const problems = [];
-    for (const r of recipe) {
-      const needed = parseFloat(r.quantity_needed) * quantity;
-      const invItem = inventory.find((i) => i.ingredientId === r.ingredient_id);
-      const available = invItem ? invItem.quantityOnHand : 0;
-      if (available < needed) {
-        problems.push({
-          ingredient: r.ingredient_name,
-          unit: r.unit_of_measure,
-          needed,
-          available,
-        });
-      }
-    }
-    setShortages(problems);
-  }, [recipe, quantity, inventory]);
-
-  const selectedItem = menuItems.find((m) => String(m.menu_item_id) === String(selectedMenuItemId));
-  const canSubmit = selectedMenuItemId && recipe.length > 0 && shortages.length === 0 && !loading;
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ChefHatIcon className="size-5" />
-            Use Ingredients by Menu Item
-          </DialogTitle>
-          <DialogDescription>
-            Select the menu item being prepared. Ingredients will be deducted
-            automatically based on the recipe.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4 py-2">
-          <div className="grid gap-1.5">
-            <label className="text-sm font-medium">Menu Item</label>
-            <Select value={selectedMenuItemId} onValueChange={setSelectedMenuItemId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a menu item…" />
-              </SelectTrigger>
-              <SelectContent>
-                {menuItems.map((m) => (
-                  <SelectItem key={m.menu_item_id} value={String(m.menu_item_id)}>
-                    {m.item_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {selectedMenuItemId && (
-            <div className="grid gap-1.5">
-              <label className="text-sm font-medium">Quantity to Prepare</label>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  className="size-8 shrink-0"
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  disabled={quantity <= 1}
-                >
-                  <MinusIcon className="size-3.5" />
-                </Button>
-                <Input
-                  type="number"
-                  min="1"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-20 text-center"
-                />
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="outline"
-                  className="size-8 shrink-0"
-                  onClick={() => setQuantity((q) => q + 1)}
-                >
-                  <PlusIcon className="size-3.5" />
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  {quantity === 1 ? "portion" : "portions"}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {selectedMenuItemId && (
-            <div className="grid gap-1.5">
-              <label className="text-sm font-medium">
-                Ingredients that will be deducted
-              </label>
-              {recipeLoading ? (
-                <div className="rounded-lg border bg-muted/30 p-4">
-                  <div className="h-4 w-1/2 rounded bg-muted animate-pulse" />
-                </div>
-              ) : recipe.length === 0 ? (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-                  No recipe found for this menu item. Add ingredients to the recipe first.
-                </div>
-              ) : (
-                <div className="rounded-lg border divide-y overflow-hidden">
-                  {recipe.map((r) => {
-                    const needed = parseFloat(r.quantity_needed) * quantity;
-                    const invItem = inventory.find((i) => i.ingredientId === r.ingredient_id);
-                    const available = invItem ? invItem.quantityOnHand : 0;
-                    const insufficient = available < needed;
-                    return (
-                      <div
-                        key={r.recipe_id}
-                        className={`flex items-center justify-between px-3 py-2.5 text-sm ${insufficient ? "bg-destructive/5" : ""}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          {insufficient ? (
-                            <AlertTriangleIcon className="size-3.5 text-destructive shrink-0" />
-                          ) : (
-                            <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
-                          )}
-                          <span className={insufficient ? "text-destructive font-medium" : ""}>
-                            {r.ingredient_name}
-                          </span>
-                        </div>
-                        <div className="tabular-nums text-right">
-                          <span className={`font-semibold ${insufficient ? "text-destructive" : ""}`}>
-                            −{fmt(needed)}
-                          </span>
-                          <span className="text-muted-foreground"> {r.unit_of_measure}</span>
-                          <span className="text-muted-foreground text-xs ml-1">
-                            ({fmt(available)} avail.)
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {shortages.length > 0 && (
-            <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 space-y-1">
-              <p className="text-sm font-semibold text-destructive">
-                Insufficient stock for {quantity} portion{quantity > 1 ? "s" : ""}:
-              </p>
-              {shortages.map((s) => (
-                <p key={s.ingredient} className="text-xs text-destructive">
-                  • {s.ingredient}: need {fmt(s.needed)} {s.unit}, have {fmt(s.available)}
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button
-            disabled={!canSubmit || loading}
-            onClick={() =>
-              onConfirm({
-                menuItemId: selectedMenuItemId,
-                menuItemName: selectedItem?.item_name,
-                quantity,
-              })
-            }
-          >
-            {loading ? "Deducting…" : `Deduct for ${quantity} portion${quantity > 1 ? "s" : ""}`}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Daily Production Log Dialog ──────────────────────────────────────────────
-function DailyProductionDialog({ open, onOpenChange, menuItems, inventory, onConfirm, loading, selectedTruck }) {
-  const [productions, setProductions] = useState({});
-  const [recipesData, setRecipesData] = useState({});
-  const [recipesLoading, setRecipesLoading] = useState(false);
-  const [aggregatedIngredients, setAggregatedIngredients] = useState({});
-  const [shortages, setShortages] = useState([]);
-  const [todaysSales, setTodaysSales] = useState({});
-
-  useEffect(() => {
-    if (open && selectedTruck) {
-      setProductions({});
-      setRecipesData({});
-      setAggregatedIngredients({});
-      setShortages([]);
-      setTodaysSales({});
-
-      setRecipesLoading(true);
-      Promise.all([
-        fetch(`/api/recipes`).then((r) => r.json()),
-        fetch(`/api/inventory/today-sales?licensePlate=${encodeURIComponent(selectedTruck)}`).then((r) => r.json()),
-      ])
-        .then(([recipes, sales]) => {
-          const byMenuItem = {};
-          if (Array.isArray(recipes)) {
-            recipes.forEach((r) => {
-              const mid = String(r.menu_item_id);
-              if (!byMenuItem[mid]) byMenuItem[mid] = [];
-              byMenuItem[mid].push(r);
-            });
-          }
-          setRecipesData(byMenuItem);
-
-          const salesMap = {};
-          const productsMap = {};
-          if (Array.isArray(sales)) {
-            sales.forEach((s) => {
-              const mid = String(s.menuItemId);
-              salesMap[mid] = s.totalQuantity;
-              productsMap[mid] = s.totalQuantity;
-            });
-          }
-          setTodaysSales(salesMap);
-          setProductions(productsMap);
-          setRecipesLoading(false);
-        })
-        .catch(() => setRecipesLoading(false));
-    }
-  }, [open, selectedTruck]);
-
-  useEffect(() => {
-    const aggregated = {};
-    const hasShortage = [];
-
-    Object.entries(productions).forEach(([menuItemId, qty]) => {
-      if (qty <= 0) return;
-      const recipe = recipesData[String(menuItemId)] || [];
-      recipe.forEach((r) => {
-        const needed = parseFloat(r.quantity_needed) * qty;
-        const ingId = r.ingredient_id;
-        if (!aggregated[ingId]) {
-          aggregated[ingId] = {
-            name: r.ingredient_name,
-            unit: r.unit_of_measure,
-            total: 0,
-            available: 0,
-          };
-        }
-        aggregated[ingId].total += needed;
-      });
-    });
-
-    Object.entries(aggregated).forEach(([ingId, ing]) => {
-      const invItem = inventory.find((i) => i.ingredientId === parseInt(ingId));
-      if (invItem) {
-        ing.available = invItem.quantityOnHand;
-        if (invItem.quantityOnHand < ing.total) {
-          hasShortage.push({
-            ingredient: ing.name,
-            unit: ing.unit,
-            needed: ing.total,
-            available: invItem.quantityOnHand,
-          });
-        }
-      } else {
-        ing.available = 0;
-        hasShortage.push({
-          ingredient: ing.name,
-          unit: ing.unit,
-          needed: ing.total,
-          available: 0,
-        });
-      }
-    });
-
-    setAggregatedIngredients(aggregated);
-    setShortages(hasShortage);
-  }, [productions, recipesData, inventory]);
-
-  const totalItems = Object.values(productions).reduce((sum, qty) => sum + qty, 0);
-  const canSubmit = totalItems > 0 && shortages.length === 0 && !loading;
-
-  const handleQtyChange = (menuItemId, newQty) => {
-    const qty = Math.max(0, parseInt(newQty) || 0);
-    if (qty === 0) {
-      const newProds = { ...productions };
-      delete newProds[menuItemId];
-      setProductions(newProds);
-    } else {
-      setProductions({ ...productions, [menuItemId]: qty });
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ClipboardListIcon className="size-5" />
-            Daily Production Log
-          </DialogTitle>
-          <DialogDescription>
-            Log how many of each menu item were prepared today. Inventory will be
-            deducted based on recipes.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid gap-4 py-2">
-          <div className="grid gap-2">
-            <h3 className="text-sm font-semibold">Menu Items Prepared</h3>
-            {recipesLoading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-10 rounded bg-muted animate-pulse" />
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-lg border divide-y max-h-48 overflow-y-auto">
-                {menuItems.length === 0 ? (
-                  <div className="px-3 py-4 text-sm text-muted-foreground">No menu items available</div>
-                ) : (
-                  menuItems.map((item) => {
-                    const hasRecipe = recipesData[String(item.menu_item_id)]?.length > 0;
-                    const qty = productions[String(item.menu_item_id)] || 0;
-                    const salesQty = todaysSales[String(item.menu_item_id)];
-                    const hasSalesData = salesQty !== undefined && salesQty > 0;
-                    return (
-                      <div
-                        key={item.menu_item_id}
-                        className="flex items-center justify-between px-3 py-3 text-sm gap-2"
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium">{item.item_name}</p>
-                          {!hasRecipe && (
-                            <p className="text-xs text-orange-600 dark:text-orange-400">No recipe configured</p>
-                          )}
-                          {hasSalesData && (
-                            <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                              Today's sales: {salesQty} {salesQty === 1 ? "item" : "items"}
-                            </p>
-                          )}
-                        </div>
-                        {hasRecipe && (
-                          <div className="flex items-center gap-1.5">
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="outline"
-                              className="size-7 shrink-0"
-                              onClick={() => handleQtyChange(item.menu_item_id, qty - 1)}
-                              disabled={qty <= 0}
-                            >
-                              <MinusIcon className="size-3" />
-                            </Button>
-                            <Input
-                              type="number"
-                              min="0"
-                              value={qty}
-                              onChange={(e) => handleQtyChange(item.menu_item_id, e.target.value)}
-                              className="w-16 text-center text-sm h-8"
-                            />
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="outline"
-                              className="size-7 shrink-0"
-                              onClick={() => handleQtyChange(item.menu_item_id, qty + 1)}
-                            >
-                              <PlusIcon className="size-3" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
-          </div>
-
-          {totalItems > 0 && (
-            <div className="rounded-lg border bg-muted/50 p-3">
-              <p className="text-sm font-semibold">
-                Total items prepared: <span className="text-lg">{totalItems}</span>
-              </p>
-            </div>
-          )}
-
-          {Object.keys(aggregatedIngredients).length > 0 && (
-            <div className="grid gap-2">
-              <h3 className="text-sm font-semibold">Ingredients to Deduct</h3>
-              <div className="rounded-lg border divide-y max-h-48 overflow-y-auto">
-                {Object.entries(aggregatedIngredients).map(([ingId, ing]) => {
-                  const insufficient = ing.available < ing.total;
-                  return (
-                    <div
-                      key={ingId}
-                      className={`flex items-center justify-between px-3 py-2.5 text-sm ${insufficient ? "bg-destructive/5" : ""}`}
-                    >
-                      <div className="flex items-center gap-2">
-                        {insufficient ? (
-                          <AlertTriangleIcon className="size-3.5 text-destructive shrink-0" />
-                        ) : (
-                          <CheckCircle2Icon className="size-3.5 text-emerald-500 shrink-0" />
-                        )}
-                        <span className={insufficient ? "text-destructive font-medium" : ""}>
-                          {ing.name}
-                        </span>
-                      </div>
-                      <div className="tabular-nums text-right">
-                        <span className={`font-semibold ${insufficient ? "text-destructive" : ""}`}>
-                          −{fmt(ing.total)}
-                        </span>
-                        <span className="text-muted-foreground"> {ing.unit}</span>
-                        <span className="text-muted-foreground text-xs ml-1">
-                          ({fmt(ing.available)} avail.)
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {shortages.length > 0 && (
-            <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 space-y-1">
-              <p className="text-sm font-semibold text-destructive">⚠ Insufficient stock:</p>
-              {shortages.map((s) => (
-                <p key={s.ingredient} className="text-xs text-destructive">
-                  • {s.ingredient}: need {fmt(s.needed)} {s.unit}, have {fmt(s.available)}
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button disabled={!canSubmit} onClick={() => onConfirm(productions)}>
-            {loading ? "Deducting…" : `Deduct for ${totalItems} item${totalItems === 1 ? "" : "s"}`}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
+// Removed UseMenuItemDialog and DailyProductionDialog components
 
 // ─── Expire Confirmation Dialog ───────────────────────────────────────────────
 function ExpireDialog({ open, onOpenChange, expiredItems, onConfirm, loading }) {
@@ -1076,8 +595,7 @@ function InventoryPage() {
   // Dialogs
   const [adjustItem,              setAdjustItem]              = useState(null);
   const [reorderItem,             setReorderItem]             = useState(null);
-  const [useMenuItemOpen,         setUseMenuItemOpen]         = useState(false);
-  const [dailyProductionOpen,     setDailyProductionOpen]     = useState(false);
+  // Removed useMenuItemOpen and dailyProductionOpen
   const [expireItems,             setExpireItems]             = useState(null);
   const [hasShownWarningForTruck, setHasShownWarningForTruck] = useState(null);
   const [modalLoading,            setModalLoading]            = useState(false);
@@ -1193,37 +711,7 @@ function InventoryPage() {
     setPendingReceiveLoading(false);
   };
 
-  const handleUseMenuItem = async ({ menuItemId, menuItemName, quantity }) => {
-    setModalLoading(true);
-    try {
-      const res = await fetch("/api/inventory/use-menu-item", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          licensePlate: selectedTruck,
-          menuItemId,
-          menuItemName,
-          quantity,
-          adjustedBy: currentUser,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      if (!data.success) {
-        showToast("Insufficient stock for some ingredients.", "error");
-        return;
-      }
-      const alertMsg = data.alertsCreated?.length
-        ? ` Reorder alerts created for: ${data.alertsCreated.join(", ")}.`
-        : "";
-      showToast(`✓ Deducted ingredients for ${quantity}x ${menuItemName || "item"}.${alertMsg}`);
-      setUseMenuItemOpen(false);
-      loadData(selectedTruck);
-    } catch (err) {
-      showToast(err.message, "error");
-    }
-    setModalLoading(false);
-  };
+
 
   const handleAdjust = async ({ qty, type, reason }) => {
     setModalLoading(true);
@@ -1311,41 +799,7 @@ function InventoryPage() {
     setExpireLoading(false);
   };
 
-  const handleDailyProduction = async (productions) => {
-    const productionArray = Object.entries(productions).map(([menuItemId, qty]) => ({
-      menuItemId: parseInt(menuItemId),
-      quantity: qty,
-    }));
 
-    setProductionLoading(true);
-    try {
-      const res = await fetch("/api/inventory/use-daily-production", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          licensePlate: selectedTruck,
-          productions: productionArray,
-          adjustedBy: currentUser,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      if (!data.success) {
-        showToast("Operation failed. Please try again.", "error");
-        return;
-      }
-      const totalItems = productionArray.reduce((sum, p) => sum + p.quantity, 0);
-      const alertMsg = data.alertsCreated?.length
-        ? ` Reorder alerts created for: ${data.alertsCreated.join(", ")}.`
-        : "";
-      showToast(`✓ Deducted ingredients for ${totalItems} item${totalItems === 1 ? "" : "s"} prepared.${alertMsg}`);
-      setDailyProductionOpen(false);
-      loadData(selectedTruck);
-    } catch (err) {
-      showToast(err.message, "error");
-    }
-    setProductionLoading(false);
-  };
 
   const filtered = inventory.filter((item) => {
     const matchSearch = !search ||
@@ -1381,27 +835,7 @@ function InventoryPage() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setUseMenuItemOpen(true)}
-              disabled={!selectedTruck}
-              className="gap-2"
-            >
-              <ChefHatIcon className="size-4" />
-              Use by Menu Item
-            </Button>
-
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setDailyProductionOpen(true)}
-              disabled={!selectedTruck}
-              className="gap-2"
-            >
-              <ClipboardListIcon className="size-4" />
-              Daily Production
-            </Button>
+            {/* Removed Use by Menu Item and Daily Production buttons */}
 
             <Button
               variant="outline"
@@ -1763,24 +1197,7 @@ function InventoryPage() {
       </div>
 
       {/* ── Dialogs ─────────────────────────────────────────────── */}
-      <UseMenuItemDialog
-        open={useMenuItemOpen}
-        onOpenChange={setUseMenuItemOpen}
-        menuItems={menuItems}
-        inventory={inventory}
-        onConfirm={handleUseMenuItem}
-        loading={modalLoading}
-      />
-
-      <DailyProductionDialog
-        open={dailyProductionOpen}
-        onOpenChange={setDailyProductionOpen}
-        menuItems={menuItems}
-        inventory={inventory}
-        onConfirm={handleDailyProduction}
-        loading={productionLoading}
-        selectedTruck={selectedTruck}
-      />
+      {/* Removed UseMenuItemDialog and DailyProductionDialog */}
 
       <ExpireDialog
         open={expireItems !== null}
