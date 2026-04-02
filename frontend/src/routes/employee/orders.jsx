@@ -58,6 +58,7 @@ function OrdersPage() {
     filterDate, setFilterDate,
     showCompleted, setShowCompleted,
     showCancelled, setShowCancelled,
+    page, setPage, totalPages,
     loading,
     refreshCurrent, refreshPast,
   } = useOrders({ token, selectedTruck });
@@ -185,6 +186,29 @@ function OrdersPage() {
           </div>
 
           <OrderList orders={pastOrders} loading={loading} />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-6">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                ← Prev
+              </button>
+              <span className="text-sm text-gray-500">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="px-3 py-1.5 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Next →
+              </button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

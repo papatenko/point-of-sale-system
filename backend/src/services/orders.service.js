@@ -12,10 +12,12 @@ export async function getOrderById(db, url) {
 
 export async function listOrders(db, req, url) {
   const { searchParams } = new URL(url, "http://localhost");
-  const status   = searchParams.get("status");
-  const search   = searchParams.get("search");
+  const status     = searchParams.get("status");
+  const search     = searchParams.get("search");
   const truckParam = searchParams.get("truck");
-  const date     = searchParams.get("date"); // YYYY-MM-DD
+  const date       = searchParams.get("date"); // YYYY-MM-DD
+  const page       = parseInt(searchParams.get("page") ?? "0", 10); // 0 = no pagination
+  const PAGE_SIZE  = 20;
 
   // Extract JWT payload for role + license_plate
   const authHeader = req?.headers?.authorization ?? "";
@@ -39,48 +41,77 @@ export async function listOrders(db, req, url) {
     );
   }
 
-  let query = `SELECT c.checkout_id, c.order_number, c.order_type, c.order_status,
-                      c.total_price, c.payment_method, c.customer_email,
-                      c.scheduled_time, c.license_plate,
-                      c.date_created,
-                      u.phone_number AS customer_phone,
-                      GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ', ') AS items
-               FROM checkout c
-               LEFT JOIN order_items oi ON oi.order_id = c.checkout_id
-               LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
-               LEFT JOIN users u ON u.email = c.customer_email
-               WHERE 1=1`;
+  // Build WHERE clause separately so it can be reused for COUNT
+  let where = ` WHERE 1=1`;
   const params = [];
 
   if (effectiveTruck) {
-    query += ` AND c.license_plate = ?`;
+    where += ` AND c.license_plate = ?`;
     params.push(effectiveTruck);
   }
 
   if (status) {
     const list = status.split(",").map((s) => s.trim());
-    query += ` AND c.order_status IN (${list.map(() => "?").join(",")})`;
+    where += ` AND c.order_status IN (${list.map(() => "?").join(",")})`;
     params.push(...list);
   }
 
   if (search) {
-    // Search by order number OR checkout_id
-    query += ` AND (c.order_number LIKE ? OR c.checkout_id LIKE ?)`;
+    where += ` AND (c.order_number LIKE ? OR CAST(c.checkout_id AS CHAR) LIKE ?)`;
     params.push(`%${search}%`, `%${search}%`);
   }
 
   if (date) {
-    // Filter by the date of created_at (aliased as date_created)
-    query += ` AND DATE(c.date_created) = ?`;
+    where += ` AND DATE(c.date_created) = ?`;
     params.push(date);
   }
 
-  // Group then sort: ready → preparing → pending → newest first for past
-  query += ` GROUP BY c.checkout_id
-             ORDER BY FIELD(c.order_status, 'ready', 'preparing', 'pending', 'completed', 'cancelled'),
-                      c.checkout_id DESC`;
+  // For paginated (past) queries sort by date desc; for live queues sort by status priority
+  const orderBy = page > 0
+    ? ` ORDER BY c.date_created DESC`
+    : ` ORDER BY FIELD(c.order_status, 'ready', 'preparing', 'pending', 'completed', 'cancelled'),
+                c.checkout_id ASC`;
 
-  const [rows] = await db.query(query, params);
+  // Paginated query (past orders)
+  if (page > 0) {
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(DISTINCT c.checkout_id) AS total FROM checkout c${where}`,
+      params,
+    );
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const offset = (page - 1) * PAGE_SIZE;
+
+    const dataQuery = `SELECT c.checkout_id, c.order_number, c.order_type, c.order_status,
+                              c.total_price, c.payment_method, c.customer_email,
+                              c.scheduled_time, c.license_plate, c.date_created,
+                              u.phone_number AS customer_phone,
+                              GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ', ') AS items
+                       FROM checkout c
+                       LEFT JOIN order_items oi ON oi.order_id = c.checkout_id
+                       LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
+                       LEFT JOIN users u ON u.email = c.customer_email
+                       ${where}
+                       GROUP BY c.checkout_id
+                       ${orderBy}
+                       LIMIT ? OFFSET ?`;
+    const [rows] = await db.query(dataQuery, [...params, PAGE_SIZE, offset]);
+    return { orders: rows, total, page, pages: totalPages };
+  }
+
+  // Non-paginated query (current / scheduled orders)
+  const dataQuery = `SELECT c.checkout_id, c.order_number, c.order_type, c.order_status,
+                            c.total_price, c.payment_method, c.customer_email,
+                            c.scheduled_time, c.license_plate, c.date_created,
+                            u.phone_number AS customer_phone,
+                            GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ', ') AS items
+                     FROM checkout c
+                     LEFT JOIN order_items oi ON oi.order_id = c.checkout_id
+                     LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
+                     LEFT JOIN users u ON u.email = c.customer_email
+                     ${where}
+                     GROUP BY c.checkout_id
+                     ${orderBy}`;
+  const [rows] = await db.query(dataQuery, params);
   return rows;
 }
 

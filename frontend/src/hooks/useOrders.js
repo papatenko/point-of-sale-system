@@ -8,10 +8,11 @@ export function useOrders({ token = null, selectedTruck = null } = {}) {
   const [loading, setLoading] = useState(true);
 
   // Past orders filters
-  const today = new Date().toISOString().split("T")[0];
-  const [filterDate, setFilterDate] = useState(today);
+  const [filterDate, setFilterDate] = useState("");
   const [showCompleted, setShowCompleted] = useState(true);
   const [showCancelled, setShowCancelled] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -39,7 +40,7 @@ export function useOrders({ token = null, selectedTruck = null } = {}) {
     }
   }, [token, selectedTruck]);
 
-  const fetchPastOrders = useCallback(async (q = "", date = today, completed = true, cancelled = true) => {
+  const fetchPastOrders = useCallback(async (q = "", date = "", completed = true, cancelled = true, pg = 1) => {
     try {
       const statuses = [
         ...(completed ? ["completed"] : []),
@@ -47,16 +48,18 @@ export function useOrders({ token = null, selectedTruck = null } = {}) {
       ];
       if (statuses.length === 0) {
         setPastOrders([]);
+        setTotalPages(1);
         setLoading(false);
         return;
       }
-      const params = new URLSearchParams({ status: statuses.join(",") });
+      const params = new URLSearchParams({ status: statuses.join(","), page: pg });
       if (q) params.set("search", q);
       if (date) params.set("date", date);
       if (selectedTruck) params.set("truck", selectedTruck);
       const res = await fetch(`/api/orders?${params.toString()}`, { headers });
       const data = await res.json();
-      setPastOrders(Array.isArray(data) ? data : []);
+      setPastOrders(Array.isArray(data.orders) ? data.orders : []);
+      setTotalPages(data.pages ?? 1);
     } catch {
       setPastOrders([]);
     } finally {
@@ -67,7 +70,7 @@ export function useOrders({ token = null, selectedTruck = null } = {}) {
   useEffect(() => {
     fetchCurrentOrders();
     fetchScheduledOrders();
-    fetchPastOrders(search, filterDate, showCompleted, showCancelled);
+    fetchPastOrders(search, filterDate, showCompleted, showCancelled, page);
   }, [fetchCurrentOrders, fetchScheduledOrders, fetchPastOrders]);
 
   // Auto-refresh current + scheduled orders every 10s
@@ -79,14 +82,19 @@ export function useOrders({ token = null, selectedTruck = null } = {}) {
     return () => clearInterval(id);
   }, [fetchCurrentOrders, fetchScheduledOrders]);
 
-  // Re-fetch past orders when search/filters change
+  // Reset to page 1 when filters/search change
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterDate, showCompleted, showCancelled]);
+
+  // Re-fetch past orders when search/filters/page change
   useEffect(() => {
     const timer = setTimeout(
-      () => fetchPastOrders(search, filterDate, showCompleted, showCancelled),
+      () => fetchPastOrders(search, filterDate, showCompleted, showCancelled, page),
       300
     );
     return () => clearTimeout(timer);
-  }, [search, filterDate, showCompleted, showCancelled, fetchPastOrders]);
+  }, [search, filterDate, showCompleted, showCancelled, page, fetchPastOrders]);
 
   return {
     currentOrders,
@@ -96,8 +104,10 @@ export function useOrders({ token = null, selectedTruck = null } = {}) {
     filterDate, setFilterDate,
     showCompleted, setShowCompleted,
     showCancelled, setShowCancelled,
+    page, setPage,
+    totalPages,
     loading,
     refreshCurrent: () => { fetchCurrentOrders(); fetchScheduledOrders(); },
-    refreshPast: () => fetchPastOrders(search, filterDate, showCompleted, showCancelled),
+    refreshPast: () => fetchPastOrders(search, filterDate, showCompleted, showCancelled, page),
   };
 }
