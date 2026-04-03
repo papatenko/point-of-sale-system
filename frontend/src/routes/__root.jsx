@@ -130,6 +130,12 @@ function RootLayout() {
     navigate({ to: "/auth/login" });
   };
 
+  useEffect(() => {
+  if (pathname.startsWith("http://localhost:3000/api")) {
+    navigate({ to: "/" });
+  }
+}, [pathname, navigate]);
+
   return (
     <>
       {/* Only show public navbar outside the employee dashboard */}

@@ -15,6 +15,7 @@ export function useOrders({ token = null, selectedTruck = null } = {}) {
   const [totalPages, setTotalPages] = useState(1);
 
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  
 
   const fetchCurrentOrders = useCallback(async () => {
     try {

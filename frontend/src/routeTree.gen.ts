@@ -21,6 +21,7 @@ import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
 import { Route as EmployeePosRouteImport } from './routes/employee/pos'
 import { Route as EmployeeOrdersRouteImport } from './routes/employee/orders'
 import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
+import { Route as CustomerUmaRouteImport } from './routes/customer/uma'
 import { Route as CustomerCreate_customerRouteImport } from './routes/customer/create_customer'
 import { Route as ConfirmationOrderIdRouteImport } from './routes/confirmation.$orderId'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
@@ -98,6 +99,11 @@ const EmployeeInventoryRoute = EmployeeInventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
   getParentRoute: () => EmployeeRouteRoute,
+} as any)
+const CustomerUmaRoute = CustomerUmaRouteImport.update({
+  id: '/customer/uma',
+  path: '/customer/uma',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CustomerCreate_customerRoute = CustomerCreate_customerRouteImport.update({
   id: '/customer/create_customer',
@@ -205,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
   '/customer/create_customer': typeof CustomerCreate_customerRoute
+  '/customer/uma': typeof CustomerUmaRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
   '/customer/create_customer': typeof CustomerCreate_customerRoute
+  '/customer/uma': typeof CustomerUmaRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -267,6 +275,7 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
   '/customer/create_customer': typeof CustomerCreate_customerRoute
+  '/customer/uma': typeof CustomerUmaRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -300,6 +309,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/confirmation/$orderId'
     | '/customer/create_customer'
+    | '/customer/uma'
     | '/employee/inventory'
     | '/employee/orders'
     | '/employee/pos'
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/confirmation/$orderId'
     | '/customer/create_customer'
+    | '/customer/uma'
     | '/employee/inventory'
     | '/employee/orders'
     | '/employee/pos'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/confirmation/$orderId'
     | '/customer/create_customer'
+    | '/customer/uma'
     | '/employee/inventory'
     | '/employee/orders'
     | '/employee/pos'
@@ -391,6 +403,7 @@ export interface RootRouteChildren {
   AuthSignupRoute: typeof AuthSignupRoute
   ConfirmationOrderIdRoute: typeof ConfirmationOrderIdRoute
   CustomerCreate_customerRoute: typeof CustomerCreate_customerRoute
+  CustomerUmaRoute: typeof CustomerUmaRoute
   AuthIndexRoute: typeof AuthIndexRoute
   CustomerDatabaseCustomerRoute: typeof CustomerDatabaseCustomerRoute
 }
@@ -480,6 +493,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/employee/inventory'
       preLoaderRoute: typeof EmployeeInventoryRouteImport
       parentRoute: typeof EmployeeRouteRoute
+    }
+    '/customer/uma': {
+      id: '/customer/uma'
+      path: '/customer/uma'
+      fullPath: '/customer/uma'
+      preLoaderRoute: typeof CustomerUmaRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/customer/create_customer': {
       id: '/customer/create_customer'
@@ -679,6 +699,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthSignupRoute: AuthSignupRoute,
   ConfirmationOrderIdRoute: ConfirmationOrderIdRoute,
   CustomerCreate_customerRoute: CustomerCreate_customerRoute,
+  CustomerUmaRoute: CustomerUmaRoute,
   AuthIndexRoute: AuthIndexRoute,
   CustomerDatabaseCustomerRoute: CustomerDatabaseCustomerRoute,
 }
