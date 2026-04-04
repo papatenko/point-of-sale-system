@@ -4,6 +4,7 @@ import { CheckCircle, ArrowRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import QRCode from "qrcode";
 import { formatDateTime } from "@/utils/format";
+import { getOrder } from "@/services/orders";
 
 export const Route = createFileRoute("/confirmation/$orderId")({
   component: ConfirmationPage,
@@ -47,13 +48,12 @@ function ConfirmationPage() {
   };
 
   useEffect(() => {
-    fetch(`/api/orders/${orderId}`)
-      .then((r) => r.json())
+    getOrder(orderId)
       .then((data) => {
         setOrder(data);
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [orderId]);
 
   if (loading) {

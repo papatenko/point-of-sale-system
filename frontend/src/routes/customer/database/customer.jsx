@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/database/data-table";
 import { CreateForm } from "@/components/database/create-form";
 import { Plus } from "lucide-react";
-import { GENDER_OPTIONS } from "@/data/gender";
-import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
+import { GENDER_OPTIONS } from "@/constants/gender";
+import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
 
 export const Route = createFileRoute("/customer/database/customer")({
   component: CustomersDatabaseComponent,

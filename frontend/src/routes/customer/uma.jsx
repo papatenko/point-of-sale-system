@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import HeroCarousel from "@/components/hero";
+import HeroCarousel from "@/components/common/hero";
 
 export const Route = createFileRoute('/customer/uma')({
   component: RouteComponent,

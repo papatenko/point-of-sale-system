@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { DataTable } from "@/components/database/data-table";
 import { AddDialog } from "@/components/database/add-dialog";
-import { UNIT_OPTIONS } from "@/data/units";
+import { UNIT_OPTIONS } from "@/constants/units";
 
 export const Route = createFileRoute("/employee/database/ingredients")({
   component: IngredientsDatabaseComponent,

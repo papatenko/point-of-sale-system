@@ -26,8 +26,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { GENDER_OPTIONS } from "@/data/gender";
-import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
+import { GENDER_OPTIONS } from "@/constants/gender";
+import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
 
 export const Route = createFileRoute("/employee/create/employee")({
   component: CreationComponent,

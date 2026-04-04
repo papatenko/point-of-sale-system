@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, RefreshCw, Truck, Calendar } from "lucide-react";
 import { useOrders } from "@/hooks/useOrders";
 import { formatDateTime } from "@/utils/format";
+import { getTrucks } from "@/services/trucks";
+import { updateOrderStatus } from "@/services/orders";
 
 export const Route = createFileRoute("/employee/orders")({
   component: OrdersPage,
@@ -38,8 +40,7 @@ function OrdersPage() {
 
   useEffect(() => {
     if (role !== "admin") return;
-    fetch("/api/trucks", { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json())
+    getTrucks()
       .then((data) => {
         const list = Array.isArray(data) ? data : [];
         setTrucks(list);
@@ -274,14 +275,7 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
   const handleUpdate = async (newStatus) => {
     setUpdating(true);
     try {
-      await fetch(`/api/orders/${order.checkout_id}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      await updateOrderStatus(order.checkout_id, newStatus);
       refreshCurrent?.();
       if (newStatus === "completed" || newStatus === "cancelled")
         refreshPast?.();

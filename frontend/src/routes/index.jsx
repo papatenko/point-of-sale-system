@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronRight, Truck } from "lucide-react";
-import HeroCarousel from "@/components/hero";
+import HeroCarousel from "@/components/common/hero";
 
 export const Route = createFileRoute("/")({
   component: Index,

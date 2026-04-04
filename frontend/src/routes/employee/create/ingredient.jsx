@@ -25,7 +25,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import { UNIT_OPTIONS, CATEGORY_OPTIONS } from "@/data/units";
+import { UNIT_OPTIONS, CATEGORY_OPTIONS } from "@/constants/units";
 
 export const Route = createFileRoute("/employee/create/ingredient")({
   component: CreateIngredientComponent,

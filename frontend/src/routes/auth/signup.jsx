@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { setLogin } from "@/redux/authSlice";
 import { Link } from "@tanstack/react-router";
+import { register } from "@/services/auth";
 
 export const Route = createFileRoute("/auth/signup")({
   component: SignupComponent,
@@ -35,25 +36,13 @@ function SignupComponent() {
     }
 
     try {
-      const res = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          first_name: firstName,
-          last_name: lastName,
-          phone_number: phoneNumber,
-        }),
+      const data = await register({
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+        phone_number: phoneNumber,
       });
-
-      // 
-      
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || data.error || "Registration failed");
-      }
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));

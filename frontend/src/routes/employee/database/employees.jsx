@@ -3,8 +3,8 @@ import { useState, useEffect, useMemo } from "react";
 import { DataTable } from "@/components/database/data-table";
 import { AddDialog } from "@/components/database/add-dialog";
 import { TruckFilter } from "@/components/common/truck-filter";
-import { GENDER_OPTIONS } from "@/data/gender";
-import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
+import { GENDER_OPTIONS } from "@/constants/gender";
+import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
 
 export const Route = createFileRoute("/employee/database/employees")({
   component: EmployeesDatabaseComponent,

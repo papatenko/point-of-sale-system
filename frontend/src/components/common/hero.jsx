@@ -8,11 +8,11 @@ import { motion, useScroll, useTransform } from "framer-motion";
 // import imgAmigos from "./../img/j.png";
 // import imgChica from "./../img/pink.png";
 
-import imgCamion from "./../img/8.png";    // Quitamos el doble punto ".."
-import imgChef from "./../img/9.png";          // Corregido .pgn -> .png y doble slash //
-import imgEstudiante from "./../img/10.png";    // Añadida extensión .png necesaria
-import imgAmigos from "./../img/11.png";
-import imgChica from "./../img/12.png";
+import imgCamion from "../../img/8.png";
+import imgChef from "../../img/9.png";
+import imgEstudiante from "../../img/10.png";
+import imgAmigos from "../../img/11.png";
+import imgChica from "../../img/12.png";
 
 const layers = [
   { id: 1, img: imgCamion, x: "0%", yStart: "100vh", size: "w-[100%]", z: 10 }, // El camión, más al fondo
