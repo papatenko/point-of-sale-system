@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle, ArrowRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import QRCode from "qrcode";
+import { formatDateTime } from "@/utils/format";
 
 export const Route = createFileRoute("/confirmation/$orderId")({
   component: ConfirmationPage,
@@ -14,36 +15,36 @@ function ConfirmationPage() {
   const [loading, setLoading] = useState(true);
 
   const handleDownloadQR = async () => {
-  if (!order) return;
+    if (!order) return;
 
-  const ticketData = {
-    orderId: orderId,
-    orderNumber: order.orderNumber,
-    items: order.items.map((item) => ({
-      name: item.name,
-      quantity: item.quantity,
-      price: parseFloat(item.lineTotal).toFixed(2),
-    })),
-    total: parseFloat(order.totalPrice).toFixed(2),
-    orderType: order.orderType,
-    payment: paymentLabels[order.paymentMethod] ?? order.paymentMethod,
-    status: order.orderStatus,
-    email: order.customerEmail ?? "",
+    const ticketData = {
+      orderId: orderId,
+      orderNumber: order.orderNumber,
+      items: order.items.map((item) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: parseFloat(item.lineTotal).toFixed(2),
+      })),
+      total: parseFloat(order.totalPrice).toFixed(2),
+      orderType: order.orderType,
+      payment: paymentLabels[order.paymentMethod] ?? order.paymentMethod,
+      status: order.orderStatus,
+      email: order.customerEmail ?? "",
+    };
+
+    const qrString = JSON.stringify(ticketData, null, 2);
+
+    try {
+      const url = await QRCode.toDataURL(qrString);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `ticket-${order.orderNumber}.png`;
+      link.click();
+    } catch (err) {
+      console.error(err);
+    }
   };
-
-  const qrString = JSON.stringify(ticketData, null, 2);
-
-  try {
-    const url = await QRCode.toDataURL(qrString);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `ticket-${order.orderNumber}.png`;
-    link.click();
-  } catch (err) {
-    console.error(err);
-  }
-};
 
   useEffect(() => {
     fetch(`/api/orders/${orderId}`)
@@ -67,8 +68,13 @@ function ConfirmationPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <p className="text-2xl font-bold text-foreground mb-2">Order Not Found</p>
-          <p className="text-muted-foreground mb-6">We couldn't find that order. It may have been removed or the link is invalid.</p>
+          <p className="text-2xl font-bold text-foreground mb-2">
+            Order Not Found
+          </p>
+          <p className="text-muted-foreground mb-6">
+            We couldn't find that order. It may have been removed or the link is
+            invalid.
+          </p>
           <Link to="/order">
             <Button className="bg-amber-600 hover:bg-amber-700 text-white">
               Browse Menu
@@ -91,9 +97,14 @@ function ConfirmationPage() {
         {/* Success header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/40 mb-4">
-            <CheckCircle size={44} className="text-green-500 dark:text-green-400" />
+            <CheckCircle
+              size={44}
+              className="text-green-500 dark:text-green-400"
+            />
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Order Confirmed!</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Order Confirmed!
+          </h1>
           <p className="text-muted-foreground mt-2">
             Order{" "}
             <span className="font-semibold text-foreground">
@@ -114,7 +125,9 @@ function ConfirmationPage() {
 
         {/* Order items */}
         <div className="bg-background rounded-xl shadow-sm border p-6 mb-4">
-          <h2 className="font-semibold text-base mb-4 text-foreground">Items Ordered</h2>
+          <h2 className="font-semibold text-base mb-4 text-foreground">
+            Items Ordered
+          </h2>
           <div className="space-y-3">
             {order.items.map((item) => (
               <div
@@ -123,7 +136,9 @@ function ConfirmationPage() {
               >
                 <span className="text-foreground">
                   {item.name}{" "}
-                  <span className="text-muted-foreground">×{item.quantity}</span>
+                  <span className="text-muted-foreground">
+                    ×{item.quantity}
+                  </span>
                 </span>
                 <span className="font-medium text-foreground">
                   ${parseFloat(item.lineTotal).toFixed(2)}
@@ -161,15 +176,7 @@ function ConfirmationPage() {
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Order Placed</span>
               <span className="font-medium text-foreground">
-                {new Date(
-                  // date_created is a TIMESTAMP stored as UTC — append Z so browser converts to local
-                  typeof order.dateCreated === "string"
-                    ? order.dateCreated.replace(" ", "T") + "Z"
-                    : order.dateCreated
-                ).toLocaleString([], {
-                  month: "short", day: "numeric",
-                  hour: "2-digit", minute: "2-digit",
-                })}
+                {formatDateTime(order.dateCreated)}
               </span>
             </div>
           )}
@@ -177,24 +184,20 @@ function ConfirmationPage() {
             <span className="text-muted-foreground">Scheduled Pickup</span>
             <span className="font-medium text-foreground">
               {order.scheduledTime
-                ? new Date(
-                    // scheduled_time is a DATETIME (local, no TZ) — parse as local
-                    order.scheduledTime.replace(" ", "T")
-                  ).toLocaleString([], {
-                    month: "short", day: "numeric",
-                    hour: "2-digit", minute: "2-digit",
-                  })
+                ? formatDateTime(order.scheduledTime)
                 : "As soon as ready"}
             </span>
           </div>
           {order.customerEmail && (
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Email</span>
-              <span className="font-medium text-foreground">{order.customerEmail}</span>
+              <span className="font-medium text-foreground">
+                {order.customerEmail}
+              </span>
             </div>
           )}
         </div>
-          <Button
+        <Button
           onClick={handleDownloadQR}
           className="w-full bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center gap-2 mb-4"
         >

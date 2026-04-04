@@ -6,29 +6,23 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, RefreshCw, Truck, Calendar } from "lucide-react";
 import { useOrders } from "@/hooks/useOrders";
+import { formatDateTime } from "@/utils/format";
 
 export const Route = createFileRoute("/employee/orders")({
   component: OrdersPage,
 });
 
 const STATUS_COLORS = {
-  pending:   "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800",
-  preparing: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800",
-  ready:     "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800",
+  pending:
+    "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800",
+  preparing:
+    "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800",
+  ready:
+    "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800",
   completed: "bg-muted text-muted-foreground border-border",
-  cancelled: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800",
+  cancelled:
+    "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800",
 };
-
-function formatDateTime(raw) {
-  if (!raw) return null;
-  // date_created is a TIMESTAMP stored as UTC — append Z so browser converts to local
-  const iso = typeof raw === "string" ? raw.replace(" ", "T") + "Z" : raw;
-  const d = new Date(iso);
-  return d.toLocaleString([], {
-    month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
-}
 
 function OrdersPage() {
   const token = localStorage.getItem("token");
@@ -55,14 +49,23 @@ function OrdersPage() {
   }, [role]);
 
   const {
-    currentOrders, scheduledOrders, pastOrders,
-    search, setSearch,
-    filterDate, setFilterDate,
-    showCompleted, setShowCompleted,
-    showCancelled, setShowCancelled,
-    page, setPage, totalPages,
+    currentOrders,
+    scheduledOrders,
+    pastOrders,
+    search,
+    setSearch,
+    filterDate,
+    setFilterDate,
+    showCompleted,
+    setShowCompleted,
+    showCancelled,
+    setShowCancelled,
+    page,
+    setPage,
+    totalPages,
     loading,
-    refreshCurrent, refreshPast,
+    refreshCurrent,
+    refreshPast,
   } = useOrders({ token, selectedTruck });
 
   return (
@@ -109,7 +112,7 @@ function OrdersPage() {
         </TabsList>
 
         {/* ── Current Orders ── */}
-          <TabsContent value="current">
+        <TabsContent value="current">
           <div className="flex items-center gap-1.5 mb-3 text-xs text-muted-foreground">
             <RefreshCw size={11} />
             Auto-refreshes every 10s
@@ -125,7 +128,7 @@ function OrdersPage() {
         </TabsContent>
 
         {/* ── Scheduled Orders ── */}
-          <TabsContent value="scheduled">
+        <TabsContent value="scheduled">
           <div className="flex items-center gap-1.5 mb-3 text-xs text-muted-foreground">
             <RefreshCw size={11} />
             Auto-refreshes every 10s
@@ -146,7 +149,10 @@ function OrdersPage() {
           <div className="flex flex-wrap gap-3 mb-4 items-center">
             {/* Search */}
             <div className="relative flex-1 min-w-[180px]">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search
+                size={15}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
               <Input
                 placeholder="Search by order # or transaction ID..."
                 value={search}
@@ -217,9 +223,20 @@ function OrdersPage() {
   );
 }
 
-function OrderList({ orders, loading, showActions = false, token, refreshCurrent, refreshPast }) {
-  if (loading) return <p className="text-muted-foreground py-8 text-center">Loading...</p>;
-  if (orders.length === 0) return <p className="text-muted-foreground py-8 text-center">No orders found.</p>;
+function OrderList({
+  orders,
+  loading,
+  showActions = false,
+  token,
+  refreshCurrent,
+  refreshPast,
+}) {
+  if (loading)
+    return <p className="text-muted-foreground py-8 text-center">Loading...</p>;
+  if (orders.length === 0)
+    return (
+      <p className="text-muted-foreground py-8 text-center">No orders found.</p>
+    );
 
   return (
     <div className="space-y-3">
@@ -240,12 +257,15 @@ function OrderList({ orders, loading, showActions = false, token, refreshCurrent
 function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
   const [updating, setUpdating] = useState(false);
 
-  const isReady     = order.order_status === "ready";
+  const isReady = order.order_status === "ready";
   const isPreparing = order.order_status === "preparing";
 
   const scheduledLabel = order.scheduled_time
     ? new Date(order.scheduled_time.replace(" ", "T")).toLocaleString([], {
-        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       })
     : null;
 
@@ -263,7 +283,8 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
         body: JSON.stringify({ status: newStatus }),
       });
       refreshCurrent?.();
-      if (newStatus === "completed" || newStatus === "cancelled") refreshPast?.();
+      if (newStatus === "completed" || newStatus === "cancelled")
+        refreshPast?.();
     } finally {
       setUpdating(false);
     }
@@ -272,27 +293,40 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
   return (
     <Card
       className={`shadow-sm transition-all ${
-        isReady     ? "ring-2 ring-green-400 dark:ring-green-600 bg-green-50/40 dark:bg-green-950/20" :
-        isPreparing ? "ring-2 ring-blue-300 dark:ring-blue-600 bg-blue-50/30 dark:bg-blue-950/20"  : ""
+        isReady
+          ? "ring-2 ring-green-400 dark:ring-green-600 bg-green-50/40 dark:bg-green-950/20"
+          : isPreparing
+            ? "ring-2 ring-blue-300 dark:ring-blue-600 bg-blue-50/30 dark:bg-blue-950/20"
+            : ""
       }`}
     >
       <CardHeader className="py-3 px-4 flex flex-row items-center justify-between space-y-0">
         <div className="flex items-center gap-3 flex-wrap">
           <div>
-            <p className="text-xs text-muted-foreground leading-none mb-0.5">Transaction ID</p>
-            <CardTitle className="text-sm font-semibold">#{order.checkout_id}</CardTitle>
+            <p className="text-xs text-muted-foreground leading-none mb-0.5">
+              Transaction ID
+            </p>
+            <CardTitle className="text-sm font-semibold">
+              #{order.checkout_id}
+            </CardTitle>
           </div>
           <div className="w-px h-6 bg-border" />
           <div>
-            <p className="text-xs text-muted-foreground leading-none mb-0.5">Order #</p>
+            <p className="text-xs text-muted-foreground leading-none mb-0.5">
+              Order #
+            </p>
             <p className="text-sm font-semibold">{order.order_number}</p>
           </div>
           {createdLabel && (
             <>
               <div className="w-px h-6 bg-border" />
               <div>
-                <p className="text-xs text-muted-foreground leading-none mb-0.5">Date & Time</p>
-                <p className="text-sm font-medium text-foreground">{createdLabel}</p>
+                <p className="text-xs text-muted-foreground leading-none mb-0.5">
+                  Date & Time
+                </p>
+                <p className="text-sm font-medium text-foreground">
+                  {createdLabel}
+                </p>
               </div>
             </>
           )}
@@ -300,13 +334,19 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
             <>
               <div className="w-px h-6 bg-border" />
               <div>
-                <p className="text-xs text-muted-foreground leading-none mb-0.5">Location</p>
-                <p className="text-sm font-medium text-foreground">{order.truck_location}</p>
+                <p className="text-xs text-muted-foreground leading-none mb-0.5">
+                  Location
+                </p>
+                <p className="text-sm font-medium text-foreground">
+                  {order.truck_location}
+                </p>
               </div>
             </>
           )}
         </div>
-        <Badge className={`text-xs font-medium border ${STATUS_COLORS[order.order_status] ?? "bg-muted text-muted-foreground"}`}>
+        <Badge
+          className={`text-xs font-medium border ${STATUS_COLORS[order.order_status] ?? "bg-muted text-muted-foreground"}`}
+        >
           {order.order_status}
         </Badge>
       </CardHeader>
@@ -317,12 +357,16 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
           <ul className="mb-4 space-y-1">
             {order.items.split(" | ").map((item, i) => {
               const match = item.match(/^(\d+)x\s+(.+)$/);
-              const qty  = match ? match[1] : "?";
+              const qty = match ? match[1] : "?";
               const name = match ? match[2] : item;
               return (
                 <li key={i} className="flex items-baseline gap-2">
-                  <span className="text-amber-600 font-bold text-base w-8 shrink-0">{qty}×</span>
-                  <span className="text-base font-semibold text-foreground">{name}</span>
+                  <span className="text-amber-600 font-bold text-base w-8 shrink-0">
+                    {qty}×
+                  </span>
+                  <span className="text-base font-semibold text-foreground">
+                    {name}
+                  </span>
                 </li>
               );
             })}
@@ -331,11 +375,17 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
 
         {/* Order meta */}
         <div className="flex gap-4 flex-wrap pt-1 border-t border-border text-muted-foreground">
-          <span className="capitalize">{order.order_type?.replace("-", " ")}</span>
-          <span className="font-medium text-foreground">${parseFloat(order.total_price).toFixed(2)}</span>
+          <span className="capitalize">
+            {order.order_type?.replace("-", " ")}
+          </span>
+          <span className="font-medium text-foreground">
+            ${parseFloat(order.total_price).toFixed(2)}
+          </span>
           <span>{order.payment_method}</span>
           {scheduledLabel && (
-            <span className="text-amber-600 font-medium">Pickup: {scheduledLabel}</span>
+            <span className="text-amber-600 font-medium">
+              Pickup: {scheduledLabel}
+            </span>
           )}
           {order.customer_email && (
             <span>
