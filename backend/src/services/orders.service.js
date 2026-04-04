@@ -28,27 +28,37 @@ export async function listOrders(db, req, url) {
 
   // Only admin can switch trucks via ?truck= param
   const effectiveTruck = (role === "admin" && truckParam) ? truckParam : jwtLicensePlate;
+  const isCustomer = payload?.user_type === "customer";
 
   // Promote eligible pending orders → preparing
-  if (effectiveTruck && status?.includes("pending")) {
-    // Set session var so the deduct_inventory_on_preparing trigger can populate adjusted_by
-    const employeeEmail = payload?.email ?? null;
-    await db.query(`SET @current_employee_email = ?`, [employeeEmail]);
-    await db.query(
-      `UPDATE checkout
-       SET order_status = 'preparing'
-       WHERE order_status = 'pending'
-         AND license_plate = ?
-         AND (scheduled_time IS NULL OR scheduled_time <= DATE_ADD(NOW(), INTERVAL 10 MINUTE))`,
-      [effectiveTruck],
-    );
+  if (!isCustomer && effectiveTruck && status?.includes("pending")) {
+    try {
+      // Set session var so the deduct_inventory_on_preparing trigger can populate adjusted_by
+      const employeeEmail = payload?.email ?? null;
+      await db.query(`SET @current_employee_email = ?`, [employeeEmail]);
+      await db.query(
+        `UPDATE checkout
+         SET order_status = 'preparing'
+         WHERE order_status = 'pending'
+           AND license_plate = ?
+           AND (scheduled_time IS NULL OR scheduled_time <= DATE_ADD(NOW(), INTERVAL 10 MINUTE))`,
+        [effectiveTruck],
+      );
+    } catch (promoteErr) {
+      // If the trigger or update fails, log and continue — don't block the fetch
+      console.error("Order promotion failed:", promoteErr.message);
+    }
   }
 
   // Build WHERE clause separately so it can be reused for COUNT
   let where = ` WHERE 1=1`;
   const params = [];
 
-  if (effectiveTruck) {
+  if (isCustomer) {
+    // Customer sees only their own orders (filtered by email in JWT)
+    where += ` AND c.customer_email = ?`;
+    params.push(payload.email);
+  } else if (effectiveTruck) {
     where += ` AND c.license_plate = ?`;
     params.push(effectiveTruck);
   }
@@ -89,7 +99,7 @@ export async function listOrders(db, req, url) {
                               c.scheduled_time, c.license_plate, c.date_created,
                               u.phone_number AS customer_phone,
                               ft.current_location AS truck_location,
-                              GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ', ') AS items
+                              GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ' | ') AS items
                        FROM checkout c
                        LEFT JOIN order_items oi ON oi.order_id = c.checkout_id
                        LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
@@ -109,7 +119,7 @@ export async function listOrders(db, req, url) {
                             c.scheduled_time, c.license_plate, c.date_created,
                             u.phone_number AS customer_phone,
                             ft.current_location AS truck_location,
-                            GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ', ') AS items
+                            GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ' | ') AS items
                      FROM checkout c
                      LEFT JOIN order_items oi ON oi.order_id = c.checkout_id
                      LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id

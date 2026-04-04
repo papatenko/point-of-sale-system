@@ -16,6 +16,7 @@ export async function createCheckout(db, body, req = null) {
     paymentMethod,
     licensePlate: bodyLicensePlate,
     scheduledTime,
+    scheduledDate,
     items,
   } = body;
 
@@ -38,48 +39,54 @@ export async function createCheckout(db, body, req = null) {
 
   // Determine scheduled datetime
   let scheduledMysql = null;
-  if (scheduledTime) {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const outsideHours = currentHour < 10 || currentHour >= 22;
-
-    // Use tomorrow's date if ordering after closing or before opening
-    const targetDate = new Date(now);
-    if (outsideHours) targetDate.setDate(targetDate.getDate() + 1);
-    const dateStr = targetDate.toISOString().split("T")[0];
-
-    const dt = new Date(`${dateStr}T${scheduledTime}:00`);
+  if (scheduledTime && scheduledDate) {
+    const dt = new Date(`${scheduledDate}T${scheduledTime}:00`);
     const h = dt.getHours();
     if (h < 10 || h >= 22) {
       throw new Error("Scheduled time must be between 10:00 AM and 10:00 PM.");
     }
-    scheduledMysql = `${dateStr} ${scheduledTime}:00`;
+    scheduledMysql = `${scheduledDate} ${scheduledTime}:00`;
   }
-  // Walk-in and unscheduled online orders both use NULL scheduled_time
 
-  // Incremental order number per truck per day (resets daily)
+  // Determine order date for numbering: use scheduled date if provided, else today (local)
+  const orderDate = scheduledMysql
+    ? scheduledMysql.split(" ")[0]
+    : (() => {
+        const now = new Date();
+        const y = now.getFullYear();
+        const mo = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        return `${y}-${mo}-${d}`;
+      })();
+
+  // Incremental order number per truck per day, keyed to the order's target date
   const [[{ nextNum }]] = await db.query(
     `SELECT COALESCE(MAX(
        CASE WHEN order_number REGEXP '^[0-9]+$'
          THEN CAST(order_number AS UNSIGNED) ELSE 0 END
      ), 0) + 1 AS nextNum
      FROM checkout
-     WHERE license_plate = ? AND DATE(COALESCE(scheduled_time, NOW())) = CURDATE()`,
-    [licensePlate],
+     WHERE license_plate = ?
+       AND DATE(COALESCE(scheduled_time, date_created)) = ?`,
+    [licensePlate, orderDate],
   );
   const orderNumber = String(nextNum);
 
-  // Insert checkout with a placeholder total (will update after order_items trigger runs)
+  // ASAP online orders go straight to preparing; scheduled orders start as pending
+  const initialStatus =
+    orderType === "online-pickup" && !scheduledMysql ? "preparing" : "pending";
+
   const [result] = await db.query(
     `INSERT INTO checkout
        (order_number, license_plate, customer_email, order_type, order_status,
         scheduled_time, total_price, payment_method, payment_status)
-     VALUES (?, ?, ?, ?, 'pending', ?, 0, ?, 'pending')`,
+     VALUES (?, ?, ?, ?, ?, ?, 0, ?, 'pending')`,
     [
       orderNumber,
       licensePlate,
       customerEmail || null,
       orderType,
+      initialStatus,
       scheduledMysql,
       paymentMethod,
     ],
@@ -87,7 +94,6 @@ export async function createCheckout(db, body, req = null) {
   const orderId = result.insertId;
 
   for (const item of items) {
-    // Insert with any value, trigger will set correct line_total_price
     await db.query(
       `INSERT INTO order_items (order_id, menu_item_id, quantity, line_total_price)
        VALUES (?, ?, ?, 0)`,
@@ -95,14 +101,14 @@ export async function createCheckout(db, body, req = null) {
     );
   }
 
-  // Now sum the (possibly discounted) order_items and update checkout
+  // Sum order_items and update checkout total
   const [[{ total }]] = await db.query(
     `SELECT SUM(line_total_price) AS total FROM order_items WHERE order_id = ?`,
-    [orderId]
+    [orderId],
   );
   await db.query(
     `UPDATE checkout SET total_price = ? WHERE checkout_id = ?`,
-    [total, orderId]
+    [total, orderId],
   );
 
   return { orderId, orderNumber };

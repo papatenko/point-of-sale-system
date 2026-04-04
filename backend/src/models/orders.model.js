@@ -9,6 +9,8 @@ export async function findById(db, orderId) {
        c.payment_method,
        c.payment_status,
        c.customer_email,
+       c.scheduled_time,
+       c.date_created,
        oi.order_item_id,
        oi.menu_item_id,
        oi.quantity,
@@ -32,6 +34,8 @@ export async function findById(db, orderId) {
     paymentMethod: rows[0].payment_method,
     paymentStatus: rows[0].payment_status,
     customerEmail: rows[0].customer_email,
+    scheduledTime: rows[0].scheduled_time ?? null,
+    dateCreated: rows[0].date_created ?? null,
     items: rows
       .filter((r) => r.order_item_id !== null)
       .map((r) => ({

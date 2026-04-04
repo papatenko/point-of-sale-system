@@ -21,7 +21,9 @@ const STATUS_COLORS = {
 
 function formatDateTime(raw) {
   if (!raw) return null;
-  const d = new Date(raw);
+  // date_created is a TIMESTAMP stored as UTC — append Z so browser converts to local
+  const iso = typeof raw === "string" ? raw.replace(" ", "T") + "Z" : raw;
+  const d = new Date(iso);
   return d.toLocaleString([], {
     month: "short", day: "numeric",
     hour: "2-digit", minute: "2-digit",
@@ -242,7 +244,9 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
   const isPreparing = order.order_status === "preparing";
 
   const scheduledLabel = order.scheduled_time
-    ? new Date(order.scheduled_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    ? new Date(order.scheduled_time.replace(" ", "T")).toLocaleString([], {
+        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+      })
     : null;
 
   const createdLabel = formatDateTime(order.date_created);
@@ -301,11 +305,6 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
               </div>
             </>
           )}
-          {(isReady || isPreparing) && (
-            <span className={`text-xs font-medium flex items-center gap-1 ${isReady ? "text-green-600 dark:text-green-400" : "text-blue-500 dark:text-blue-400"}`}>
-              ● {isReady ? "Ready" : "Priority"}
-            </span>
-          )}
         </div>
         <Badge className={`text-xs font-medium border ${STATUS_COLORS[order.order_status] ?? "bg-muted text-muted-foreground"}`}>
           {order.order_status}
@@ -316,7 +315,7 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
         {/* Order items — large and clear for cooks */}
         {order.items && (
           <ul className="mb-4 space-y-1">
-            {order.items.split(", ").map((item, i) => {
+            {order.items.split(" | ").map((item, i) => {
               const match = item.match(/^(\d+)x\s+(.+)$/);
               const qty  = match ? match[1] : "?";
               const name = match ? match[2] : item;

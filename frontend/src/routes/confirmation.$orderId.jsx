@@ -157,6 +157,36 @@ function ConfirmationPage() {
               {order.orderStatus}
             </span>
           </div>
+          {order.dateCreated && (
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Order Placed</span>
+              <span className="font-medium text-foreground">
+                {new Date(
+                  // date_created is a TIMESTAMP stored as UTC — append Z so browser converts to local
+                  typeof order.dateCreated === "string"
+                    ? order.dateCreated.replace(" ", "T") + "Z"
+                    : order.dateCreated
+                ).toLocaleString([], {
+                  month: "short", day: "numeric",
+                  hour: "2-digit", minute: "2-digit",
+                })}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Scheduled Pickup</span>
+            <span className="font-medium text-foreground">
+              {order.scheduledTime
+                ? new Date(
+                    // scheduled_time is a DATETIME (local, no TZ) — parse as local
+                    order.scheduledTime.replace(" ", "T")
+                  ).toLocaleString([], {
+                    month: "short", day: "numeric",
+                    hour: "2-digit", minute: "2-digit",
+                  })
+                : "As soon as ready"}
+            </span>
+          </div>
           {order.customerEmail && (
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Email</span>
