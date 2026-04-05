@@ -22,7 +22,6 @@ import { Route as EmployeePosRouteImport } from './routes/employee/pos'
 import { Route as EmployeeOrdersRouteImport } from './routes/employee/orders'
 import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
 import { Route as CustomerUmaRouteImport } from './routes/customer/uma'
-import { Route as CustomerCreate_customerRouteImport } from './routes/customer/create_customer'
 import { Route as ConfirmationOrderIdRouteImport } from './routes/confirmation.$orderId'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
@@ -35,7 +34,6 @@ import { Route as EmployeeDatabaseFoodTrucksRouteImport } from './routes/employe
 import { Route as EmployeeDatabaseEmployeesRouteImport } from './routes/employee/database/employees'
 import { Route as EmployeeDatabaseCustomersRouteImport } from './routes/employee/database/customers'
 import { Route as EmployeeDatabaseBackupRouteImport } from './routes/employee/database/backup'
-import { Route as CustomerDatabaseCustomerRouteImport } from './routes/customer/database/customer'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -100,11 +98,6 @@ const EmployeeInventoryRoute = EmployeeInventoryRouteImport.update({
 const CustomerUmaRoute = CustomerUmaRouteImport.update({
   id: '/customer/uma',
   path: '/customer/uma',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CustomerCreate_customerRoute = CustomerCreate_customerRouteImport.update({
-  id: '/customer/create_customer',
-  path: '/customer/create_customer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfirmationOrderIdRoute = ConfirmationOrderIdRouteImport.update({
@@ -173,12 +166,6 @@ const EmployeeDatabaseBackupRoute = EmployeeDatabaseBackupRouteImport.update({
   path: '/backup',
   getParentRoute: () => EmployeeDatabaseRouteRoute,
 } as any)
-const CustomerDatabaseCustomerRoute =
-  CustomerDatabaseCustomerRouteImport.update({
-    id: '/customer/database/customer',
-    path: '/customer/database/customer',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -190,7 +177,6 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
-  '/customer/create_customer': typeof CustomerCreate_customerRoute
   '/customer/uma': typeof CustomerUmaRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/orders': typeof EmployeeOrdersRoute
@@ -199,7 +185,6 @@ export interface FileRoutesByFullPath {
   '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
   '/employee/': typeof EmployeeIndexRoute
-  '/customer/database/customer': typeof CustomerDatabaseCustomerRoute
   '/employee/database/backup': typeof EmployeeDatabaseBackupRoute
   '/employee/database/customers': typeof EmployeeDatabaseCustomersRoute
   '/employee/database/employees': typeof EmployeeDatabaseEmployeesRoute
@@ -218,7 +203,6 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
-  '/customer/create_customer': typeof CustomerCreate_customerRoute
   '/customer/uma': typeof CustomerUmaRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/orders': typeof EmployeeOrdersRoute
@@ -227,7 +211,6 @@ export interface FileRoutesByTo {
   '/employee/search': typeof EmployeeSearchRoute
   '/auth': typeof AuthIndexRoute
   '/employee': typeof EmployeeIndexRoute
-  '/customer/database/customer': typeof CustomerDatabaseCustomerRoute
   '/employee/database/backup': typeof EmployeeDatabaseBackupRoute
   '/employee/database/customers': typeof EmployeeDatabaseCustomersRoute
   '/employee/database/employees': typeof EmployeeDatabaseEmployeesRoute
@@ -248,7 +231,6 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
-  '/customer/create_customer': typeof CustomerCreate_customerRoute
   '/customer/uma': typeof CustomerUmaRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/orders': typeof EmployeeOrdersRoute
@@ -257,7 +239,6 @@ export interface FileRoutesById {
   '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
   '/employee/': typeof EmployeeIndexRoute
-  '/customer/database/customer': typeof CustomerDatabaseCustomerRoute
   '/employee/database/backup': typeof EmployeeDatabaseBackupRoute
   '/employee/database/customers': typeof EmployeeDatabaseCustomersRoute
   '/employee/database/employees': typeof EmployeeDatabaseEmployeesRoute
@@ -279,7 +260,6 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
-    | '/customer/create_customer'
     | '/customer/uma'
     | '/employee/inventory'
     | '/employee/orders'
@@ -288,7 +268,6 @@ export interface FileRouteTypes {
     | '/employee/search'
     | '/auth/'
     | '/employee/'
-    | '/customer/database/customer'
     | '/employee/database/backup'
     | '/employee/database/customers'
     | '/employee/database/employees'
@@ -307,7 +286,6 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
-    | '/customer/create_customer'
     | '/customer/uma'
     | '/employee/inventory'
     | '/employee/orders'
@@ -316,7 +294,6 @@ export interface FileRouteTypes {
     | '/employee/search'
     | '/auth'
     | '/employee'
-    | '/customer/database/customer'
     | '/employee/database/backup'
     | '/employee/database/customers'
     | '/employee/database/employees'
@@ -336,7 +313,6 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
-    | '/customer/create_customer'
     | '/customer/uma'
     | '/employee/inventory'
     | '/employee/orders'
@@ -345,7 +321,6 @@ export interface FileRouteTypes {
     | '/employee/search'
     | '/auth/'
     | '/employee/'
-    | '/customer/database/customer'
     | '/employee/database/backup'
     | '/employee/database/customers'
     | '/employee/database/employees'
@@ -365,10 +340,8 @@ export interface RootRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
   ConfirmationOrderIdRoute: typeof ConfirmationOrderIdRoute
-  CustomerCreate_customerRoute: typeof CustomerCreate_customerRoute
   CustomerUmaRoute: typeof CustomerUmaRoute
   AuthIndexRoute: typeof AuthIndexRoute
-  CustomerDatabaseCustomerRoute: typeof CustomerDatabaseCustomerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -464,13 +437,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomerUmaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/customer/create_customer': {
-      id: '/customer/create_customer'
-      path: '/customer/create_customer'
-      fullPath: '/customer/create_customer'
-      preLoaderRoute: typeof CustomerCreate_customerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/confirmation/$orderId': {
       id: '/confirmation/$orderId'
       path: '/confirmation/$orderId'
@@ -555,13 +521,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeDatabaseBackupRouteImport
       parentRoute: typeof EmployeeDatabaseRouteRoute
     }
-    '/customer/database/customer': {
-      id: '/customer/database/customer'
-      path: '/customer/database/customer'
-      fullPath: '/customer/database/customer'
-      preLoaderRoute: typeof CustomerDatabaseCustomerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -625,10 +584,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
   ConfirmationOrderIdRoute: ConfirmationOrderIdRoute,
-  CustomerCreate_customerRoute: CustomerCreate_customerRoute,
   CustomerUmaRoute: CustomerUmaRoute,
   AuthIndexRoute: AuthIndexRoute,
-  CustomerDatabaseCustomerRoute: CustomerDatabaseCustomerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
