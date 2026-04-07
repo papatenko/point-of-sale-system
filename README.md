@@ -1,82 +1,157 @@
-# Point of Sale
+# Shako Kabob — Point of Sale System
 
-# Frontend
+**Live Demo:** [pos.papatenko.org](https://pos.papatenko.org)
 
-## Views / Frontend Components
+---
 
-### Transactions Views
-- **Staff Transactions** – For employees to process customer purchases.
+## Overview
 
-### Product / Inventory Views
-- **Products / Inventory** – Display all items with price, available quantity, tags, reviews, and images.
+Shako Kabob is a full-stack Point of Sale (POS) system built for a food truck operation. It supports both customer-facing online ordering and employee-facing POS, inventory, and management features.
 
-#### Store Items
-| Field | Description |
-|-------|-------------|
-| ID | Unique item identifier |
-| Name | Item name |
-| Price | Item price |
-| Reviews | Customer reviews |
+---
 
-- **Cart View** – Shows items added to the cart; accessible by both customers and staff.
+## Tech Stack
 
-### User / Account Views
-- **Customers** – Customer account information:
-  - Name
-  - Phone Number
-  - Address
-  - Purchase History / Receipts
-  - Payment History
-  - Loyalty Points
-  - Favorites
+### Frontend
 
-- **Shopping Cart / My Cart** – Customers can view, add, or remove items from their cart.
+- **Vite** — Build tool and dev server
+- **React 19** — UI framework
+- **TanStack Router** — Client-side routing
+- **Tailwind CSS v4** — Styling with shadcn/ui components
+- **Recharts** — Sales charts and reporting visualizations
+- **React Hook Form + Zod** — Form validation
 
-### Staff Views
-- **Employees** – Employee management dashboard for:
-  - Cashiers
-  - Self-Transactions Staff
-  - Managers
-  - Inventory *(if a customer asks, they should be able to check if an item is in stock)*
+### Backend
 
-- **Managers** – Full dashboard to manage:
-  - Inventory (add more of an item or add a new item)
-  - Employees
-  - Customer Data
+- **Node.js (ES Modules)** — API server runtime
+- **MySQL 2** — Database driver with connection pooling
+- **bcrypt** — Password hashing
+- **JSON Web Tokens** — Session/auth management
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+### Infrastructure
 
-## Getting Started
+- **Turbo** — Monorepo task runner
+- **Docker** — Containerized deployment
+- **GitHub Actions + Coolify** — CI/CD and deployment automation
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Project Structure
+
+```
+.
+├── backend/               # Node.js API server
+│   └── src/
+│       ├── server.js      # HTTP server entry point
+│       ├── routes.js      # Route definitions and handler mapping
+│       ├── database.js    # MySQL connection pool
+│       ├── auth/          # JWT login/register logic
+│       ├── models/        # Report data models
+│       ├── services/      # Business logic (users, orders, inventory, etc.)
+│       ├── utils/         # Router helper
+│       └── .env           # Environment variables (see below)
+│
+├── frontend/              # React SPA
+│   ├── src/
+│   │   ├── routes/       # Page components (auth, customer, employee)
+│   │   ├── components/   # UI components (ui/, order/, layout/)
+│   │   ├── services/     # API client functions
+│   │   ├── redux/        # State management slices
+│   │   ├── hooks/        # Custom React hooks
+│   │   ├── constants/    # Lookup data (genders, units, etc.)
+│   │   └── index.css     # Tailwind + base styles
+│   ├── dist/             # Production build output
+│   └── vite.config.js    # Vite configuration
+│
+├── db/                   # Database scripts
+│   ├── db.sql            # Full schema (tables, triggers, constraints)
+│   ├── PoS_System_dump.sql # Full data dump with sample data
+│   └── seed_menu.sql     # Minimal seed (truck + menu items)
+│
+├── .github/workflows/     # CI/CD
+│   └── deploy.yml        # Triggers Coolify redeploy on push to main
+│
+├── Dockerfile            # Multi-stage Docker image
+├── turbo.json            # Turbo monorepo config
+└── package.json          # Root workspace config
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `backend/.env` with the following:
 
-## Learn More
+```env
+DB_HOST=<your-mysql-host>
+DB_USER=<your-mysql-user>
+DB_PASSWORD=<your-mysql-password>
+DB_NAME=<your-database-name>
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Installation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Steps
 
-## Deploy on Vercel
+**1. Clone the repository**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+git clone <repo-url>
+cd point-of-sale-system
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**2. Install dependencies**
+
+```bash
+npm install
+```
+
+**3. Set up the database**
+
+Create a MySQL database, then run the schema:
+
+```bash
+mysql -u root -p <database-name> < db/db.sql
+```
+
+Option A — Full data dump with sample data:
+
+```bash
+mysql -u root -p <database-name> < db/PoS_System_dump.sql
+```
+
+Option B — Minimal seed (only the default truck + menu items):
+
+```bash
+mysql -u root -p <database-name> < db/seed_menu.sql
+```
+
+**4. Configure environment variables**
+
+```bash
+cd backend
+cp .env.example .env   # if an example exists
+# Edit .env with your MySQL credentials
+```
+
+---
+
+## Running in Production
+
+### Docker
+
+```bash
+docker build -t shako-pos .
+docker run -p 3000:3000 --env-file backend/.env shako-pos
+```
+
+### Manual Build
+
+```bash
+npm run build           # Builds frontend into frontend/dist/
+npm run start           # Starts backend server on port 3000
+```
+
+The backend serves the built frontend from `frontend/dist/` automatically.
