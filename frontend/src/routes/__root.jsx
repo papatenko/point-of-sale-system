@@ -164,6 +164,16 @@ function RootLayout() {
                     <Link to="/order">Order Online</Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
+                {user?.user_type === "customer" && (
+                  <NavigationMenuItem>
+                    <NavigationMenuLink
+                      asChild
+                      className={navigationMenuTriggerStyle()}
+                    >
+                      <Link to="/orders">My Orders</Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                )}
               </NavigationMenuList>
             </NavigationMenu>
           </div>

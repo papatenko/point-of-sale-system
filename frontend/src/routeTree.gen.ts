@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as OrderRouteImport } from './routes/order'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as EmployeeRouteRouteImport } from './routes/employee/route'
@@ -38,6 +39,11 @@ import { Route as EmployeeDatabaseBackupRouteImport } from './routes/employee/da
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersRoute = OrdersRouteImport.update({
+  id: '/orders',
+  path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrderRoute = OrderRouteImport.update({
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/order': typeof OrderRoute
+  '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/checkout': typeof CheckoutRoute
   '/order': typeof OrderRoute
+  '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/employee': typeof EmployeeRouteRouteWithChildren
   '/checkout': typeof CheckoutRoute
   '/order': typeof OrderRoute
+  '/orders': typeof OrdersRoute
   '/profile': typeof ProfileRoute
   '/employee/database': typeof EmployeeDatabaseRouteRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
@@ -255,6 +264,7 @@ export interface FileRouteTypes {
     | '/employee'
     | '/checkout'
     | '/order'
+    | '/orders'
     | '/profile'
     | '/employee/database'
     | '/auth/login'
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/'
     | '/checkout'
     | '/order'
+    | '/orders'
     | '/profile'
     | '/employee/database'
     | '/auth/login'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/employee'
     | '/checkout'
     | '/order'
+    | '/orders'
     | '/profile'
     | '/employee/database'
     | '/auth/login'
@@ -336,6 +348,7 @@ export interface RootRouteChildren {
   EmployeeRouteRoute: typeof EmployeeRouteRouteWithChildren
   CheckoutRoute: typeof CheckoutRoute
   OrderRoute: typeof OrderRoute
+  OrdersRoute: typeof OrdersRoute
   ProfileRoute: typeof ProfileRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
@@ -351,6 +364,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders': {
+      id: '/orders'
+      path: '/orders'
+      fullPath: '/orders'
+      preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/order': {
@@ -580,6 +600,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmployeeRouteRoute: EmployeeRouteRouteWithChildren,
   CheckoutRoute: CheckoutRoute,
   OrderRoute: OrderRoute,
+  OrdersRoute: OrdersRoute,
   ProfileRoute: ProfileRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
