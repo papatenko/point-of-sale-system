@@ -72,21 +72,25 @@ export async function createCheckout(db, body, req = null) {
   );
   const orderNumber = String(nextNum);
 
-  // ASAP online orders go straight to preparing; scheduled orders start as pending
+  // ASAP online orders and walk-in orders should end up as preparing;
+  // scheduled orders stay pending until auto-promoted.
   const initialStatus =
-    orderType === "online-pickup" && !scheduledMysql ? "preparing" : "pending";
+    orderType === "online-pickup" && !scheduledMysql ? "preparing" :
+    orderType === "walk-in" ? "preparing" : "pending";
 
+  // Always INSERT as 'pending' so order_items can be inserted first.
+  // Then UPDATE to 'preparing' if needed — this lets the BEFORE UPDATE trigger
+  // fire with order_items already present (for inventory deduction).
   const [result] = await db.query(
     `INSERT INTO checkout
        (order_number, license_plate, customer_email, order_type, order_status,
         scheduled_time, total_price, payment_method, payment_status)
-     VALUES (?, ?, ?, ?, ?, ?, 0, ?, 'pending')`,
+     VALUES (?, ?, ?, ?, 'pending', ?, 0, ?, 'pending')`,
     [
       orderNumber,
       licensePlate,
       customerEmail || null,
       orderType,
-      initialStatus,
       scheduledMysql,
       paymentMethod,
     ],
@@ -110,6 +114,19 @@ export async function createCheckout(db, body, req = null) {
     `UPDATE checkout SET total_price = ? WHERE checkout_id = ?`,
     [total, orderId],
   );
+
+  // Now promote to preparing if needed — trigger fires here with order_items present
+  if (initialStatus === "preparing") {
+    try {
+      await db.query(
+        `UPDATE checkout SET order_status = 'preparing' WHERE checkout_id = ?`,
+        [orderId],
+      );
+    } catch (err) {
+      // Trigger blocked promotion (e.g. insufficient inventory) — order stays pending
+      console.error("Could not promote order to preparing:", err.message);
+    }
+  }
 
   return { orderId, orderNumber };
 }

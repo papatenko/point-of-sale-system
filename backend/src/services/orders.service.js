@@ -99,7 +99,17 @@ export async function listOrders(db, req, url) {
                               c.scheduled_time, c.license_plate, c.date_created,
                               u.phone_number AS customer_phone,
                               ft.current_location AS truck_location,
-                              GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ' | ') AS items
+                              GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ' | ') AS items,
+                              (SELECT COUNT(*) > 0
+                               FROM order_items oi2
+                               JOIN recipe_ingredient ri ON ri.menu_item_id = oi2.menu_item_id
+                               LEFT JOIN truck_inventory ti
+                                      ON ti.ingredient_id = ri.ingredient_id
+                                     AND ti.license_plate = c.license_plate
+                               WHERE oi2.order_id = c.checkout_id
+                                 AND (ti.quantity_on_hand IS NULL
+                                      OR ti.quantity_on_hand < ri.quantity_needed * oi2.quantity)
+                              ) AS inventory_warning
                        FROM checkout c
                        LEFT JOIN order_items oi ON oi.order_id = c.checkout_id
                        LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
@@ -119,7 +129,17 @@ export async function listOrders(db, req, url) {
                             c.scheduled_time, c.license_plate, c.date_created,
                             u.phone_number AS customer_phone,
                             ft.current_location AS truck_location,
-                            GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ' | ') AS items
+                            GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ' | ') AS items,
+                            (SELECT COUNT(*) > 0
+                             FROM order_items oi2
+                             JOIN recipe_ingredient ri ON ri.menu_item_id = oi2.menu_item_id
+                             LEFT JOIN truck_inventory ti
+                                    ON ti.ingredient_id = ri.ingredient_id
+                                   AND ti.license_plate = c.license_plate
+                             WHERE oi2.order_id = c.checkout_id
+                               AND (ti.quantity_on_hand IS NULL
+                                    OR ti.quantity_on_hand < ri.quantity_needed * oi2.quantity)
+                            ) AS inventory_warning
                      FROM checkout c
                      LEFT JOIN order_items oi ON oi.order_id = c.checkout_id
                      LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
@@ -132,10 +152,76 @@ export async function listOrders(db, req, url) {
   return rows;
 }
 
+export async function updateOrderItems(db, orderId, items) {
+  if (!items || items.length === 0) throw new Error("Order must have at least one item.");
+
+  const [[order]] = await db.query(
+    `SELECT order_status FROM checkout WHERE checkout_id = ?`,
+    [orderId],
+  );
+  if (!order) throw new Error("Order not found.");
+  if (order.order_status !== "pending") throw new Error("Can only edit pending orders.");
+
+  await db.query(`DELETE FROM order_items WHERE order_id = ?`, [orderId]);
+
+  for (const item of items) {
+    await db.query(
+      `INSERT INTO order_items (order_id, menu_item_id, quantity, line_total_price) VALUES (?, ?, ?, 0)`,
+      [orderId, item.menuItemId, item.quantity],
+    );
+  }
+
+  const [[{ total }]] = await db.query(
+    `SELECT COALESCE(SUM(line_total_price), 0) AS total FROM order_items WHERE order_id = ?`,
+    [orderId],
+  );
+  await db.query(
+    `UPDATE checkout SET total_price = ? WHERE checkout_id = ?`,
+    [total, orderId],
+  );
+
+  return { success: true };
+}
+
 export async function updateOrderStatus(db, orderId, newStatus) {
-  const allowed = ["ready", "completed", "cancelled"];
+  const allowed = ["preparing", "ready", "completed", "cancelled"];
   if (!allowed.includes(newStatus)) {
     throw new Error(`Invalid status: ${newStatus}`);
+  }
+
+  // Preparing can only be set from pending (manual promotion)
+  if (newStatus === "preparing") {
+    const [[current]] = await db.query(
+      `SELECT order_status FROM checkout WHERE checkout_id = ?`,
+      [orderId],
+    );
+    if (!current || current.order_status !== "pending") {
+      throw new Error("Can only promote to preparing from pending.");
+    }
+  }
+
+  // Restore inventory if cancelling a preparing or ready order
+  if (newStatus === "cancelled") {
+    const [[current]] = await db.query(
+      `SELECT order_status, license_plate FROM checkout WHERE checkout_id = ?`,
+      [orderId],
+    );
+    if (current && ["preparing", "ready"].includes(current.order_status)) {
+      await db.query(
+        `UPDATE truck_inventory ti
+         JOIN (
+           SELECT ri.ingredient_id,
+                  SUM(ri.quantity_needed * oi.quantity) AS total_restore
+           FROM order_items oi
+           JOIN recipe_ingredient ri ON ri.menu_item_id = oi.menu_item_id
+           WHERE oi.order_id = ?
+           GROUP BY ri.ingredient_id
+         ) amt ON amt.ingredient_id = ti.ingredient_id
+         SET ti.quantity_on_hand = ti.quantity_on_hand + amt.total_restore
+         WHERE ti.license_plate = ?`,
+        [orderId, current.license_plate],
+      );
+    }
   }
 
   await db.query(

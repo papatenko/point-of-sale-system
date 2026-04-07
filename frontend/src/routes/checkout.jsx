@@ -311,8 +311,8 @@ function CheckoutPage() {
               <h2 className="text-base font-semibold mb-4 text-foreground">Payment Method</h2>
               <div className="space-y-2.5">
                 {[
-                  { value: "credit", label: "Credit Card at Pickup" },
-                  { value: "debit", label: "Debit Card at Pickup" },
+                  { value: "credit", label: "Credit Card" },
+                  { value: "debit", label: "Debit Card" },
                 ].map((opt) => (
                   <label
                     key={opt.value}

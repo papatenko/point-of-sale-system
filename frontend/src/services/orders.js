@@ -16,6 +16,13 @@ export async function updateOrderStatus(orderId, status) {
   });
 }
 
+export async function updateOrderItems(orderId, items) {
+  return apiFetch(`/api/orders/${orderId}/items`, {
+    method: "PUT",
+    body: JSON.stringify({ items }),
+  });
+}
+
 export async function createCheckout(orderData) {
   return apiFetch("/api/checkout", {
     method: "POST",
