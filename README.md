@@ -87,6 +87,7 @@ DB_HOST=<your-mysql-host>
 DB_USER=<your-mysql-user>
 DB_PASSWORD=<your-mysql-password>
 DB_NAME=<your-database-name>
+JWT_SECRET=<your-jwt-secret>
 ```
 
 ---
@@ -98,7 +99,7 @@ DB_NAME=<your-database-name>
 **1. Clone the repository**
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/papatenko/point-of-sale-system
 cd point-of-sale-system
 ```
 
@@ -150,8 +151,7 @@ docker run -p 3000:3000 --env-file backend/.env shako-pos
 ### Manual Build
 
 ```bash
-npm run build           # Builds frontend into frontend/dist/
-npm run start           # Starts backend server on port 3000
+npm run build
 ```
 
-The backend serves the built frontend from `frontend/dist/` automatically.
+The backend serves the built frontend from `frontend/dist/` automatically at port 3000.
