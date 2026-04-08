@@ -175,14 +175,13 @@ function RouteComponent() {
   const [pendingEnd, setPendingEnd] = useState("");
   const [reportPickerValue, setReportPickerValue] = useState("");
   const [activeReport, setActiveReport] = useState(null);
-  const [ethnicityTruckPlate, setEthnicityTruckPlate] = useState("");
+  const [truckFilterPlate, setTruckFilterPlate] = useState("");
+  const [ethnicityFilter, setEthnicityFilter] = useState("__all__");
+  const [orderTypeFilter, setOrderTypeFilter] = useState("__all__");
+  const [topRowsFilter, setTopRowsFilter] = useState("__all__");
   const [trucks, setTrucks] = useState([]);
 
   useEffect(() => {
-    if (activeReport !== "usersByEthnicity") {
-      setEthnicityTruckPlate("");
-      return;
-    }
     let cancelled = false;
     const token = localStorage.getItem("token");
     fetch("/api/trucks", {
@@ -199,7 +198,7 @@ function RouteComponent() {
     return () => {
       cancelled = true;
     };
-  }, [activeReport]);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -212,8 +211,17 @@ function RouteComponent() {
           params.set("start", appliedFilter.start);
           params.set("end", appliedFilter.end);
         }
-        if (ethnicityTruckPlate) {
-          params.set("ethnicityTruck", ethnicityTruckPlate);
+        if (truckFilterPlate) {
+          params.set("truck", truckFilterPlate);
+        }
+        if (ethnicityFilter !== "__all__") {
+          params.set(
+            "ethnicity",
+            ethnicityFilter === "__unspecified__" ? "unspecified" : ethnicityFilter,
+          );
+        }
+        if (orderTypeFilter !== "__all__") {
+          params.set("orderType", orderTypeFilter);
         }
         const qs = params.toString();
         const token = localStorage.getItem("token");
@@ -236,7 +244,7 @@ function RouteComponent() {
     return () => {
       cancelled = true;
     };
-  }, [appliedFilter, ethnicityTruckPlate]);
+  }, [appliedFilter, truckFilterPlate, ethnicityFilter, orderTypeFilter]);
 
   const handleApplyFilter = useCallback(() => {
     if (!pendingStart || !pendingEnd) {
@@ -266,6 +274,17 @@ function RouteComponent() {
         })
       : "—";
 
+  const applyTopRows = useCallback(
+    (rows) => {
+      if (!Array.isArray(rows)) return [];
+      if (topRowsFilter === "__all__") return rows;
+      const limit = Number(topRowsFilter);
+      if (!Number.isFinite(limit) || limit <= 0) return rows;
+      return rows.slice(0, limit);
+    },
+    [topRowsFilter],
+  );
+
   const ethnicityChartData = useMemo(() => {
     if (!stats?.ethnicityByRace) return [];
     const rows = stats.ethnicityByRace.map((r) => ({
@@ -275,51 +294,49 @@ function RouteComponent() {
     if ((stats.ethnicityUnspecified ?? 0) > 0) {
       rows.push({ name: "Not specified", value: stats.ethnicityUnspecified });
     }
-    return rows.filter((r) => r.value > 0).sort((a, b) => b.value - a.value);
-  }, [stats]);
+    return applyTopRows(rows.filter((r) => r.value > 0).sort((a, b) => b.value - a.value));
+  }, [stats, applyTopRows]);
 
   const usersWithEthnicity = useMemo(() => {
     if (!stats?.ethnicityByRace) return 0;
     return stats.ethnicityByRace.reduce((sum, r) => sum + (r.total || 0), 0);
   }, [stats]);
 
-  const menuChartData = useMemo(
-    () =>
-      buildChartRows(stats?.menuItemsByCategory, "categoryName", [
-        {
-          name: "Uncategorized",
-          value: stats?.menuItemsUncategorized ?? 0,
-        },
-      ]),
-    [stats],
-  );
+  const menuChartData = useMemo(() => {
+    const rows = buildChartRows(stats?.menuItemsByCategory, "categoryName", [
+      {
+        name: "Uncategorized",
+        value: stats?.menuItemsUncategorized ?? 0,
+      },
+    ]);
+    return applyTopRows(rows);
+  }, [stats, applyTopRows]);
 
-  const ingredientsChartData = useMemo(
-    () => buildChartRows(stats?.ingredientsByCategory),
-    [stats],
-  );
+  const ingredientsChartData = useMemo(() => {
+    const rows = buildChartRows(stats?.ingredientsByCategory);
+    return applyTopRows(rows);
+  }, [stats, applyTopRows]);
 
-  const ordersChartData = useMemo(
-    () => buildChartRows(stats?.ordersByCategory),
-    [stats],
-  );
+  const ordersChartData = useMemo(() => {
+    const rows = buildChartRows(stats?.ordersByCategory);
+    return applyTopRows(rows);
+  }, [stats, applyTopRows]);
 
-  const soldChartData = useMemo(
-    () =>
-      buildChartRows(stats?.itemsSoldByCategory, "categoryName", [
-        {
-          name: "Uncategorized",
-          value: stats?.itemsSoldUncategorized ?? 0,
-          details: stats?.itemsSoldUncategorizedDetails ?? [],
-        },
-      ]),
-    [stats],
-  );
+  const soldChartData = useMemo(() => {
+    const rows = buildChartRows(stats?.itemsSoldByCategory, "categoryName", [
+      {
+        name: "Uncategorized",
+        value: stats?.itemsSoldUncategorized ?? 0,
+        details: stats?.itemsSoldUncategorizedDetails ?? [],
+      },
+    ]);
+    return applyTopRows(rows);
+  }, [stats, applyTopRows]);
 
   /** All trucks (including 0 orders), label by name + plate when helpful */
   const trucksChartData = useMemo(() => {
     if (!stats?.ordersByTruck?.length) return [];
-    return [...stats.ordersByTruck]
+    const rows = [...stats.ordersByTruck]
       .map((r) => {
         const name = (r.truckName || "").trim();
         const plate = r.licensePlate || "";
@@ -330,10 +347,29 @@ function RouteComponent() {
         return { name: label, value: Number(r.total) || 0 };
       })
       .sort((a, b) => b.value - a.value);
+    return applyTopRows(rows);
+  }, [stats, applyTopRows]);
+
+  const ethnicityFilterOptions = useMemo(() => {
+    const base = (stats?.ethnicityByRace || [])
+      .filter((r) => r.raceId != null)
+      .map((r) => ({ label: r.race, value: String(r.raceId) }));
+    if ((stats?.ethnicityUnspecified ?? 0) > 0) {
+      base.push({ label: "Not specified", value: "__unspecified__" });
+    }
+    return base;
   }, [stats]);
 
+  const orderTypeFilterOptions = useMemo(
+    () =>
+      (stats?.ordersByCategory || [])
+        .map((r) => ({ label: r.categoryName, value: r.rawCategoryName || r.categoryName }))
+        .filter((r) => r.value),
+    [stats],
+  );
+
   const orderFilterActive = Boolean(stats?.filters?.orderMetricsFiltered);
-  const ethnicityTruckActive = Boolean(stats?.filters?.ethnicityTruck);
+  const truckFilterActive = Boolean(stats?.filters?.truck);
   const ethnicityUsesOrderDates = Boolean(stats?.filters?.ethnicityUsesOrderDates);
   const activeReportIsOrderBased =
     activeReport === "ordersByType" ||
@@ -341,7 +377,7 @@ function RouteComponent() {
     activeReport === "ordersByTruck";
   const showOrderDateRangeCard =
     activeReportIsOrderBased ||
-    (activeReport === "usersByEthnicity" && Boolean(ethnicityTruckPlate));
+    (activeReport === "usersByEthnicity" && Boolean(truckFilterPlate));
 
   const reportOptions = useMemo(
     () => [
@@ -432,6 +468,82 @@ function RouteComponent() {
           </CardContent>
         </Card>
 
+        <Card className="border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Truck filter</CardTitle>
+            <CardDescription>
+              Combine filters to narrow the report view quickly.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-end gap-3">
+            <div className="grid min-w-[260px] gap-1.5">
+              <Label>Truck</Label>
+              <Select
+                value={truckFilterPlate || "__all__"}
+                onValueChange={(v) => setTruckFilterPlate(v === "__all__" ? "" : v)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All trucks" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All trucks</SelectItem>
+                  {trucks.map((t) => (
+                    <SelectItem key={t.license_plate} value={t.license_plate}>
+                      {(t.truck_name || "").trim() || t.license_plate}{" "}
+                      <span className="text-muted-foreground">({t.license_plate})</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid min-w-[220px] gap-1.5">
+              <Label>Ethnicity</Label>
+              <Select value={ethnicityFilter} onValueChange={setEthnicityFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All ethnicities" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All ethnicities</SelectItem>
+                  {ethnicityFilterOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid min-w-[220px] gap-1.5">
+              <Label>Order type</Label>
+              <Select value={orderTypeFilter} onValueChange={setOrderTypeFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All order types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All order types</SelectItem>
+                  {orderTypeFilterOptions.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid min-w-[180px] gap-1.5">
+              <Label>Top rows</Label>
+              <Select value={topRowsFilter} onValueChange={setTopRowsFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="All rows" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">All rows</SelectItem>
+                  <SelectItem value="5">Top 5</SelectItem>
+                  <SelectItem value="10">Top 10</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
         {showOrderDateRangeCard && (
           <Card className="border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25">
             <CardHeader className="pb-2">
@@ -487,10 +599,10 @@ function RouteComponent() {
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Users by ethnicity</CardTitle>
               <CardDescription>
-                {ethnicityTruckActive ? (
+                {truckFilterActive ? (
                   <>
                     Filtered to customers who placed at least one order at truck{" "}
-                    <strong>{stats.filters.ethnicityTruck}</strong>
+                    <strong>{stats.filters.truck}</strong>
                     {ethnicityUsesOrderDates ? (
                       <>
                         , using only checkouts in the active{" "}
@@ -519,40 +631,6 @@ function RouteComponent() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/30 p-3">
-                <div className="grid min-w-[220px] flex-1 gap-1.5">
-                  <Label>Then filter by truck (optional)</Label>
-                  <Select
-                    value={ethnicityTruckPlate || "__all__"}
-                    onValueChange={(v) =>
-                      setEthnicityTruckPlate(v === "__all__" ? "" : v)
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="All trucks" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__all__">All trucks</SelectItem>
-                      {trucks.map((t) => (
-                        <SelectItem
-                          key={t.license_plate}
-                          value={t.license_plate}
-                        >
-                          {(t.truck_name || "").trim() || t.license_plate}{" "}
-                          <span className="text-muted-foreground">
-                            ({t.license_plate})
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <p className="text-xs text-muted-foreground max-w-md">
-                  Cross-filter: pick a truck to show only ethnicities of users
-                  who ordered from that location. Apply an order date range
-                  (above) to limit which checkouts count.
-                </p>
-              </div>
               <div className="w-full h-[min(420px,70vh)] min-h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
