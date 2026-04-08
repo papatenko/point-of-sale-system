@@ -27,6 +27,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const Route = createFileRoute("/employee/reports")({
   component: RouteComponent,
@@ -90,6 +99,40 @@ function renderTooltipDetails(items = []) {
   );
 }
 
+function formatDateTime(value) {
+  if (value == null || value === "") return "—";
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+function moneyCell(n) {
+  if (typeof n !== "number" || Number.isNaN(n)) return "—";
+  return n.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function ReportDetailTableWrap({ title, rowLimit, children }) {
+  return (
+    <div className="mt-6 space-y-2">
+      <h3 className="text-sm font-medium text-foreground">{title}</h3>
+      <div className="max-h-[min(420px,50vh)] overflow-auto rounded-md border">
+        {children}
+      </div>
+      {rowLimit != null && (
+        <p className="text-xs text-muted-foreground">
+          Showing up to {rowLimit} rows (newest orders first where applicable).
+        </p>
+      )}
+    </div>
+  );
+}
+
 function ReportBarChartCard({
   title,
   total,
@@ -100,6 +143,7 @@ function ReportBarChartCard({
   chartHeightClass = "h-[min(320px,55vh)] min-h-[200px]",
   cardClassName = "",
   yAxisWidth = 140,
+  detail = null,
 }) {
   return (
     <Card className={`mt-4 ${cardClassName}`.trim()}>
@@ -161,6 +205,7 @@ function ReportBarChartCard({
         ) : (
           <p className="text-sm text-muted-foreground">{emptyMessage}</p>
         )}
+        {detail}
       </CardContent>
     </Card>
   );
@@ -390,6 +435,209 @@ function RouteComponent() {
     ],
     [],
   );
+
+  const detailLimit = stats?.reportDetails?.rowLimit ?? 500;
+
+  const ethnicityUsersTable = useMemo(() => {
+    const rows = stats?.reportDetails?.ethnicityUsers ?? [];
+    if (rows.length === 0) {
+      return (
+        <ReportDetailTableWrap title="Underlying records" rowLimit={detailLimit}>
+          <p className="p-4 text-sm text-muted-foreground">No user rows for the current filters.</p>
+        </ReportDetailTableWrap>
+      );
+    }
+    return (
+      <ReportDetailTableWrap title="Users (names & contact)" rowLimit={detailLimit}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Ethnicity</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.email}>
+                <TableCell className="whitespace-normal">{r.ethnicity}</TableCell>
+                <TableCell className="whitespace-normal">
+                  {[r.firstName, r.lastName].filter(Boolean).join(" ") || "—"}
+                </TableCell>
+                <TableCell className="whitespace-normal">{r.email}</TableCell>
+                <TableCell>{r.phoneNumber || "—"}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableCaption>One row per customer in scope of this report.</TableCaption>
+        </Table>
+      </ReportDetailTableWrap>
+    );
+  }, [stats, detailLimit]);
+
+  const menuItemsDetailTable = useMemo(() => {
+    const rows = stats?.reportDetails?.menuItems ?? [];
+    if (rows.length === 0) {
+      return (
+        <ReportDetailTableWrap title="Menu items (detail)" rowLimit={detailLimit}>
+          <p className="p-4 text-sm text-muted-foreground">No menu items for the current filters.</p>
+        </ReportDetailTableWrap>
+      );
+    }
+    return (
+      <ReportDetailTableWrap title="Menu items (detail)" rowLimit={detailLimit}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Category</TableHead>
+              <TableHead>Item</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Available</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.menuItemId}>
+                <TableCell className="whitespace-normal">{r.categoryName}</TableCell>
+                <TableCell className="whitespace-normal">{r.itemName}</TableCell>
+                <TableCell>${moneyCell(r.price)}</TableCell>
+                <TableCell>{r.isAvailable ? "Yes" : "No"}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </ReportDetailTableWrap>
+    );
+  }, [stats, detailLimit]);
+
+  const ingredientsDetailTable = useMemo(() => {
+    const rows = stats?.reportDetails?.ingredients ?? [];
+    if (rows.length === 0) {
+      return (
+        <ReportDetailTableWrap title="Ingredients (detail)" rowLimit={detailLimit}>
+          <p className="p-4 text-sm text-muted-foreground">No ingredients for the current filters.</p>
+        </ReportDetailTableWrap>
+      );
+    }
+    return (
+      <ReportDetailTableWrap title="Ingredients (detail)" rowLimit={detailLimit}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Category</TableHead>
+              <TableHead>Ingredient</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.ingredientId}>
+                <TableCell className="whitespace-normal">{r.categoryName}</TableCell>
+                <TableCell className="whitespace-normal">{r.ingredientName}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </ReportDetailTableWrap>
+    );
+  }, [stats, detailLimit]);
+
+  const ordersDetailTable = useMemo(() => {
+    const rows = stats?.reportDetails?.orders ?? [];
+    if (rows.length === 0) {
+      return (
+        <ReportDetailTableWrap title="Orders (detail)" rowLimit={detailLimit}>
+          <p className="p-4 text-sm text-muted-foreground">No orders for the current filters.</p>
+        </ReportDetailTableWrap>
+      );
+    }
+    return (
+      <ReportDetailTableWrap title="Orders (detail)" rowLimit={detailLimit}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Placed</TableHead>
+              <TableHead>Order #</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Truck</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Payment</TableHead>
+              <TableHead>Total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.checkoutId}>
+                <TableCell className="whitespace-nowrap">{formatDateTime(r.orderPlacedAt)}</TableCell>
+                <TableCell>{r.orderNumber}</TableCell>
+                <TableCell>{r.orderTypeLabel || r.orderType}</TableCell>
+                <TableCell className="whitespace-normal">
+                  {(r.truckName || "").trim() || r.licensePlate}
+                  {r.licensePlate ? (
+                    <span className="text-muted-foreground"> ({r.licensePlate})</span>
+                  ) : null}
+                </TableCell>
+                <TableCell className="whitespace-normal max-w-[200px]">
+                  {r.customerName || r.customerEmail || "—"}
+                </TableCell>
+                <TableCell>{r.orderStatus}</TableCell>
+                <TableCell>
+                  {r.paymentStatus} / {r.paymentMethod}
+                </TableCell>
+                <TableCell>${moneyCell(r.totalPrice)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </ReportDetailTableWrap>
+    );
+  }, [stats, detailLimit]);
+
+  const orderLineItemsDetailTable = useMemo(() => {
+    const rows = stats?.reportDetails?.orderLineItems ?? [];
+    if (rows.length === 0) {
+      return (
+        <ReportDetailTableWrap title="Line items sold (detail)" rowLimit={detailLimit}>
+          <p className="p-4 text-sm text-muted-foreground">No line items for the current filters.</p>
+        </ReportDetailTableWrap>
+      );
+    }
+    return (
+      <ReportDetailTableWrap title="Line items sold (detail)" rowLimit={detailLimit}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Placed</TableHead>
+              <TableHead>Order #</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Truck</TableHead>
+              <TableHead>Menu category</TableHead>
+              <TableHead>Item</TableHead>
+              <TableHead>Qty</TableHead>
+              <TableHead>Line total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r, i) => (
+              <TableRow key={`${r.checkoutId}-${r.orderNumber}-${r.itemName}-${i}`}>
+                <TableCell className="whitespace-nowrap">{formatDateTime(r.orderPlacedAt)}</TableCell>
+                <TableCell>{r.orderNumber}</TableCell>
+                <TableCell>{r.orderTypeLabel || r.orderType}</TableCell>
+                <TableCell className="whitespace-normal">
+                  {(r.truckName || "").trim() || r.licensePlate}
+                </TableCell>
+                <TableCell className="whitespace-normal">{r.menuCategoryName}</TableCell>
+                <TableCell className="whitespace-normal">{r.itemName}</TableCell>
+                <TableCell>{r.quantity}</TableCell>
+                <TableCell>${moneyCell(r.lineTotalPrice)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </ReportDetailTableWrap>
+    );
+  }, [stats, detailLimit]);
 
   return (
     <div className="p-5 max-w-5xl">
@@ -657,6 +905,7 @@ function RouteComponent() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              {ethnicityUsersTable}
             </CardContent>
           </Card>
         )}
@@ -669,6 +918,7 @@ function RouteComponent() {
             chartData={menuChartData}
             valueLabel="Menu items"
             emptyMessage="No menu items yet, or categories have no items."
+            detail={menuItemsDetailTable}
           />
         )}
 
@@ -680,6 +930,7 @@ function RouteComponent() {
             chartData={ingredientsChartData}
             valueLabel="Ingredients"
             emptyMessage="No ingredients in the database yet."
+            detail={ingredientsDetailTable}
           />
         )}
 
@@ -691,6 +942,7 @@ function RouteComponent() {
             chartData={ordersChartData}
             valueLabel="Orders"
             emptyMessage="No orders placed yet."
+            detail={ordersDetailTable}
           />
         )}
 
@@ -702,6 +954,7 @@ function RouteComponent() {
             chartData={soldChartData}
             valueLabel="Units sold"
             emptyMessage="No order line items yet."
+            detail={orderLineItemsDetailTable}
           />
         )}
 
@@ -715,6 +968,7 @@ function RouteComponent() {
             emptyMessage="No food trucks registered yet."
             yAxisWidth={220}
             chartHeightClass="h-[min(420px,65vh)] min-h-[220px]"
+            detail={ordersDetailTable}
           />
         )}
 
