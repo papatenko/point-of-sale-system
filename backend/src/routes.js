@@ -139,6 +139,9 @@ router.get("/api/orders/:id", async (_, db, _req, url) =>
 router.patch("/api/orders/:id/status", async (body, db, _req, _url, params) =>
   OrderService.updateOrderStatus(db, params.id, body.status),
 );
+router.put("/api/orders/:id/items", async (body, db, _req, _url, params) =>
+  OrderService.updateOrderItems(db, params.id, body.items),
+);
 
 // Inventory
 router.get("/api/inventory", async (_, db, _req, url) =>
@@ -234,5 +237,6 @@ router.get("/api/search", async (_, db, _req, url) => {
 
 export async function handleRoute(url, body, method, req, res, db) {
   const basePath = url.split("?")[0];
+  
   return await router.match(method, basePath, body, db, req, url);
 }

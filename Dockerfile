@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY backend/package*.json ./backend/
 COPY frontend/package*.json ./frontend/
-RUN npm install turbo@latest -g && npm install
+RUN npm install turbo@latest -g && npm ci
 # copy source code - changes here don't invalidate npm install cache
 COPY . .
 RUN turbo run build --filter=frontend

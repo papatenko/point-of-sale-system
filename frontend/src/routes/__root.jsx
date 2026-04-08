@@ -130,6 +130,12 @@ function RootLayout() {
     navigate({ to: "/auth/login" });
   };
 
+  useEffect(() => {
+  if (pathname.startsWith("http://localhost:3000/api")) {
+    navigate({ to: "/" });
+  }
+}, [pathname, navigate]);
+
   return (
     <>
       {/* Only show public navbar outside the employee dashboard */}
@@ -158,6 +164,16 @@ function RootLayout() {
                     <Link to="/order">Order Online</Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
+                {user?.user_type === "customer" && (
+                  <NavigationMenuItem>
+                    <NavigationMenuLink
+                      asChild
+                      className={navigationMenuTriggerStyle()}
+                    >
+                      <Link to="/orders">My Orders</Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                )}
               </NavigationMenuList>
             </NavigationMenu>
           </div>

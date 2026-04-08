@@ -15,27 +15,21 @@ export function useOrders({ token = null, selectedTruck = null } = {}) {
   const [totalPages, setTotalPages] = useState(1);
 
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  
 
   const fetchCurrentOrders = useCallback(async () => {
     try {
-      const params = new URLSearchParams({ status: "preparing,ready" });
+      const params = new URLSearchParams({ status: "pending,preparing,ready" });
       if (selectedTruck) params.set("truck", selectedTruck);
       const res = await fetch(`/api/orders?${params.toString()}`, { headers });
       const data = await res.json();
-      setCurrentOrders(Array.isArray(data) ? data : []);
+      const all = Array.isArray(data) ? data : [];
+      // Immediate orders: preparing/ready (any), OR pending with no scheduled_time
+      setCurrentOrders(all.filter((o) => o.order_status !== "pending" || !o.scheduled_time));
+      // Scheduled orders: pending AND has a future scheduled_time
+      setScheduledOrders(all.filter((o) => o.order_status === "pending" && !!o.scheduled_time));
     } catch {
       setCurrentOrders([]);
-    }
-  }, [token, selectedTruck]);
-
-  const fetchScheduledOrders = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({ status: "pending" });
-      if (selectedTruck) params.set("truck", selectedTruck);
-      const res = await fetch(`/api/orders?${params.toString()}`, { headers });
-      const data = await res.json();
-      setScheduledOrders(Array.isArray(data) ? data : []);
-    } catch {
       setScheduledOrders([]);
     }
   }, [token, selectedTruck]);
@@ -69,18 +63,16 @@ export function useOrders({ token = null, selectedTruck = null } = {}) {
 
   useEffect(() => {
     fetchCurrentOrders();
-    fetchScheduledOrders();
     fetchPastOrders(search, filterDate, showCompleted, showCancelled, page);
-  }, [fetchCurrentOrders, fetchScheduledOrders, fetchPastOrders]);
+  }, [fetchCurrentOrders, fetchPastOrders]);
 
   // Auto-refresh current + scheduled orders every 10s
   useEffect(() => {
     const id = setInterval(() => {
       fetchCurrentOrders();
-      fetchScheduledOrders();
     }, 10_000);
     return () => clearInterval(id);
-  }, [fetchCurrentOrders, fetchScheduledOrders]);
+  }, [fetchCurrentOrders]);
 
   // Reset to page 1 when filters/search change
   useEffect(() => {
@@ -107,7 +99,7 @@ export function useOrders({ token = null, selectedTruck = null } = {}) {
     page, setPage,
     totalPages,
     loading,
-    refreshCurrent: () => { fetchCurrentOrders(); fetchScheduledOrders(); },
+    refreshCurrent: () => { fetchCurrentOrders(); },
     refreshPast: () => fetchPastOrders(search, filterDate, showCompleted, showCancelled, page),
   };
 }

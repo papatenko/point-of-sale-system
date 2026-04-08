@@ -79,6 +79,18 @@ const server = createServer(async (req, res) => {
 
   // API routes
   if (req.url.startsWith("/api")) {
+    //parche routes
+    const SECRET = "mi_clave_frontend";
+    const apiKey = req.headers["x-api-key"];
+
+    if (apiKey !== SECRET) {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("Not found");
+      return;
+    }
+
+
+
     const body = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method)
       ? await readBody(req)
       : null;

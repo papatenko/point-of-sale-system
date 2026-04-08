@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setLogin } from "@/redux/authSlice";
-import { GENDER_OPTIONS } from "@/data/gender";
-import { ETHNICITY_OPTIONS } from "@/data/ethnicity";
+import { GENDER_OPTIONS } from "@/constants/gender";
+import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
+import { getCurrentUser, updateProfile } from "@/services/auth";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -32,25 +33,18 @@ function ProfilePage() {
       return;
     }
 
-    fetch("/api/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
+    getCurrentUser()
       .then((data) => {
-        if (data.error) {
-          setError(data.error);
-        } else {
-          setFormData({
-            first_name: data.first_name || "",
-            last_name: data.last_name || "",
-            phone_number: data.phone_number || "",
-            gender: data.gender || "",
-            ethnicity: data.ethnicity || "",
-            password: "",
-          });
-        }
+        setFormData({
+          first_name: data.first_name || "",
+          last_name: data.last_name || "",
+          phone_number: data.phone_number || "",
+          gender: data.gender || "",
+          ethnicity: data.ethnicity || "",
+          password: "",
+        });
       })
-      .catch(() => setError("Failed to load profile"))
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [navigate]);
 
@@ -78,40 +72,22 @@ if (
   return;
 }
 
-    const token = localStorage.getItem("token");
-
     try {
-      const res = await fetch("/api/me", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          phone_number: formData.phone_number || null,
-          gender: formData.gender ? parseInt(formData.gender) : null,
-          ethnicity: formData.ethnicity ? parseInt(formData.ethnicity) : null,
-          password: formData.password || undefined,
-        }),
+      const data = await updateProfile({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        phone_number: formData.phone_number || null,
+        gender: formData.gender ? parseInt(formData.gender) : null,
+        ethnicity: formData.ethnicity ? parseInt(formData.ethnicity) : null,
+        password: formData.password || undefined,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to update profile");
-      }
 
       setMessage(data.message || "Profile updated successfully");
       setFormData((p) => ({ ...p, password: "" }));
 
       if (data.token) {
         localStorage.setItem("token", data.token);
-        const userRes = await fetch("/api/me", {
-          headers: { Authorization: `Bearer ${data.token}` },
-        });
-        const userData = await userRes.json();
+        const userData = await getCurrentUser();
         localStorage.setItem("user", JSON.stringify(userData));
         dispatch(setLogin({ token: data.token, user: userData }));
       }

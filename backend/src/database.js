@@ -16,7 +16,7 @@ export async function getDatabase() {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      timezone: "America/Chicago",
+      dateStrings: true,  // return DATETIME/TIMESTAMP as strings, not Date objects
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,

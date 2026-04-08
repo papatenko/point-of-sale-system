@@ -13,6 +13,23 @@ const router = createRouter({ routeTree });
 // Render the app
 const rootElement = document.getElementById("root");
 const root = ReactDOM.createRoot(rootElement);
+
+
+//parche
+const originalFetch = window.fetch;
+
+window.fetch = (url, options = {}) => {
+  const newOptions = {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      'x-api-key': 'mi_clave_frontend'
+    }
+  };
+
+  return originalFetch(url, newOptions);
+};
+
 root.render(
   <StrictMode>
     <Provider store={store}>

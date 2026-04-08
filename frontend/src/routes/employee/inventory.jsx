@@ -21,6 +21,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useSelector } from "react-redux";
+import { formatDateTime, formatTime } from "@/utils/format";
 
 export const Route = createFileRoute("/employee/inventory")({
   component: InventoryPage,
@@ -1107,7 +1108,7 @@ function InventoryPage() {
                               }
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
-                              {new Date(a.alertCreated).toLocaleString()}
+                              {formatDateTime(a.alertCreated)}
                             </TableCell>
                             <TableCell className="text-right">
                               {a.alertStatus === "active" && invItem ? (
@@ -1169,7 +1170,7 @@ function InventoryPage() {
                         return (
                           <TableRow key={h.adjustmentId}>
                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                              {new Date(h.adjustmentDate).toLocaleString()}
+                              {formatTime(h.adjustmentDate)}
                             </TableCell>
                             <TableCell className="font-medium text-foreground">{h.ingredientName}</TableCell>
                             <TableCell>

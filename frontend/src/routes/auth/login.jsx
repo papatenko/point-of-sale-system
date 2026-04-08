@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setLogin } from '@/redux/authSlice';
+import { login } from '@/services/auth';
 
 export const Route = createFileRoute('/auth/login')({
   validateSearch: (search) => ({
@@ -25,17 +26,7 @@ function LoginComponent() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || data.error || 'Login failed');
-      }
+      const data = await login(email, password);
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));

@@ -5,28 +5,33 @@ import { clearCart } from "@/redux/cartSlice";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin, Clock } from "lucide-react";
 
-function getAvailableTimeSlots() {
-  const now = new Date();
+function localDateStr(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function getTodayStr() {
+  return localDateStr(new Date());
+}
+
+function getTomorrowStr() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return localDateStr(d);
+}
+
+function isOutsideHours() {
+  const h = new Date().getHours();
+  return h < 10 || h >= 22;
+}
+
+function getAllTimeSlots() {
   const slots = [];
-
-  // Round current time up to the next 30-min boundary
-  const rounded = new Date(now);
-  const m = rounded.getMinutes();
-  if (m === 0) {
-    // exactly on the hour — keep
-  } else if (m <= 30) {
-    rounded.setMinutes(30, 0, 0);
-  } else {
-    rounded.setHours(rounded.getHours() + 1, 0, 0, 0);
-  }
-
   for (let h = 10; h <= 22; h++) {
     for (const min of [0, 30]) {
       if (h === 22 && min === 30) continue;
-      const slot = new Date(now);
-      slot.setHours(h, min, 0, 0);
-      if (slot < rounded) continue; // past slot
-
       const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
       const ampm = h >= 12 ? "PM" : "AM";
       const label = `${displayH}:${min.toString().padStart(2, "0")} ${ampm}`;
@@ -37,24 +42,28 @@ function getAvailableTimeSlots() {
   return slots;
 }
 
-function isOutsideHours() {
-  const h = new Date().getHours();
-  return h < 10 || h >= 22;
-}
+function getTimeSlotsForDate(dateStr) {
+  const allSlots = getAllTimeSlots();
+  if (dateStr !== getTodayStr()) return allSlots; // future date — all slots
 
-function getTomorrowTimeSlots() {
-  const slots = [];
-  for (let h = 10; h <= 22; h++) {
-    for (const min of [0, 30]) {
-      if (h === 22 && min === 30) continue;
-      const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
-      const ampm = h >= 12 ? "PM" : "AM";
-      const label = `Tomorrow ${displayH}:${min.toString().padStart(2, "0")} ${ampm}`;
-      const value = `TOMORROW:${h.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`;
-      slots.push({ value, label });
-    }
+  // Today: filter out past / current slots
+  const now = new Date();
+  const rounded = new Date(now);
+  const m = rounded.getMinutes();
+  if (m === 0) {
+    // exactly on the hour — advance 30 min so current slot is excluded if right at hour
+  } else if (m <= 30) {
+    rounded.setMinutes(30, 0, 0);
+  } else {
+    rounded.setHours(rounded.getHours() + 1, 0, 0, 0);
   }
-  return slots;
+
+  return allSlots.filter((slot) => {
+    const [h, min] = slot.value.split(":").map(Number);
+    const slotTime = new Date(now);
+    slotTime.setHours(h, min, 0, 0);
+    return slotTime >= rounded;
+  });
 }
 
 export const Route = createFileRoute("/checkout")({
@@ -77,15 +86,17 @@ function CheckoutPage() {
   }, [token]);
 
   const outsideHours = isOutsideHours();
-  // Generate slots for tomorrow if currently outside hours
-  const timeSlots = outsideHours ? getTomorrowTimeSlots() : getAvailableTimeSlots();
+  // Outside hours: default to tomorrow since today has no slots
+  const defaultDate = outsideHours ? getTomorrowStr() : getTodayStr();
+  const initialSlots = getTimeSlotsForDate(defaultDate);
 
   const [paymentMethod, setPaymentMethod] = useState("credit");
   const [licensePlate, setLicensePlate] = useState("");
   // Outside hours: scheduling is mandatory (toggle locked on)
   const [scheduleEnabled, setScheduleEnabled] = useState(outsideHours);
+  const [scheduledDate, setScheduledDate] = useState(defaultDate);
   const [scheduledTime, setScheduledTime] = useState(
-    timeSlots.length > 0 ? timeSlots[0].value : "",
+    initialSlots.length > 0 ? initialSlots[0].value : "",
   );
   const [trucks, setTrucks] = useState([]);
   const [trucksLoading, setTrucksLoading] = useState(true);
@@ -134,11 +145,8 @@ function CheckoutPage() {
           customerEmail: user?.email ?? null,
           paymentMethod,
           licensePlate,
-          scheduledTime: scheduleEnabled
-            ? (scheduledTime.startsWith("TOMORROW:")
-                ? scheduledTime.replace("TOMORROW:", "")
-                : scheduledTime)
-            : null,
+          scheduledDate: scheduleEnabled ? scheduledDate : null,
+          scheduledTime: scheduleEnabled ? scheduledTime : null,
           items: cartItems.map((i) => ({
             menuItemId: i.menuItemId,
             quantity: i.quantity,
@@ -247,26 +255,55 @@ function CheckoutPage() {
               </div>
               {outsideHours ? (
                 <p className="text-xs text-amber-600 mb-3">
-                  We're currently closed. Orders placed now will be scheduled for tomorrow.
+                  We're currently closed. Please schedule a pickup for a future date.
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground mb-3">
                   Leave off to pick up as soon as your order is ready.
                 </p>
               )}
-              {scheduleEnabled && (
-                <select
-                  value={scheduledTime}
-                  onChange={(e) => setScheduledTime(e.target.value)}
-                  className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background"
-                >
-                  {timeSlots.map((slot) => (
-                    <option key={slot.value} value={slot.value}>
-                      {slot.label}
-                    </option>
-                  ))}
-                </select>
-              )}
+              {scheduleEnabled && (() => {
+                const slots = getTimeSlotsForDate(scheduledDate);
+                return (
+                  <div className="space-y-3">
+                    {/* Date picker */}
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Pickup Date</label>
+                      <input
+                        type="date"
+                        value={scheduledDate}
+                        min={getTodayStr()}
+                        onChange={(e) => {
+                          const newDate = e.target.value;
+                          setScheduledDate(newDate);
+                          const newSlots = getTimeSlotsForDate(newDate);
+                          setScheduledTime(newSlots.length > 0 ? newSlots[0].value : "");
+                        }}
+                        className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background"
+                      />
+                    </div>
+                    {/* Time picker */}
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Pickup Time</label>
+                      {slots.length === 0 ? (
+                        <p className="text-xs text-destructive">No available time slots for today. Please select a future date.</p>
+                      ) : (
+                        <select
+                          value={scheduledTime}
+                          onChange={(e) => setScheduledTime(e.target.value)}
+                          className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background"
+                        >
+                          {slots.map((slot) => (
+                            <option key={slot.value} value={slot.value}>
+                              {slot.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Payment Method */}
@@ -274,8 +311,8 @@ function CheckoutPage() {
               <h2 className="text-base font-semibold mb-4 text-foreground">Payment Method</h2>
               <div className="space-y-2.5">
                 {[
-                  { value: "credit", label: "Credit Card at Pickup" },
-                  { value: "debit", label: "Debit Card at Pickup" },
+                  { value: "credit", label: "Credit Card" },
+                  { value: "debit", label: "Debit Card" },
                 ].map((opt) => (
                   <label
                     key={opt.value}

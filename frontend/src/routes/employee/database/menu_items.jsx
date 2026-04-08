@@ -40,8 +40,23 @@ const COLUMNS = [
   { key: "price", label: "Price", format: (v) => `$${v}` },
 ];
 
+const CATEGORY_OPTIONS = [
+  { value: "1", label: "Appetizers" },
+  { value: "2", label: "Entrees" },
+  { value: "3", label: "Sides" },
+  { value: "4", label: "Drinks" },
+  { value: "5", label: "Desserts" },
+];
+
 const CREATE_FIELDS = [
   { name: "item_name", label: "Item Name", type: "text", required: true },
+  {
+    name: "category",
+    label: "Category",
+    type: "select",
+    options: CATEGORY_OPTIONS,
+    required: true,
+  },
   {
     name: "price",
     label: "Price ($)",
@@ -92,6 +107,7 @@ function MenuItemsDatabaseComponent() {
         },
         body: JSON.stringify({
           item_name: formData.item_name,
+          category: parseInt(formData.category),
           price: parseFloat(formData.price),
           description: formData.description || null,
           image_url: formData.image_url,
