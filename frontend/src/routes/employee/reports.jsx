@@ -718,7 +718,7 @@ function RouteComponent() {
 
         <Card className="border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Truck filter</CardTitle>
+            <CardTitle className="text-sm">Filters</CardTitle>
             <CardDescription>
               Combine filters to narrow the report view quickly.
             </CardDescription>
