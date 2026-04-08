@@ -18,7 +18,7 @@ function OrderPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const cartItems = useSelector((s) => s.cart.items);
-  const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const cartTotal = cartItems.reduce((sum, i) => sum + (i.quantity >= 2 ? i.price * (i.quantity - 1) : i.price * i.quantity), 0);
   const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
   useEffect(() => {
@@ -76,31 +76,29 @@ function OrderPage() {
         <div className="flex gap-8">
           {/* Menu */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-3xl font-bold mb-2 text-foreground">
-              Our Menu
-            </h1>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Our Menu</h1>
             {/* <SearchPage tabla="menu_items" /> */}
             <SearchPage
               tabla="menu_items"
               onSelect={(items) => {
-                if (!items || items.length === 0) {
-                  setFilteredItems(null);
-                  return;
-                }
+              if (!items || items.length === 0) {
+                setFilteredItems(null);
+                return;
+              }
 
-                const ids = items.map((i) => i.menu_item_id);
+              const ids = items.map((i) => i.menu_item_id);
 
-                const match = menu.filter((m) =>
-                  items.some(
-                    (i) =>
-                      i.item_name &&
-                      m.item_name.toLowerCase() === i.item_name.toLowerCase(),
-                  ),
-                );
+             const match = menu.filter((m) =>
+              items.some(
+                (i) =>
+                  i.item_name &&
+                  m.item_name.toLowerCase() === i.item_name.toLowerCase()
+              )
+            );
 
-                setFilteredItems(match);
-              }}
-            />
+              setFilteredItems(match);
+            }}
+                  />
             <p className="text-muted-foreground mb-8">
               Order online for pickup — fresh and made to order.
             </p>
@@ -110,19 +108,19 @@ function OrderPage() {
                 Loading menu...
               </div>
             ) : filteredItems ? (
-              //  CUANDO HAY SEARCH → SOLO mostrar resultados
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filteredItems.map((item) => (
-                  <MenuCard
-                    key={item.menu_item_id}
-                    item={item}
-                    qty={getQty(item.menu_item_id)}
-                    onAdd={() => handleAdd(item)}
-                    onQty={(q) => handleQty(item.menu_item_id, q)}
-                  />
-                ))}
-              </div>
-            ) : (
+            //  CUANDO HAY SEARCH → SOLO mostrar resultados
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {filteredItems.map((item) => (
+                    <MenuCard
+                      key={item.menu_item_id}
+                      item={item}
+                      qty={getQty(item.menu_item_id)}
+                      onAdd={() => handleAdd(item)}
+                      onQty={(q) => handleQty(item.menu_item_id, q)}
+                    />
+                  ))}
+                </div>
+              ) : (
               sortedCategories.map((category) => (
                 <section key={category} className="mb-10">
                   <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-border text-foreground">

@@ -46,9 +46,20 @@ export function CartPanel({ items, total, onQty, onCheckout, checkoutLabel = "Ch
                 <Plus size={11} />
               </button>
             </div>
-            <p className="text-sm font-bold ml-1 w-14 text-right flex-shrink-0 text-foreground">
-              ${(item.price * item.quantity).toFixed(2)}
-            </p>
+            {item.quantity >= 2 ? (
+              <div className="text-right flex-shrink-0 w-14 ml-1">
+                <p className="text-xs line-through text-muted-foreground/70">
+                  ${(item.price * item.quantity).toFixed(2)}
+                </p>
+                <p className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                  ${(item.price * (item.quantity - 1)).toFixed(2)}
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm font-bold ml-1 w-14 text-right flex-shrink-0 text-foreground">
+                ${(item.price * item.quantity).toFixed(2)}
+              </p>
+            )}
           </div>
         ))}
       </div>

@@ -6,7 +6,7 @@ export async function getAllEmployees(db) {
 }
 
 export async function createEmployee(db, data) {
-  const { email, license_plate, role, hire_date, hourly_rate } = data;
+  const { email, license_plate, role, hire_date } = data;
 
   if (!email) {
     return { error: "email is required" };
@@ -37,7 +37,6 @@ export async function createEmployee(db, data) {
     license_plate: finalLicensePlate,
     role,
     hire_date,
-    hourly_rate,
   });
 
   if (role === "manager") {
