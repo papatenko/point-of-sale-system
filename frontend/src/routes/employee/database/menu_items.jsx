@@ -64,6 +64,8 @@ function MenuItemsDatabaseComponent() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [pendingRecipeIngredients, setPendingRecipeIngredients] = useState([]);
   const [editForm, setEditForm] = useState({});
+  const [editRecipeOpen, setEditRecipeOpen] = useState(false);
+  const [editRecipeForm, setEditRecipeForm] = useState({});
 
   const fetchMenuItems = useCallback(async () => {
     try {
@@ -259,6 +261,41 @@ function MenuItemsDatabaseComponent() {
     }
   };
 
+  const openEditRecipeDialog = (recipe) => {
+    setEditRecipeForm({
+      recipe_id: recipe.recipe_id,
+      ingredient_name: recipe.ingredient_name,
+      unit_of_measure: recipe.unit_of_measure,
+      quantity_needed: recipe.quantity_needed,
+      instructions: recipe.instructions || "",
+    });
+    setEditRecipeOpen(true);
+  };
+
+  const handleEditRecipeSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const fd = new FormData(form);
+
+    const res = await fetch("/api/recipes", {
+      method: "PUT",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        recipe_id: editRecipeForm.recipe_id,
+        quantity_needed: parseFloat(fd.get("quantity_needed")),
+        instructions: fd.get("instructions") || null,
+      }),
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      setEditRecipeOpen(false);
+      fetchMenuItems();
+    } else {
+      alert(data.error || "Failed to update recipe ingredient");
+    }
+  };
+
   const getIngredientName = (id) => {
     const ing = ingredients.find((i) => i.ingredient_id === id);
     return ing ? `${ing.ingredient_name} (${ing.unit_of_measure})` : `ID: ${id}`;
@@ -386,6 +423,14 @@ function MenuItemsDatabaseComponent() {
                                   title="Remove ingredient"
                                 >
                                   <X className="size-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openEditRecipeDialog(r)}
+                                  className="shrink-0 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400 transition-colors p-0.5"
+                                  title="Edit ingredient"
+                                >
+                                  <Pencil className="size-3" />
                                 </button>
                               </div>
                             ))}
@@ -654,6 +699,52 @@ function MenuItemsDatabaseComponent() {
               Delete
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editRecipeOpen} onOpenChange={setEditRecipeOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Recipe Ingredient</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditRecipeSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <Label>Ingredient</Label>
+              <div className="flex h-9 w-full min-w-0 rounded-md border border-input bg-muted/50 px-3 py-1 text-sm text-muted-foreground">
+                {editRecipeForm.ingredient_name} ({editRecipeForm.unit_of_measure})
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>
+                Quantity Needed <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                name="quantity_needed"
+                type="number"
+                step="0.01"
+                min="0"
+                defaultValue={editRecipeForm.quantity_needed}
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Instructions</Label>
+              <Input
+                name="instructions"
+                type="text"
+                placeholder="Optional preparation notes"
+                defaultValue={editRecipeForm.instructions}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setEditRecipeOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white">
+                Save Changes
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
