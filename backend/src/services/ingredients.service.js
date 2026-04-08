@@ -46,3 +46,30 @@ export async function deleteIngredient(db, ingredient_id) {
     message: "Ingredient deleted successfully",
   };
 }
+
+export async function updateIngredient(db, data) {
+  const { ingredient_id, ingredient_name, category, unit_of_measure, current_unit_cost, storage_time, preferred_supplier_id } = data;
+
+  if (!ingredient_id || !ingredient_name || !unit_of_measure || !current_unit_cost) {
+    return {
+      error: "Missing required fields: ingredient_id, ingredient_name, unit_of_measure, current_unit_cost",
+    };
+  }
+
+  if (!VALID_UNITS.includes(unit_of_measure)) {
+    return {
+      error: `Invalid unit_of_measure. Must be one of: ${VALID_UNITS.join(", ")}`,
+    };
+  }
+
+  const result = await IngredientModel.update(db, { ingredient_id, ingredient_name, category, unit_of_measure, current_unit_cost, storage_time, preferred_supplier_id });
+
+  if (result.affectedRows === 0) {
+    return { error: "Ingredient not found" };
+  }
+
+  return {
+    success: true,
+    message: "Ingredient updated successfully",
+  };
+}

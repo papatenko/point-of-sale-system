@@ -8,7 +8,6 @@ import {
   Utensils,
   Truck,
   Archive,
-  UserCircle,
   Database,
   ClipboardList,
 } from "lucide-react";
@@ -48,16 +47,9 @@ export const EMPLOYEE_ROUTES = [
 
 export const DATABASE_MANAGEMENT_ROUTES = [
   {
-    name: "Employees",
-    url: "/employee/database/employees",
+    name: "Users",
+    url: "/employee/database/users",
     icon: Users,
-    roles: ["admin"],
-    category: "people",
-  },
-  {
-    name: "Customers",
-    url: "/employee/database/customers",
-    icon: UserCircle,
     roles: ["admin"],
     category: "people",
   },

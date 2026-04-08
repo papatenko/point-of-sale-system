@@ -66,6 +66,7 @@ function MenuItemsDatabaseComponent() {
   const [editForm, setEditForm] = useState({});
   const [editRecipeOpen, setEditRecipeOpen] = useState(false);
   const [editRecipeForm, setEditRecipeForm] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchMenuItems = useCallback(async () => {
     try {
@@ -301,6 +302,20 @@ function MenuItemsDatabaseComponent() {
     return ing ? `${ing.ingredient_name} (${ing.unit_of_measure})` : `ID: ${id}`;
   };
 
+  const filteredMenuItems = menuItems.filter((item) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      item.item_name?.toLowerCase().includes(q) ||
+      item.category_name?.toLowerCase().includes(q) ||
+      item.description?.toLowerCase().includes(q) ||
+      item.price?.toString().includes(q) ||
+      item.recipes?.some((r) =>
+        r.ingredient_name?.toLowerCase().includes(q)
+      )
+    );
+  });
+
   const ingredientOptions = ingredients.map((i) => ({
     value: String(i.ingredient_id),
     label: `${i.ingredient_name} (${i.unit_of_measure})`,
@@ -316,26 +331,38 @@ function MenuItemsDatabaseComponent() {
 
   return (
     <div className="p-6 space-y-6 w-full">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold">Menu Items</h1>
           <p className="text-muted-foreground text-sm">
             Manage menu items and their recipes
           </p>
         </div>
-        <Button onClick={openCreateDialog} className="bg-amber-600 hover:bg-amber-700 text-white">
-          <Plus className="mr-2 size-4" />
-          Add Menu Item
-        </Button>
+        <div className="flex items-center gap-3">
+          <Input
+            placeholder="Search menu items..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-64"
+          />
+          <Button onClick={openCreateDialog} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
+            <Plus className="mr-2 size-4" />
+            Add Menu Item
+          </Button>
+        </div>
       </div>
 
-      {menuItems.length === 0 ? (
+      {filteredMenuItems.length === 0 && menuItems.length > 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          No menu items match your search.
+        </div>
+      ) : filteredMenuItems.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           No menu items found. Add one to get started.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <Card key={item.menu_item_id} className="flex flex-col">
               <CardContent className="p-0 flex flex-col flex-1">
                 <div className="relative">
