@@ -106,10 +106,27 @@ router.get("/api/menu", async (_, db) =>
   MenuItemService.getAvailableMenuItems(db),
 );
 router.get("/api/menu-items", async (_, db) =>
-  MenuItemService.getAllMenuItems(db),
+  MenuItemService.getAllMenuItemsWithRecipes(db),
 );
 router.post("/api/menu-items", async (body, db) =>
   MenuItemService.createMenuItem(db, body),
+);
+router.post("/api/menu-items-with-recipes", async (body, db) => {
+  const { item_name, category, description, price, image_url, recipes } = body;
+  if (!item_name || !price) {
+    return { error: "Missing required fields: item_name, price" };
+  }
+  if (!recipes || recipes.length === 0) {
+    return { error: "At least one recipe ingredient is required" };
+  }
+  return await MenuItemService.createMenuItemWithRecipes(
+    db,
+    { item_name, category, description, price, image_url },
+    recipes,
+  );
+});
+router.put("/api/menu-items", async (body, db) =>
+  MenuItemService.updateMenuItem(db, body),
 );
 router.delete("/api/menu-items", async (body, db) => {
   const { menu_item_id } = body;
