@@ -17,9 +17,20 @@ export function MenuCard({ item, qty, onAdd, onQty }) {
             {item.description}
           </p>
         )}
-        <p className="font-bold text-amber-600 dark:text-amber-400">
-          ${parseFloat(item.price).toFixed(2)}
-        </p>
+        {qty >= 2 ? (
+          <div className="mt-1 space-y-0.5">
+            <p className="text-sm line-through text-muted-foreground/70">
+              ${parseFloat(item.price).toFixed(2)}
+            </p>
+            <span className="inline-block text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded px-1.5 py-0.5">
+              1 item free!
+            </span>
+          </div>
+        ) : (
+          <p className="font-bold text-amber-600 dark:text-amber-400">
+            ${parseFloat(item.price).toFixed(2)}
+          </p>
+        )}
       </div>
       <div className="flex-shrink-0 mt-1">
         {qty === 0 ? (

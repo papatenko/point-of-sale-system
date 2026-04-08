@@ -21,7 +21,7 @@ function PosScreen() {
 
   const dispatch = useDispatch();
   const cartItems = useSelector((s) => s.cart.items);
-  const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const cartTotal = cartItems.reduce((sum, i) => sum + (i.quantity >= 2 ? i.price * (i.quantity - 1) : i.price * i.quantity), 0);
   const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
   // Get truck info from logged-in employee
