@@ -59,6 +59,10 @@ router.get("/api/employees", async (_, db) =>
 router.post("/api/employees", async (body, db) =>
   EmployeeService.createEmployee(db, body),
 );
+router.put("/api/employees", async (body, db) => {
+  const { email, role, license_plate } = body;
+  return EmployeeService.updateEmployee(db, email, { role, license_plate });
+});
 router.delete("/api/employees", async (body, db) => {
   const { email } = body;
   return EmployeeService.deleteEmployee(db, email);
@@ -75,6 +79,9 @@ router.delete("/api/ingredients", async (body, db) => {
   const { ingredient_id } = body;
   return IngredientService.deleteIngredient(db, ingredient_id);
 });
+router.put("/api/ingredients", async (body, db) =>
+  IngredientService.updateIngredient(db, body),
+);
 
 // Trucks
 router.get("/api/trucks", async (_, db) => TruckService.getAllTrucks(db));

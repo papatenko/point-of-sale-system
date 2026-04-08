@@ -68,3 +68,17 @@ export async function deleteEmployee(db, email) {
     message: "Employee and associated user deleted successfully",
   };
 }
+
+export async function updateEmployee(db, email, data) {
+  if (!email) {
+    return { error: "email is required" };
+  }
+
+  const existing = await EmployeeModel.findByEmail(db, email);
+  if (!existing) {
+    return { error: "Employee not found" };
+  }
+
+  await EmployeeModel.update(db, email, data);
+  return { success: true, message: "Employee updated successfully" };
+}
