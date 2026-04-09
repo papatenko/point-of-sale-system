@@ -652,9 +652,6 @@ function RouteComponent() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">Totals</CardTitle>
-            <CardDescription>
-              Don&apos;t display charts until you pick one below.
-            </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[
