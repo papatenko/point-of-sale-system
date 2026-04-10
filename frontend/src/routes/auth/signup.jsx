@@ -24,6 +24,25 @@ function SignupComponent() {
   const dispatch = useDispatch();
 
 
+  const handlePhoneChange = (e) => {
+      let value = e.target.value;
+      let onlyNumbers = value.replace(/[^0-9]/g, "");
+
+      if (onlyNumbers.length > 11) {
+        onlyNumbers = onlyNumbers.slice(0, 11);
+      }
+
+      setPhoneNumber(onlyNumbers);
+
+      if (onlyNumbers.length < 10) {
+        setError("Must be at least 10 digits");
+      } else {
+        setError("");
+      }
+    };
+    
+
+
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
@@ -34,6 +53,11 @@ function SignupComponent() {
       setLoading(false);
       return;
     }
+     if (phoneNumber.length < 10 || phoneNumber.length > 11) {
+    setError("Phone number must be 10–11 digits");
+    setLoading(false);
+    return;
+  }
 
     try {
       const data = await register({
@@ -134,19 +158,25 @@ function SignupComponent() {
             Phone Number
           </label>
           <input
-            id="phone"
-            name="phone"
-            type="tel"
-            placeholder="1234567890"
-            value={phoneNumber}
-            onChange={(e) => {
-              const value = e.target.value;
-              const onlyNumbers = value.replace(/[^0-9]/g, "");
-              setPhoneNumber(onlyNumbers);
-            }}
-            className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
-            required
-          />
+        type="tel"
+        value={phoneNumber}
+        onChange={handlePhoneChange}
+        placeholder="1234567890"
+        className={`w-full p-2.5 border rounded-lg text-sm transition
+          ${
+            error
+              ? "border-red-500 focus:ring-2 focus:ring-red-400"
+              : "border-input focus:ring-2 focus:ring-amber-400"
+          }
+          bg-background text-foreground`}
+        required
+      />
+
+      {error && (
+        <p className="text-red-400 text-xs mt-1">
+          {error}
+        </p>
+      )}
         </div>
 
         <div>

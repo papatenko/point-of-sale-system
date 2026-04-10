@@ -12,6 +12,7 @@ export const Route = createFileRoute("/profile")({
 
 function ProfilePage() {
   const [formData, setFormData] = useState({
+    email: "",
     first_name: "",
     last_name: "",
     phone_number: "",
@@ -36,6 +37,7 @@ function ProfilePage() {
     getCurrentUser()
       .then((data) => {
         setFormData({
+          email: data.email || "",
           first_name: data.first_name || "",
           last_name: data.last_name || "",
           phone_number: data.phone_number || "",
@@ -106,12 +108,13 @@ if (
     );
   }
 
+
   return (
     <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-md mx-auto">
         <div className="bg-background rounded-xl shadow-sm border p-6">
           <h1 className="text-2xl font-bold mb-6 text-foreground">Profile Settings</h1>
-
+          <h3 className="text-1xl mb-6 text-foreground">{formData.email}</h3>
           {message && (
             <div className="mb-4 p-3 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-lg text-sm text-green-700 dark:text-green-300">
               {message}
