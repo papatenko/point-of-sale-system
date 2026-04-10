@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
 import {
   PackageIcon,
-  AlertTriangle,
+  AlertTriangleIcon,
   CheckCircle2Icon,
   TruckIcon,
   MinusCircleIcon,
@@ -154,7 +154,7 @@ function StatCard({ icon: Icon, label, value, variant = "default" }) {
     danger: "text-destructive",
     warning: "text-accent",
     success: "text-primary",
-    info:    "text-blue-500",
+    info: "text-blue-500",
   };
   return (
     <Card>
@@ -358,8 +358,9 @@ function ReceiveShipmentsDialog({ orders, open, onOpenChange, onReceive }) {
             Incoming Supply Shipments
           </DialogTitle>
           <DialogDescription>
-            {orders.length} shipment{orders.length !== 1 ? "s" : ""} awaiting receipt.
-            Confirm delivery quantities to restock inventory automatically.
+            {orders.length} shipment{orders.length !== 1 ? "s" : ""} awaiting
+            receipt. Confirm delivery quantities to restock inventory
+            automatically.
           </DialogDescription>
         </DialogHeader>
 
@@ -394,7 +395,10 @@ function ReceiveShipmentsDialog({ orders, open, onOpenChange, onReceive }) {
               <Button
                 size="sm"
                 className="shrink-0 gap-1.5"
-                onClick={() => { onReceive(order); onOpenChange(false); }}
+                onClick={() => {
+                  onReceive(order);
+                  onOpenChange(false);
+                }}
               >
                 <PackageIcon className="size-3.5" />
                 Receive
@@ -403,16 +407,13 @@ function ReceiveShipmentsDialog({ orders, open, onOpenChange, onReceive }) {
           ))}
         </div>
 
-      <ReceiveOrderDialog
-        order={activeOrder}
-        open={!!activeOrder}
-        onOpenChange={(o) => {
-          if (!o) setActiveOrder(null);
-        }}
-        onConfirm={handleConfirmReceive}
-        loading={receiveLoading}
-      />
-    </>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -689,6 +690,7 @@ function InventoryPage() {
   const [inventory, setInventory] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [history, setHistory] = useState([]);
+  const [histSort, setHistSort] = useState({ col: "date", dir: "desc" });
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -697,17 +699,15 @@ function InventoryPage() {
   // Dialogs
   const [adjustItem, setAdjustItem] = useState(null);
   const [reorderItem, setReorderItem] = useState(null);
-  // Removed useMenuItemOpen and dailyProductionOpen
   const [expireItems, setExpireItems] = useState(null);
   const [hasShownWarningForTruck, setHasShownWarningForTruck] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [expireLoading, setExpireLoading] = useState(false);
   const [productionLoading, setProductionLoading] = useState(false);
 
-  // Pending supply orders notice (manager/admin only)
+  // Supply shipments (manager/admin only)
   const [pendingOrders, setPendingOrders] = useState([]);
-  const [pendingOrdersNotice, setPendingOrdersNotice] = useState(null);
-  const [hasShownPendingForTruck, setHasShownPendingForTruck] = useState(null);
+  const [pendingOrdersOpen, setPendingOrdersOpen] = useState(false);
   const [pendingActiveOrder, setPendingActiveOrder] = useState(null);
   const [pendingReceiveLoading, setPendingReceiveLoading] = useState(false);
 
@@ -743,38 +743,43 @@ function InventoryPage() {
       .catch(() => {});
   }, [authUser]);
 
-  const loadData = useCallback(async (lp) => {
-    if (!lp) return;
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const [inv, alt, hist] = await Promise.all([
-        fetch(`/api/inventory?licensePlate=${encodeURIComponent(lp)}`).then(
-          (r) => r.json(),
-        ),
-        fetch(
-          `/api/inventory/alerts?licensePlate=${encodeURIComponent(lp)}`,
-        ).then((r) => r.json()),
-        fetch(
-          `/api/inventory/history?licensePlate=${encodeURIComponent(lp)}&limit=50`,
-        ).then((r) => r.json()),
-      ]);
-      setInventory(Array.isArray(inv)  ? inv  : []);
-      setAlerts   (Array.isArray(alt)  ? alt  : []);
-      setHistory  (Array.isArray(hist) ? hist : []);
+  const loadData = useCallback(
+    async (lp) => {
+      if (!lp) return;
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("token");
+        const [inv, alt, hist] = await Promise.all([
+          fetch(`/api/inventory?licensePlate=${encodeURIComponent(lp)}`).then(
+            (r) => r.json(),
+          ),
+          fetch(
+            `/api/inventory/alerts?licensePlate=${encodeURIComponent(lp)}`,
+          ).then((r) => r.json()),
+          fetch(
+            `/api/inventory/history?licensePlate=${encodeURIComponent(lp)}&limit=50`,
+          ).then((r) => r.json()),
+        ]);
+        setInventory(Array.isArray(inv) ? inv : []);
+        setAlerts(Array.isArray(alt) ? alt : []);
+        setHistory(Array.isArray(hist) ? hist : []);
 
-      if (isManagerOrAdmin(authUser)) {
-        const pending = await fetch(
-          `/api/inventory/pending-orders?licensePlate=${encodeURIComponent(lp)}`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        ).then((r) => r.json()).catch(() => []);
-        setPendingOrders(Array.isArray(pending) ? pending : []);
+        if (isManagerOrAdmin(authUser)) {
+          const pending = await fetch(
+            `/api/inventory/pending-orders?licensePlate=${encodeURIComponent(lp)}`,
+            { headers: { Authorization: `Bearer ${token}` } },
+          )
+            .then((r) => r.json())
+            .catch(() => []);
+          setPendingOrders(Array.isArray(pending) ? pending : []);
+        }
+      } catch {
+        showToast("Failed to load inventory", "error");
       }
-    } catch {
-      showToast("Failed to load inventory", "error");
-    }
-    setLoading(false);
-  }, [authUser]);
+      setLoading(false);
+    },
+    [authUser],
+  );
 
   useEffect(() => {
     loadData(selectedTruck);
@@ -1039,15 +1044,38 @@ function InventoryPage() {
       </div>
 
       <div className="max-w-7xl mx-auto w-full px-6 py-6 flex flex-col gap-6">
-
         {/* ── Stat Cards ────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <StatCard icon={PackageIcon}       label="Total Ingredients"  value={inventory.length} />
-          <StatCard icon={XCircleIcon}       label="Out of Stock"       value={outOfStockCount}        variant={outOfStockCount        > 0 ? "danger"  : "success"} />
-          <StatCard icon={AlertTriangleIcon} label="Below Threshold"    value={belowThreshCount}       variant={belowThreshCount       > 0 ? "warning" : "success"} />
-          <StatCard icon={BellIcon}          label="Active Alerts"      value={activeAlertCount}       variant={activeAlertCount       > 0 ? "warning" : "success"} />
+          <StatCard
+            icon={PackageIcon}
+            label="Total Ingredients"
+            value={inventory.length}
+          />
+          <StatCard
+            icon={XCircleIcon}
+            label="Out of Stock"
+            value={outOfStockCount}
+            variant={outOfStockCount > 0 ? "danger" : "success"}
+          />
+          <StatCard
+            icon={AlertTriangleIcon}
+            label="Below Threshold"
+            value={belowThreshCount}
+            variant={belowThreshCount > 0 ? "warning" : "success"}
+          />
+          <StatCard
+            icon={BellIcon}
+            label="Active Alerts"
+            value={activeAlertCount}
+            variant={activeAlertCount > 0 ? "warning" : "success"}
+          />
           {isManagerOrAdmin(authUser) && (
-            <StatCard icon={TruckIcon}       label="Pending Shipments"  value={pendingOrders.length}   variant="info" />
+            <StatCard
+              icon={TruckIcon}
+              label="Pending Shipments"
+              value={pendingOrders.length}
+              variant="info"
+            />
           )}
         </div>
 
@@ -1070,7 +1098,7 @@ function InventoryPage() {
 
         {activeAlertCount > 0 && (
           <div className="flex gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-amber-900 dark:text-amber-300">
-            <AlertTriangle className="size-4 mt-0.5 shrink-0" />
+            <AlertTriangleIcon className="size-4 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium leading-none mb-1">
                 {activeAlertCount} ingredient{activeAlertCount > 1 ? "s" : ""}{" "}
@@ -1349,7 +1377,10 @@ function InventoryPage() {
             <Card className="rounded-tl-none rounded-t-none">
               <CardHeader className="border-b">
                 <CardTitle className="text-base">Adjustment History</CardTitle>
-                <CardDescription>Last 50 inventory changes for this truck · click a column header to sort</CardDescription>
+                <CardDescription>
+                  Last 50 inventory changes for this truck · click a column
+                  header to sort
+                </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 {loading ? (
@@ -1364,115 +1395,145 @@ function InventoryPage() {
                       Adjustments will appear here once recorded
                     </p>
                   </div>
-                ) : (() => {
-                  const toggleSort = (col) =>
-                    setHistSort((prev) => ({
-                      col,
-                      dir: prev.col === col && prev.dir === "asc" ? "desc" : "asc",
-                    }));
+                ) : (
+                  (() => {
+                    const toggleSort = (col) =>
+                      setHistSort((prev) => ({
+                        col,
+                        dir:
+                          prev.col === col && prev.dir === "asc"
+                            ? "desc"
+                            : "asc",
+                      }));
 
-                  const SortHead = ({ col, children }) => {
-                    const active = histSort.col === col;
+                    const SortHead = ({ col, children }) => {
+                      const active = histSort.col === col;
+                      return (
+                        <TableHead>
+                          <button
+                            onClick={() => toggleSort(col)}
+                            className="flex items-center gap-1 hover:text-foreground transition-colors select-none"
+                          >
+                            {children}
+                            {active ? (
+                              histSort.dir === "asc" ? (
+                                <ChevronUpIcon className="size-3.5" />
+                              ) : (
+                                <ChevronDownIcon className="size-3.5" />
+                              )
+                            ) : (
+                              <ChevronUpIcon className="size-3.5 opacity-20" />
+                            )}
+                          </button>
+                        </TableHead>
+                      );
+                    };
+
+                    const sortedHistory = [...history].sort((a, b) => {
+                      const dir = histSort.dir === "asc" ? 1 : -1;
+                      switch (histSort.col) {
+                        case "date":
+                          return (
+                            dir *
+                            (new Date(a.adjustmentDate) -
+                              new Date(b.adjustmentDate))
+                          );
+                        case "ingredient":
+                          return (
+                            dir *
+                            a.ingredientName.localeCompare(b.ingredientName)
+                          );
+                        case "type":
+                          return (
+                            dir *
+                            (a.adjustmentType ?? "").localeCompare(
+                              b.adjustmentType ?? "",
+                            )
+                          );
+                        case "change":
+                          return dir * (a.quantityChange - b.quantityChange);
+                        case "reason":
+                          return (
+                            dir * (a.reason ?? "").localeCompare(b.reason ?? "")
+                          );
+                        case "by":
+                          return dir * a.adjustedBy.localeCompare(b.adjustedBy);
+                        default:
+                          return 0;
+                      }
+                    });
+
                     return (
-                      <TableHead>
-                        <button
-                          onClick={() => toggleSort(col)}
-                          className="flex items-center gap-1 hover:text-foreground transition-colors select-none"
-                        >
-                          {children}
-                          {active
-                            ? histSort.dir === "asc"
-                              ? <ChevronUpIcon className="size-3.5" />
-                              : <ChevronDownIcon className="size-3.5" />
-                            : <ChevronUpIcon className="size-3.5 opacity-20" />}
-                        </button>
-                      </TableHead>
-                    );
-                  };
-
-                  const sortedHistory = [...history].sort((a, b) => {
-                    const dir = histSort.dir === "asc" ? 1 : -1;
-                    switch (histSort.col) {
-                      case "date":       return dir * (new Date(a.adjustmentDate) - new Date(b.adjustmentDate));
-                      case "ingredient": return dir * a.ingredientName.localeCompare(b.ingredientName);
-                      case "type":       return dir * (a.adjustmentType ?? "").localeCompare(b.adjustmentType ?? "");
-                      case "change":     return dir * (a.quantityChange - b.quantityChange);
-                      case "reason":     return dir * (a.reason ?? "").localeCompare(b.reason ?? "");
-                      case "by":         return dir * a.adjustedBy.localeCompare(b.adjustedBy);
-                      default: return 0;
-                    }
-                  });
-
-                  return (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <SortHead col="date">Date</SortHead>
-                        <SortHead col="ingredient">Ingredient</SortHead>
-                        <SortHead col="type">Type</SortHead>
-                        <SortHead col="change">Change</SortHead>
-                        <SortHead col="reason">Reason</SortHead>
-                        <SortHead col="by">Recorded by</SortHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {sortedHistory.map((h) => {
-                        const typeMeta = {
-                          waste: {
-                            label: "Waste",
-                            cls: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
-                          },
-                          "order-deduction": {
-                            label: "Used",
-                            cls: "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300",
-                          },
-                          restock: {
-                            label: "Restock",
-                            cls: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300",
-                          },
-                          correction: {
-                            label: "Correction",
-                            cls: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300",
-                          },
-                        };
-                        const meta = typeMeta[h.adjustmentType] ?? {
-                          label: h.adjustmentType,
-                          cls: "",
-                        };
-                        return (
-                          <TableRow key={h.adjustmentId}>
-                            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                              {formatDateTime(h.adjustmentDate)}
-                            </TableCell>
-                            <TableCell className="font-medium text-foreground">
-                              {h.ingredientName}
-                            </TableCell>
-                            <TableCell>
-                              <span
-                                className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${meta.cls}`}
-                              >
-                                {meta.label}
-                              </span>
-                            </TableCell>
-                            <TableCell
-                              className={`tabular-nums font-semibold ${h.quantityChange < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}
-                            >
-                              {h.quantityChange > 0 ? "+" : ""}
-                              {fmt(h.quantityChange)} {h.unitOfMeasure}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                              {h.reason || "—"}
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {h.adjustedBy}
-                            </TableCell>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <SortHead col="date">Date</SortHead>
+                            <SortHead col="ingredient">Ingredient</SortHead>
+                            <SortHead col="type">Type</SortHead>
+                            <SortHead col="change">Change</SortHead>
+                            <SortHead col="reason">Reason</SortHead>
+                            <SortHead col="by">Recorded by</SortHead>
                           </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                  );
-                })()}
+                        </TableHeader>
+                        <TableBody>
+                          {sortedHistory.map((h) => {
+                            const typeMeta = {
+                              waste: {
+                                label: "Waste",
+                                cls: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+                              },
+                              "order-deduction": {
+                                label: "Used",
+                                cls: "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300",
+                              },
+                              restock: {
+                                label: "Restock",
+                                cls: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300",
+                              },
+                              correction: {
+                                label: "Correction",
+                                cls: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300",
+                              },
+                            };
+                            const meta = typeMeta[h.adjustmentType] ?? {
+                              label: h.adjustmentType,
+                              cls: "",
+                            };
+                            return (
+                              <TableRow key={h.adjustmentId}>
+                                <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                                  {formatDateTime(h.adjustmentDate)}
+                                </TableCell>
+                                <TableCell className="font-medium text-foreground">
+                                  {h.ingredientName}
+                                </TableCell>
+                                <TableCell>
+                                  <span
+                                    className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${meta.cls}`}
+                                  >
+                                    {meta.label}
+                                  </span>
+                                </TableCell>
+                                <TableCell
+                                  className={`tabular-nums font-semibold ${h.quantityChange < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}
+                                >
+                                  {h.quantityChange > 0 ? "+" : ""}
+                                  {fmt(h.quantityChange)} {h.unitOfMeasure}
+                                </TableCell>
+                                <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                                  {h.reason || "—"}
+                                </TableCell>
+                                <TableCell className="text-xs text-muted-foreground">
+                                  {h.adjustedBy}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    );
+                  })()
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -1532,7 +1593,7 @@ function InventoryPage() {
           className={`fixed bottom-5 right-5 z-50 flex items-start gap-3 rounded-xl border bg-card shadow-xl px-4 py-3.5 max-w-sm text-sm animate-in slide-in-from-bottom-4 ${toast.type === "error" ? "border-destructive/50" : "border-emerald-500/50"}`}
         >
           {toast.type === "error" ? (
-            <AlertTriangle className="size-4 text-destructive mt-0.5 shrink-0" />
+            <AlertTriangleIcon className="size-4 text-destructive mt-0.5 shrink-0" />
           ) : (
             <CheckCircle2Icon className="size-4 text-emerald-500 mt-0.5 shrink-0" />
           )}
