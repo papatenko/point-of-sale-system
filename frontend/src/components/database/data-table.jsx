@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 import { Trash2 } from "lucide-react";
 
 export function DataTable({
@@ -25,6 +26,9 @@ export function DataTable({
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const { alertConfig, showAlert, hideAlert, AlertPopupComponent } = useAlertPopup();
 
   const filteredData = useMemo(() => {
     if (!searchTerm.trim()) return data;
@@ -60,9 +64,24 @@ export function DataTable({
   }, [currentPage, totalPages]);
 
   const handleDelete = (id) => {
-    if (confirm("Are you sure you want to delete this item?")) {
-      onDelete(id);
+    setDeleteId(id);
+    setDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteId) {
+      onDelete(deleteId);
     }
+    setDeleteOpen(false);
+    setDeleteId(null);
+  };
+
+  const showError = (message) => {
+    showAlert({
+      title: "Error",
+      description: message,
+      variant: "error",
+    });
   };
 
   const formatValue = (value, format) => {
@@ -136,6 +155,7 @@ export function DataTable({
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDelete(item[deleteIdKey])}
+                        disabled={!deleteIdKey}
                       >
                         <Trash2 className="size-4" />
                       </Button>
@@ -176,6 +196,17 @@ export function DataTable({
           </div>
         </div>
       )}
+
+      <AlertPopup
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete Item"
+        description="Are you sure you want to delete this item? This action cannot be undone."
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+        confirmLabel="Delete"
+      />
+      <AlertPopupComponent />
     </div>
   );
 }

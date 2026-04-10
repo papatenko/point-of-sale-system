@@ -1,24 +1,55 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
 import {
-  PackageIcon, AlertTriangleIcon, CheckCircle2Icon,
-  TruckIcon, MinusCircleIcon, ShoppingCartIcon, HistoryIcon,
-  BellIcon, SearchIcon, RefreshCwIcon, XCircleIcon, Trash2Icon,
-  ChevronDownIcon, ChevronUpIcon,
+  PackageIcon,
+  AlertTriangle,
+  CheckCircle2Icon,
+  TruckIcon,
+  MinusCircleIcon,
+  ShoppingCartIcon,
+  HistoryIcon,
+  BellIcon,
+  SearchIcon,
+  RefreshCwIcon,
+  XCircleIcon,
+  Trash2Icon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from "lucide-react";
 
-import { Button }   from "@/components/ui/button";
-import { Input }    from "@/components/ui/input";
-import { Badge }    from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-  DialogDescription, DialogFooter,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { useSelector } from "react-redux";
 import { formatDateTime, formatTime } from "@/utils/format";
@@ -48,10 +79,17 @@ function StatusBadge({ item }) {
   if (item.quantityOnHand === 0)
     return <Badge variant="destructive">Out of Stock</Badge>;
   if (item.needsReorder)
-    return <Badge variant="destructive" className="bg-orange-500 dark:bg-orange-600 hover:bg-orange-500 dark:hover:bg-orange-600">Below Threshold</Badge>;
-  const ratio = item.reorderThreshold > 0 ? item.quantityOnHand / item.reorderThreshold : 2;
-  if (ratio < 1.5)
-    return <Badge variant="warning">Running Low</Badge>;
+    return (
+      <Badge
+        variant="destructive"
+        className="bg-orange-500 dark:bg-orange-600 hover:bg-orange-500 dark:hover:bg-orange-600"
+      >
+        Below Threshold
+      </Badge>
+    );
+  const ratio =
+    item.reorderThreshold > 0 ? item.quantityOnHand / item.reorderThreshold : 2;
+  if (ratio < 1.5) return <Badge variant="warning">Running Low</Badge>;
   return <Badge variant="success">In Stock</Badge>;
 }
 
@@ -59,31 +97,51 @@ function StatusBadge({ item }) {
 function ExpiryBadge({ date }) {
   if (!date) return <span className="text-muted-foreground text-xs">—</span>;
   const days = Math.floor((new Date(date) - new Date()) / 86_400_000);
-  if (days < 0)  return <Badge variant="destructive">Expired</Badge>;
-  if (days <= 3) return <Badge variant="destructive" className="bg-orange-500 dark:bg-orange-600 hover:bg-orange-500 dark:hover:bg-orange-600">{days}d left</Badge>;
+  if (days < 0) return <Badge variant="destructive">Expired</Badge>;
+  if (days <= 3)
+    return (
+      <Badge
+        variant="destructive"
+        className="bg-orange-500 dark:bg-orange-600 hover:bg-orange-500 dark:hover:bg-orange-600"
+      >
+        {days}d left
+      </Badge>
+    );
   if (days <= 7) return <Badge variant="warning">{days}d left</Badge>;
-  return <span className="text-xs text-muted-foreground">{new Date(date).toLocaleDateString()}</span>;
+  return (
+    <span className="text-xs text-muted-foreground">
+      {new Date(date).toLocaleDateString()}
+    </span>
+  );
 }
 
 // ─── Quantity Bar ─────────────────────────────────────────────────────────────
 function QuantityBar({ item }) {
-  const ratio = item.reorderThreshold > 0
-    ? Math.min(item.quantityOnHand / (item.reorderThreshold * 2), 1)
-    : 1;
+  const ratio =
+    item.reorderThreshold > 0
+      ? Math.min(item.quantityOnHand / (item.reorderThreshold * 2), 1)
+      : 1;
   const fillColor =
-    item.quantityOnHand === 0 ? "bg-destructive"
-    : item.needsReorder       ? "bg-accent"
-    : ratio < 0.75            ? "bg-primary"
-    : "bg-primary";
+    item.quantityOnHand === 0
+      ? "bg-destructive"
+      : item.needsReorder
+        ? "bg-accent"
+        : ratio < 0.75
+          ? "bg-primary"
+          : "bg-primary";
   return (
     <div className="flex flex-col gap-1 min-w-[120px]">
       <span className="font-semibold tabular-nums text-sm">
         {fmt(item.quantityOnHand)}{" "}
-        <span className="text-muted-foreground font-normal">{item.unitOfMeasure}</span>
+        <span className="text-muted-foreground font-normal">
+          {item.unitOfMeasure}
+        </span>
       </span>
       <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-        <div className={`h-full rounded-full transition-all ${fillColor}`}
-          style={{ width: `${Math.round(ratio * 100)}%` }} />
+        <div
+          className={`h-full rounded-full transition-all ${fillColor}`}
+          style={{ width: `${Math.round(ratio * 100)}%` }}
+        />
       </div>
     </div>
   );
@@ -93,7 +151,7 @@ function QuantityBar({ item }) {
 function StatCard({ icon: Icon, label, value, variant = "default" }) {
   const colorMap = {
     default: "text-foreground",
-    danger:  "text-destructive",
+    danger: "text-destructive",
     warning: "text-accent",
     success: "text-primary",
   };
@@ -102,8 +160,14 @@ function StatCard({ icon: Icon, label, value, variant = "default" }) {
       <CardContent className="pt-6 pb-5">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">{label}</p>
-            <p className={`text-3xl font-extrabold tabular-nums ${colorMap[variant]}`}>{value}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">
+              {label}
+            </p>
+            <p
+              className={`text-3xl font-extrabold tabular-nums ${colorMap[variant]}`}
+            >
+              {value}
+            </p>
           </div>
           <div className={`p-2 rounded-lg bg-muted ${colorMap[variant]}`}>
             <Icon className="size-5" />
@@ -118,7 +182,10 @@ function LoadingRows({ count = 5 }) {
   return (
     <div className="p-6 space-y-3">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="h-12 w-full rounded-md bg-muted animate-pulse" />
+        <div
+          key={i}
+          className="h-12 w-full rounded-md bg-muted animate-pulse"
+        />
       ))}
     </div>
   );
@@ -150,15 +217,17 @@ function ReceiveOrderDialog({ order, open, onOpenChange, onConfirm, loading }) {
 
   const handleConfirm = () => {
     const items = order.items.map((item) => ({
-      poItemId:         item.poItemId,
-      ingredientId:     item.ingredientId,
+      poItemId: item.poItemId,
+      ingredientId: item.ingredientId,
       quantityReceived: received[item.poItemId] ?? 0,
     }));
     onConfirm({ poId: order.poId, items });
   };
 
-  const totalReceived = Object.values(received)
-    .reduce((sum, v) => sum + (parseFloat(v) || 0), 0);
+  const totalReceived = Object.values(received).reduce(
+    (sum, v) => sum + (parseFloat(v) || 0),
+    0,
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -177,9 +246,9 @@ function ReceiveOrderDialog({ order, open, onOpenChange, onConfirm, loading }) {
         {/* Order meta */}
         <div className="rounded-lg border bg-muted/40 divide-y text-sm">
           {[
-            { label: "Supplier",   value: order.supplierName },
+            { label: "Supplier", value: order.supplierName },
             { label: "Created by", value: order.createdBy },
-            { label: "Status",     value: order.status },
+            { label: "Status", value: order.status },
             { label: "Total cost", value: `$${fmt(order.totalCost)}` },
           ].map(({ label, value }) => (
             <div key={label} className="flex justify-between px-3 py-2">
@@ -197,9 +266,11 @@ function ReceiveOrderDialog({ order, open, onOpenChange, onConfirm, loading }) {
             onClick={() => setItemsExpanded((e) => !e)}
           >
             <span>Items to receive ({order.items.length})</span>
-            {itemsExpanded
-              ? <ChevronUpIcon className="size-4" />
-              : <ChevronDownIcon className="size-4" />}
+            {itemsExpanded ? (
+              <ChevronUpIcon className="size-4" />
+            ) : (
+              <ChevronDownIcon className="size-4" />
+            )}
           </button>
 
           {itemsExpanded && (
@@ -218,7 +289,9 @@ function ReceiveOrderDialog({ order, open, onOpenChange, onConfirm, loading }) {
                 >
                   <div>
                     <p className="font-medium">{item.ingredientName}</p>
-                    <p className="text-xs text-muted-foreground">{item.unitOfMeasure}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.unitOfMeasure}
+                    </p>
                   </div>
                   <span className="tabular-nums text-muted-foreground text-right">
                     {fmt(item.quantityOrdered)}
@@ -228,7 +301,9 @@ function ReceiveOrderDialog({ order, open, onOpenChange, onConfirm, loading }) {
                     min="0"
                     step="0.01"
                     value={received[item.poItemId] ?? ""}
-                    onChange={(e) => handleQtyChange(item.poItemId, e.target.value)}
+                    onChange={(e) =>
+                      handleQtyChange(item.poItemId, e.target.value)
+                    }
                     className="w-24 text-right h-8 text-sm"
                   />
                 </div>
@@ -239,12 +314,20 @@ function ReceiveOrderDialog({ order, open, onOpenChange, onConfirm, loading }) {
 
         {/* Restock summary */}
         <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2 text-sm flex justify-between items-center">
-          <span className="text-emerald-800 font-medium">Total units being restocked</span>
-          <span className="text-emerald-700 font-bold tabular-nums">{fmt(totalReceived)}</span>
+          <span className="text-emerald-800 font-medium">
+            Total units being restocked
+          </span>
+          <span className="text-emerald-700 font-bold tabular-nums">
+            {fmt(totalReceived)}
+          </span>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
             Cancel
           </Button>
           <Button
@@ -262,11 +345,15 @@ function ReceiveOrderDialog({ order, open, onOpenChange, onConfirm, loading }) {
 }
 
 // ─── Pending Supply Orders Banner (managers / admins only) ────────────────────
-function PendingSupplyOrdersBanner({ selectedTruck, onOrderReceived, showToast }) {
+function PendingSupplyOrdersBanner({
+  selectedTruck,
+  onOrderReceived,
+  showToast,
+}) {
   const user = useSelector((s) => s.auth.user);
-  const [orders,         setOrders]         = useState([]);
-  const [bannerLoading,  setBannerLoading]  = useState(false);
-  const [activeOrder,    setActiveOrder]    = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [bannerLoading, setBannerLoading] = useState(false);
+  const [activeOrder, setActiveOrder] = useState(null);
   const [receiveLoading, setReceiveLoading] = useState(false);
 
   const loadPendingOrders = useCallback(async () => {
@@ -303,19 +390,23 @@ function PendingSupplyOrdersBanner({ selectedTruck, onOrderReceived, showToast }
         body: JSON.stringify({ poId, licensePlate: selectedTruck, items }),
       });
       const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "Request failed");
+      if (!res.ok || data.error)
+        throw new Error(data.error || "Request failed");
 
-      showToast(`✓ PO-${poId} received — inventory restocked and alerts resolved.`);
+      showToast(
+        `✓ PO-${poId} received — inventory restocked and alerts resolved.`,
+      );
       setActiveOrder(null);
       await loadPendingOrders(); // refresh banner
-      onOrderReceived();         // refresh parent inventory table
+      onOrderReceived(); // refresh parent inventory table
     } catch (err) {
       showToast(err.message, "error");
     }
     setReceiveLoading(false);
   };
 
-  if (!isManagerOrAdmin(user) || bannerLoading || orders.length === 0) return null;
+  if (!isManagerOrAdmin(user) || bannerLoading || orders.length === 0)
+    return null;
 
   return (
     <>
@@ -324,10 +415,12 @@ function PendingSupplyOrdersBanner({ selectedTruck, onOrderReceived, showToast }
           <TruckIcon className="size-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-blue-900 dark:text-blue-200 leading-tight">
-              {orders.length} pending supply order{orders.length > 1 ? "s" : ""} awaiting receipt
+              {orders.length} pending supply order{orders.length > 1 ? "s" : ""}{" "}
+              awaiting receipt
             </p>
             <p className="text-sm text-blue-700 dark:text-blue-400 mt-0.5">
-              Confirm delivery quantities to restock inventory and resolve reorder alerts automatically.
+              Confirm delivery quantities to restock inventory and resolve
+              reorder alerts automatically.
             </p>
           </div>
         </div>
@@ -340,14 +433,22 @@ function PendingSupplyOrdersBanner({ selectedTruck, onOrderReceived, showToast }
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-sm text-foreground">PO-{order.poId}</span>
-                  <Badge variant="outline" className="text-xs border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300">
+                  <span className="font-semibold text-sm text-foreground">
+                    PO-{order.poId}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="text-xs border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300"
+                  >
                     {order.status}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">{order.supplierName}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {order.supplierName}
+                  </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {order.items.length} ingredient{order.items.length !== 1 ? "s" : ""}
+                  {order.items.length} ingredient
+                  {order.items.length !== 1 ? "s" : ""}
                   {" · "}${fmt(order.totalCost)}
                   {" · "}ordered by {order.createdBy}
                 </p>
@@ -368,7 +469,9 @@ function PendingSupplyOrdersBanner({ selectedTruck, onOrderReceived, showToast }
       <ReceiveOrderDialog
         order={activeOrder}
         open={!!activeOrder}
-        onOpenChange={(o) => { if (!o) setActiveOrder(null); }}
+        onOpenChange={(o) => {
+          if (!o) setActiveOrder(null);
+        }}
         onConfirm={handleConfirmReceive}
         loading={receiveLoading}
       />
@@ -379,7 +482,13 @@ function PendingSupplyOrdersBanner({ selectedTruck, onOrderReceived, showToast }
 // Removed UseMenuItemDialog and DailyProductionDialog components
 
 // ─── Expire Confirmation Dialog ───────────────────────────────────────────────
-function ExpireDialog({ open, onOpenChange, expiredItems, onConfirm, loading }) {
+function ExpireDialog({
+  open,
+  onOpenChange,
+  expiredItems,
+  onConfirm,
+  loading,
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -389,8 +498,8 @@ function ExpireDialog({ open, onOpenChange, expiredItems, onConfirm, loading }) 
             Expire Outdated Inventory
           </DialogTitle>
           <DialogDescription>
-            The following items have passed their expiration date. Their quantities
-            will be set to 0 and logged as waste.
+            The following items have passed their expiration date. Their
+            quantities will be set to 0 and logged as waste.
           </DialogDescription>
         </DialogHeader>
 
@@ -398,24 +507,34 @@ function ExpireDialog({ open, onOpenChange, expiredItems, onConfirm, loading }) 
           {expiredItems.length === 0 ? (
             <div className="flex flex-col items-center py-6 text-muted-foreground gap-2">
               <CheckCircle2Icon className="size-8 text-emerald-500 opacity-70" />
-              <p className="text-sm font-medium text-foreground">No expired items</p>
-              <p className="text-xs">All items are within their expiration dates.</p>
+              <p className="text-sm font-medium text-foreground">
+                No expired items
+              </p>
+              <p className="text-xs">
+                All items are within their expiration dates.
+              </p>
             </div>
           ) : (
             <div className="rounded-lg border divide-y max-h-64 overflow-y-auto">
               {expiredItems.map((item) => (
-                <div key={item.ingredientId} className="flex items-center justify-between px-3 py-2.5 text-sm">
+                <div
+                  key={item.ingredientId}
+                  className="flex items-center justify-between px-3 py-2.5 text-sm"
+                >
                   <div>
                     <p className="font-medium">{item.ingredientName}</p>
                     <p className="text-xs text-muted-foreground">
-                      Expired {new Date(item.expirationDate).toLocaleDateString()}
+                      Expired{" "}
+                      {new Date(item.expirationDate).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="text-right">
                     <span className="font-semibold text-destructive tabular-nums">
                       {fmt(item.quantityOnHand)}
                     </span>
-                    <span className="text-muted-foreground text-xs ml-1">{item.unitOfMeasure}</span>
+                    <span className="text-muted-foreground text-xs ml-1">
+                      {item.unitOfMeasure}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -424,10 +543,18 @@ function ExpireDialog({ open, onOpenChange, expiredItems, onConfirm, loading }) 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           {expiredItems.length > 0 && (
-            <Button variant="destructive" disabled={loading} onClick={onConfirm}>
-              {loading ? "Expiring…" : `Expire ${expiredItems.length} item${expiredItems.length > 1 ? "s" : ""}`}
+            <Button
+              variant="destructive"
+              disabled={loading}
+              onClick={onConfirm}
+            >
+              {loading
+                ? "Expiring…"
+                : `Expire ${expiredItems.length} item${expiredItems.length > 1 ? "s" : ""}`}
             </Button>
           )}
         </DialogFooter>
@@ -438,15 +565,22 @@ function ExpireDialog({ open, onOpenChange, expiredItems, onConfirm, loading }) 
 
 // ─── Manual Adjust Dialog ─────────────────────────────────────────────────────
 function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
-  const [qty,    setQty]    = useState("");
-  const [type,   setType]   = useState("waste");
+  const [qty, setQty] = useState("");
+  const [type, setType] = useState("waste");
   const [reason, setReason] = useState("");
 
   useEffect(() => {
-    if (open) { setQty(""); setType("waste"); setReason(""); }
+    if (open) {
+      setQty("");
+      setType("waste");
+      setReason("");
+    }
   }, [open]);
 
-  const invalid = !qty || parseFloat(qty) <= 0 || parseFloat(qty) > (item?.quantityOnHand ?? 0);
+  const invalid =
+    !qty ||
+    parseFloat(qty) <= 0 ||
+    parseFloat(qty) > (item?.quantityOnHand ?? 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -455,7 +589,9 @@ function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
           <DialogTitle>Manual Inventory Adjustment</DialogTitle>
           <DialogDescription>
             {item?.ingredientName} — currently{" "}
-            <strong>{fmt(item?.quantityOnHand)} {item?.unitOfMeasure}</strong>
+            <strong>
+              {fmt(item?.quantityOnHand)} {item?.unitOfMeasure}
+            </strong>
           </DialogDescription>
         </DialogHeader>
 
@@ -488,7 +624,8 @@ function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
             />
             {qty && parseFloat(qty) > (item?.quantityOnHand ?? 0) && (
               <p className="text-xs text-destructive">
-                Exceeds available stock ({fmt(item?.quantityOnHand)} {item?.unitOfMeasure})
+                Exceeds available stock ({fmt(item?.quantityOnHand)}{" "}
+                {item?.unitOfMeasure})
               </p>
             )}
           </div>
@@ -496,7 +633,9 @@ function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
           <div className="grid gap-1.5">
             <label className="text-sm font-medium">
               Reason{" "}
-              <span className="text-muted-foreground font-normal">(optional)</span>
+              <span className="text-muted-foreground font-normal">
+                (optional)
+              </span>
             </label>
             <Input
               placeholder="e.g. spillage, spoilage, manual correction"
@@ -507,7 +646,9 @@ function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button
             variant="destructive"
             disabled={loading || invalid}
@@ -525,9 +666,14 @@ function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
 function ReorderDialog({ item, open, onOpenChange, onConfirm, loading }) {
   const [qty, setQty] = useState("");
   const suggested = item
-    ? Math.max(item.reorderThreshold * 3 - item.quantityOnHand, item.reorderThreshold).toFixed(2)
+    ? Math.max(
+        item.reorderThreshold * 3 - item.quantityOnHand,
+        item.reorderThreshold,
+      ).toFixed(2)
     : "0";
-  useEffect(() => { if (open) setQty(suggested); }, [open, suggested]);
+  useEffect(() => {
+    if (open) setQty(suggested);
+  }, [open, suggested]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -540,13 +686,29 @@ function ReorderDialog({ item, open, onOpenChange, onConfirm, loading }) {
         <div className="grid gap-4 py-2">
           <div className="rounded-lg border bg-muted/50 divide-y">
             {[
-              { label: "Current stock",       val: `${fmt(item?.quantityOnHand)} ${item?.unitOfMeasure}`,   cls: "text-orange-600 dark:text-orange-400" },
-              { label: "Reorder threshold",   val: `${fmt(item?.reorderThreshold)} ${item?.unitOfMeasure}` },
-              { label: "Suggested order qty", val: `${suggested} ${item?.unitOfMeasure}`,                   cls: "text-blue-600 dark:text-blue-400" },
+              {
+                label: "Current stock",
+                val: `${fmt(item?.quantityOnHand)} ${item?.unitOfMeasure}`,
+                cls: "text-orange-600 dark:text-orange-400",
+              },
+              {
+                label: "Reorder threshold",
+                val: `${fmt(item?.reorderThreshold)} ${item?.unitOfMeasure}`,
+              },
+              {
+                label: "Suggested order qty",
+                val: `${suggested} ${item?.unitOfMeasure}`,
+                cls: "text-blue-600 dark:text-blue-400",
+              },
             ].map(({ label, val, cls }) => (
-              <div key={label} className="flex items-center justify-between px-3 py-2.5 text-sm">
+              <div
+                key={label}
+                className="flex items-center justify-between px-3 py-2.5 text-sm"
+              >
                 <span className="text-muted-foreground">{label}</span>
-                <span className={`font-semibold tabular-nums ${cls ?? ""}`}>{val}</span>
+                <span className={`font-semibold tabular-nums ${cls ?? ""}`}>
+                  {val}
+                </span>
               </div>
             ))}
           </div>
@@ -565,7 +727,9 @@ function ReorderDialog({ item, open, onOpenChange, onConfirm, loading }) {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button
             disabled={loading || !qty || parseFloat(qty) <= 0}
             onClick={() => onConfirm({ qty: parseFloat(qty) })}
@@ -583,32 +747,32 @@ function InventoryPage() {
   const authUser = useSelector((s) => s.auth.user);
   const currentUser = authUser?.email ?? "manager@example.com";
 
-  const [trucks,        setTrucks]        = useState([]);
+  const [trucks, setTrucks] = useState([]);
   const [selectedTruck, setSelectedTruck] = useState("");
-  const [inventory,     setInventory]     = useState([]);
-  const [alerts,        setAlerts]        = useState([]);
-  const [history,       setHistory]       = useState([]);
-  const [menuItems,     setMenuItems]     = useState([]);
-  const [loading,       setLoading]       = useState(false);
-  const [search,        setSearch]        = useState("");
-  const [filterStatus,  setFilterStatus]  = useState("all");
+  const [inventory, setInventory] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   // Dialogs
-  const [adjustItem,              setAdjustItem]              = useState(null);
-  const [reorderItem,             setReorderItem]             = useState(null);
+  const [adjustItem, setAdjustItem] = useState(null);
+  const [reorderItem, setReorderItem] = useState(null);
   // Removed useMenuItemOpen and dailyProductionOpen
-  const [expireItems,             setExpireItems]             = useState(null);
+  const [expireItems, setExpireItems] = useState(null);
   const [hasShownWarningForTruck, setHasShownWarningForTruck] = useState(null);
-  const [modalLoading,            setModalLoading]            = useState(false);
-  const [expireLoading,           setExpireLoading]           = useState(false);
-  const [productionLoading,       setProductionLoading]       = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [expireLoading, setExpireLoading] = useState(false);
+  const [productionLoading, setProductionLoading] = useState(false);
 
   // Pending supply orders notice (manager/admin only)
-  const [pendingOrders,             setPendingOrders]             = useState([]);
-  const [pendingOrdersNotice,       setPendingOrdersNotice]       = useState(null);
-  const [hasShownPendingForTruck,   setHasShownPendingForTruck]   = useState(null);
-  const [pendingActiveOrder,        setPendingActiveOrder]        = useState(null);
-  const [pendingReceiveLoading,     setPendingReceiveLoading]     = useState(false);
+  const [pendingOrders, setPendingOrders] = useState([]);
+  const [pendingOrdersNotice, setPendingOrdersNotice] = useState(null);
+  const [hasShownPendingForTruck, setHasShownPendingForTruck] = useState(null);
+  const [pendingActiveOrder, setPendingActiveOrder] = useState(null);
+  const [pendingReceiveLoading, setPendingReceiveLoading] = useState(false);
 
   const { toast, show: showToast } = useToast();
 
@@ -624,7 +788,12 @@ function InventoryPage() {
         .catch(() => showToast("Failed to load trucks", "error"));
     } else if (authUser?.license_plate) {
       // For manager/employee, use their assigned truck
-      setTrucks([{ license_plate: authUser.license_plate, truck_name: `Truck ${authUser.license_plate}` }]);
+      setTrucks([
+        {
+          license_plate: authUser.license_plate,
+          truck_name: `Truck ${authUser.license_plate}`,
+        },
+      ]);
       setSelectedTruck(authUser.license_plate);
     } else {
       setTrucks([]);
@@ -642,20 +811,28 @@ function InventoryPage() {
     setLoading(true);
     try {
       const [inv, alt, hist] = await Promise.all([
-        fetch(`/api/inventory?licensePlate=${encodeURIComponent(lp)}`).then((r) => r.json()),
-        fetch(`/api/inventory/alerts?licensePlate=${encodeURIComponent(lp)}`).then((r) => r.json()),
-        fetch(`/api/inventory/history?licensePlate=${encodeURIComponent(lp)}&limit=50`).then((r) => r.json()),
+        fetch(`/api/inventory?licensePlate=${encodeURIComponent(lp)}`).then(
+          (r) => r.json(),
+        ),
+        fetch(
+          `/api/inventory/alerts?licensePlate=${encodeURIComponent(lp)}`,
+        ).then((r) => r.json()),
+        fetch(
+          `/api/inventory/history?licensePlate=${encodeURIComponent(lp)}&limit=50`,
+        ).then((r) => r.json()),
       ]);
-      setInventory(Array.isArray(inv)  ? inv  : []);
-      setAlerts   (Array.isArray(alt)  ? alt  : []);
-      setHistory  (Array.isArray(hist) ? hist : []);
+      setInventory(Array.isArray(inv) ? inv : []);
+      setAlerts(Array.isArray(alt) ? alt : []);
+      setHistory(Array.isArray(hist) ? hist : []);
     } catch {
       showToast("Failed to load inventory", "error");
     }
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadData(selectedTruck); }, [selectedTruck, loadData]);
+  useEffect(() => {
+    loadData(selectedTruck);
+  }, [selectedTruck, loadData]);
 
   // Auto-detect expired items
   useEffect(() => {
@@ -664,7 +841,11 @@ function InventoryPage() {
       if (!item.expirationDate || item.quantityOnHand <= 0) return false;
       return new Date(item.expirationDate) < new Date();
     });
-    if (expiredItems.length > 0 && expireItems === null && hasShownWarningForTruck !== selectedTruck) {
+    if (
+      expiredItems.length > 0 &&
+      expireItems === null &&
+      hasShownWarningForTruck !== selectedTruck
+    ) {
       setExpireItems(expiredItems);
       setHasShownWarningForTruck(selectedTruck);
     }
@@ -674,9 +855,12 @@ function InventoryPage() {
   useEffect(() => {
     if (!isManagerOrAdmin(authUser) || !selectedTruck) return;
     const token = localStorage.getItem("token");
-    fetch(`/api/inventory/pending-orders?licensePlate=${encodeURIComponent(selectedTruck)}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    fetch(
+      `/api/inventory/pending-orders?licensePlate=${encodeURIComponent(selectedTruck)}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
       .then((r) => r.json())
       .then((data) => setPendingOrders(Array.isArray(data) ? data : []))
       .catch(() => setPendingOrders([]));
@@ -684,12 +868,23 @@ function InventoryPage() {
 
   // Auto-open pending supply orders notice (mirrors expired-items pattern)
   useEffect(() => {
-    if (!isManagerOrAdmin(authUser) || loading || pendingOrders.length === 0) return;
-    if (pendingOrdersNotice === null && hasShownPendingForTruck !== selectedTruck) {
+    if (!isManagerOrAdmin(authUser) || loading || pendingOrders.length === 0)
+      return;
+    if (
+      pendingOrdersNotice === null &&
+      hasShownPendingForTruck !== selectedTruck
+    ) {
       setPendingOrdersNotice(pendingOrders);
       setHasShownPendingForTruck(selectedTruck);
     }
-  }, [pendingOrders, loading, selectedTruck, authUser, pendingOrdersNotice, hasShownPendingForTruck]);
+  }, [
+    pendingOrders,
+    loading,
+    selectedTruck,
+    authUser,
+    pendingOrdersNotice,
+    hasShownPendingForTruck,
+  ]);
 
   const handlePendingReceive = async ({ poId, items }) => {
     setPendingReceiveLoading(true);
@@ -697,11 +892,15 @@ function InventoryPage() {
       const token = localStorage.getItem("token");
       const res = await fetch("/api/inventory/receive-order", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ poId, licensePlate: selectedTruck, items }),
       });
       const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "Request failed");
+      if (!res.ok || data.error)
+        throw new Error(data.error || "Request failed");
       showToast(`✓ PO-${poId} received — inventory restocked.`);
       setPendingActiveOrder(null);
       setPendingOrders((prev) => prev.filter((o) => o.poId !== poId));
@@ -712,8 +911,6 @@ function InventoryPage() {
     setPendingReceiveLoading(false);
   };
 
-
-
   const handleAdjust = async ({ qty, type, reason }) => {
     setModalLoading(true);
     try {
@@ -721,19 +918,19 @@ function InventoryPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          licensePlate:   selectedTruck,
-          ingredientId:   adjustItem.ingredientId,
-          quantityUsed:   qty,
+          licensePlate: selectedTruck,
+          ingredientId: adjustItem.ingredientId,
+          quantityUsed: qty,
           adjustmentType: type,
           reason,
-          adjustedBy:     currentUser,
+          adjustedBy: currentUser,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       showToast(
         `Updated. New qty: ${fmt(data.newQuantity)} ${adjustItem.unitOfMeasure}` +
-        (data.alertCreated ? " — Reorder alert created!" : "")
+          (data.alertCreated ? " — Reorder alert created!" : ""),
       );
       setAdjustItem(null);
       loadData(selectedTruck);
@@ -750,15 +947,17 @@ function InventoryPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          licensePlate:    selectedTruck,
-          ingredientId:    reorderItem.ingredientId,
+          licensePlate: selectedTruck,
+          ingredientId: reorderItem.ingredientId,
           quantityOrdered: qty,
-          createdBy:       currentUser,
+          createdBy: currentUser,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      showToast(`Order placed — PO #${data.poId} for ${fmt(qty)} ${reorderItem.unitOfMeasure}`);
+      showToast(
+        `Order placed — PO #${data.poId} for ${fmt(qty)} ${reorderItem.unitOfMeasure}`,
+      );
       setReorderItem(null);
       loadData(selectedTruck);
     } catch (err) {
@@ -781,7 +980,10 @@ function InventoryPage() {
       const res = await fetch("/api/inventory/expire", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ licensePlate: selectedTruck, adjustedBy: currentUser }),
+        body: JSON.stringify({
+          licensePlate: selectedTruck,
+          adjustedBy: currentUser,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -789,7 +991,7 @@ function InventoryPage() {
       showToast(
         count > 0
           ? `Expired ${count} item${count > 1 ? "s" : ""} — quantities set to 0 and logged as waste.`
-          : "No expired items found."
+          : "No expired items found.",
       );
       setExpireItems(null);
       setHasShownWarningForTruck(null);
@@ -800,25 +1002,38 @@ function InventoryPage() {
     setExpireLoading(false);
   };
 
-
-
   const filtered = inventory.filter((item) => {
-    const matchSearch = !search ||
+    const matchSearch =
+      !search ||
       item.ingredientName.toLowerCase().includes(search.toLowerCase()) ||
-      (item.ingredientCategory ?? "").toLowerCase().includes(search.toLowerCase());
+      (item.ingredientCategory ?? "")
+        .toLowerCase()
+        .includes(search.toLowerCase());
     const matchStatus =
       filterStatus === "all" ||
-      (filterStatus === "low"     && item.needsReorder) ||
-      (filterStatus === "ok"      && !item.needsReorder) ||
-      (filterStatus === "expired" && item.expirationDate && new Date(item.expirationDate) < new Date());
+      (filterStatus === "low" && item.needsReorder) ||
+      (filterStatus === "ok" && !item.needsReorder) ||
+      (filterStatus === "expired" &&
+        item.expirationDate &&
+        new Date(item.expirationDate) < new Date());
     return matchSearch && matchStatus;
   });
 
-  const activeAlertCount  = alerts.filter((a) => a.alertStatus === "active").length;
-  const belowThreshCount  = inventory.filter((i) => i.needsReorder).length;
-  const outOfStockCount   = inventory.filter((i) => i.quantityOnHand === 0).length;
-  const expiredCount      = inventory.filter((i) => i.expirationDate && new Date(i.expirationDate) < new Date() && i.quantityOnHand > 0).length;
-  const selectedTruckName = trucks.find((t) => t.license_plate === selectedTruck)?.truck_name ?? "";
+  const activeAlertCount = alerts.filter(
+    (a) => a.alertStatus === "active",
+  ).length;
+  const belowThreshCount = inventory.filter((i) => i.needsReorder).length;
+  const outOfStockCount = inventory.filter(
+    (i) => i.quantityOnHand === 0,
+  ).length;
+  const expiredCount = inventory.filter(
+    (i) =>
+      i.expirationDate &&
+      new Date(i.expirationDate) < new Date() &&
+      i.quantityOnHand > 0,
+  ).length;
+  const selectedTruckName =
+    trucks.find((t) => t.license_plate === selectedTruck)?.truck_name ?? "";
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -830,8 +1045,12 @@ function InventoryPage() {
               <PackageIcon className="size-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold leading-tight">Inventory Management</h1>
-              <p className="text-sm text-muted-foreground">{selectedTruckName || "Select a truck"}</p>
+              <h1 className="text-xl font-bold leading-tight">
+                Inventory Management
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {selectedTruckName || "Select a truck"}
+              </p>
             </div>
           </div>
 
@@ -848,7 +1067,10 @@ function InventoryPage() {
               <Trash2Icon className="size-4" />
               Expire Outdated
               {expiredCount > 0 && (
-                <Badge variant="destructive" className="ml-1 h-4 px-1.5 text-[10px]">
+                <Badge
+                  variant="destructive"
+                  className="ml-1 h-4 px-1.5 text-[10px]"
+                >
                   {expiredCount}
                 </Badge>
               )}
@@ -860,7 +1082,9 @@ function InventoryPage() {
               onClick={() => loadData(selectedTruck)}
               disabled={loading}
             >
-              <RefreshCwIcon className={`size-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCwIcon
+                className={`size-4 ${loading ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
 
@@ -885,7 +1109,6 @@ function InventoryPage() {
       </div>
 
       <div className="max-w-7xl mx-auto w-full px-6 py-6 flex flex-col gap-6">
-
         {/* ── Pending Supply Orders Banner (managers / admins only) ── */}
         <PendingSupplyOrdersBanner
           selectedTruck={selectedTruck}
@@ -895,10 +1118,29 @@ function InventoryPage() {
 
         {/* ── Stat Cards ────────────────────────────────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard icon={PackageIcon}       label="Total Ingredients" value={inventory.length} />
-          <StatCard icon={XCircleIcon}       label="Out of Stock"      value={outOfStockCount}  variant={outOfStockCount  > 0 ? "danger"  : "success"} />
-          <StatCard icon={AlertTriangleIcon} label="Below Threshold"   value={belowThreshCount} variant={belowThreshCount > 0 ? "warning" : "success"} />
-          <StatCard icon={BellIcon}          label="Active Alerts"     value={activeAlertCount} variant={activeAlertCount > 0 ? "warning" : "success"} />
+          <StatCard
+            icon={PackageIcon}
+            label="Total Ingredients"
+            value={inventory.length}
+          />
+          <StatCard
+            icon={XCircleIcon}
+            label="Out of Stock"
+            value={outOfStockCount}
+            variant={outOfStockCount > 0 ? "danger" : "success"}
+          />
+          <StatCard
+            icon={AlertTriangle}
+            label="Below Threshold"
+            value={belowThreshCount}
+            variant={belowThreshCount > 0 ? "warning" : "success"}
+          />
+          <StatCard
+            icon={BellIcon}
+            label="Active Alerts"
+            value={activeAlertCount}
+            variant={activeAlertCount > 0 ? "warning" : "success"}
+          />
         </div>
 
         {/* ── Banners ───────────────────────────────────────────── */}
@@ -907,10 +1149,12 @@ function InventoryPage() {
             <Trash2Icon className="size-4 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium leading-none mb-1">
-                {expiredCount} ingredient{expiredCount > 1 ? "s" : ""} ha{expiredCount === 1 ? "s" : "ve"} expired with stock remaining
+                {expiredCount} ingredient{expiredCount > 1 ? "s" : ""} ha
+                {expiredCount === 1 ? "s" : "ve"} expired with stock remaining
               </p>
               <p className="text-sm opacity-80">
-                Use the <strong>Expire Outdated</strong> button to zero out and log these as waste.
+                Use the <strong>Expire Outdated</strong> button to zero out and
+                log these as waste.
               </p>
             </div>
           </div>
@@ -918,10 +1162,11 @@ function InventoryPage() {
 
         {activeAlertCount > 0 && (
           <div className="flex gap-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3 text-amber-900 dark:text-amber-300">
-            <AlertTriangleIcon className="size-4 mt-0.5 shrink-0" />
+            <AlertTriangle className="size-4 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium leading-none mb-1">
-                {activeAlertCount} ingredient{activeAlertCount > 1 ? "s" : ""} need{activeAlertCount === 1 ? "s" : ""} reordering
+                {activeAlertCount} ingredient{activeAlertCount > 1 ? "s" : ""}{" "}
+                need{activeAlertCount === 1 ? "s" : ""} reordering
               </p>
               <p className="text-sm opacity-80">
                 Check the <strong>Reorder Alerts</strong> tab to place orders.
@@ -933,23 +1178,39 @@ function InventoryPage() {
         {/* ── Tabs ──────────────────────────────────────────────── */}
         <Tabs defaultValue="inventory" className="gap-0">
           <TabsList className="w-full justify-start rounded-b-none border border-b-0 bg-muted/50 h-auto p-0">
-            <TabsTrigger value="inventory" className="rounded-none rounded-tl-lg data-[state=active]:shadow-none border-r py-3 px-5 gap-2">
+            <TabsTrigger
+              value="inventory"
+              className="rounded-none rounded-tl-lg data-[state=active]:shadow-none border-r py-3 px-5 gap-2"
+            >
               <PackageIcon className="size-4" />
               Inventory
               {belowThreshCount > 0 && (
-                <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0">{belowThreshCount}</Badge>
+                <Badge
+                  variant="destructive"
+                  className="ml-1 text-xs px-1.5 py-0"
+                >
+                  {belowThreshCount}
+                </Badge>
               )}
             </TabsTrigger>
 
-            <TabsTrigger value="alerts" className="rounded-none data-[state=active]:shadow-none border-r py-3 px-5 gap-2">
+            <TabsTrigger
+              value="alerts"
+              className="rounded-none data-[state=active]:shadow-none border-r py-3 px-5 gap-2"
+            >
               <BellIcon className="size-4" />
               Reorder Alerts
               {activeAlertCount > 0 && (
-                <Badge variant="warning" className="ml-1 text-xs px-1.5 py-0">{activeAlertCount}</Badge>
+                <Badge variant="warning" className="ml-1 text-xs px-1.5 py-0">
+                  {activeAlertCount}
+                </Badge>
               )}
             </TabsTrigger>
 
-            <TabsTrigger value="history" className="rounded-none rounded-tr-lg data-[state=active]:shadow-none py-3 px-5 gap-2">
+            <TabsTrigger
+              value="history"
+              className="rounded-none rounded-tr-lg data-[state=active]:shadow-none py-3 px-5 gap-2"
+            >
               <HistoryIcon className="size-4" />
               Adjustment History
             </TabsTrigger>
@@ -971,9 +1232,9 @@ function InventoryPage() {
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     {[
-                      { key: "all",     label: "All" },
-                      { key: "low",     label: "⚠ Needs Reorder" },
-                      { key: "ok",      label: "✓ Stocked" },
+                      { key: "all", label: "All" },
+                      { key: "low", label: "⚠ Needs Reorder" },
+                      { key: "ok", label: "✓ Stocked" },
                       { key: "expired", label: "✗ Expired" },
                     ].map((f) => (
                       <Button
@@ -995,8 +1256,12 @@ function InventoryPage() {
                 ) : filtered.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
                     <PackageIcon className="size-10 opacity-30" />
-                    <p className="font-medium text-foreground">No ingredients found</p>
-                    <p className="text-sm">Try adjusting your search or filter</p>
+                    <p className="font-medium text-foreground">
+                      No ingredients found
+                    </p>
+                    <p className="text-sm">
+                      Try adjusting your search or filter
+                    </p>
                   </div>
                 ) : (
                   <Table>
@@ -1012,21 +1277,40 @@ function InventoryPage() {
                     </TableHeader>
                     <TableBody>
                       {filtered.map((item) => {
-                        const isExpired = item.expirationDate && new Date(item.expirationDate) < new Date();
+                        const isExpired =
+                          item.expirationDate &&
+                          new Date(item.expirationDate) < new Date();
                         return (
-                          <TableRow key={item.inventoryId} className={isExpired && item.quantityOnHand > 0 ? "bg-destructive/5" : ""}>
+                          <TableRow
+                            key={item.inventoryId}
+                            className={
+                              isExpired && item.quantityOnHand > 0
+                                ? "bg-destructive/5"
+                                : ""
+                            }
+                          >
                             <TableCell>
-                              <div className="font-semibold">{item.ingredientName}</div>
+                              <div className="font-semibold">
+                                {item.ingredientName}
+                              </div>
                               {item.ingredientCategory && (
-                                <div className="text-xs text-muted-foreground">{item.ingredientCategory}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {item.ingredientCategory}
+                                </div>
                               )}
                             </TableCell>
-                            <TableCell><QuantityBar item={item} /></TableCell>
+                            <TableCell>
+                              <QuantityBar item={item} />
+                            </TableCell>
                             <TableCell className="tabular-nums text-sm text-muted-foreground">
                               {fmt(item.reorderThreshold)} {item.unitOfMeasure}
                             </TableCell>
-                            <TableCell><StatusBadge item={item} /></TableCell>
-                            <TableCell><ExpiryBadge date={item.expirationDate} /></TableCell>
+                            <TableCell>
+                              <StatusBadge item={item} />
+                            </TableCell>
+                            <TableCell>
+                              <ExpiryBadge date={item.expirationDate} />
+                            </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-2">
                                 <Button
@@ -1064,7 +1348,8 @@ function InventoryPage() {
               <CardHeader className="border-b">
                 <CardTitle className="text-base">Reorder Alerts</CardTitle>
                 <CardDescription>
-                  Ingredients below their reorder threshold. Only these may be reordered.
+                  Ingredients below their reorder threshold. Only these may be
+                  reordered.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -1073,8 +1358,12 @@ function InventoryPage() {
                 ) : alerts.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
                     <CheckCircle2Icon className="size-10 text-emerald-500 opacity-70" />
-                    <p className="font-medium text-foreground">All clear — no active alerts</p>
-                    <p className="text-sm">All ingredients are above their reorder thresholds</p>
+                    <p className="font-medium text-foreground">
+                      All clear — no active alerts
+                    </p>
+                    <p className="text-sm">
+                      All ingredients are above their reorder thresholds
+                    </p>
                   </div>
                 ) : (
                   <Table>
@@ -1089,35 +1378,52 @@ function InventoryPage() {
                     </TableHeader>
                     <TableBody>
                       {alerts.map((a) => {
-                        const invItem = inventory.find((i) => i.ingredientId === a.ingredientId);
+                        const invItem = inventory.find(
+                          (i) => i.ingredientId === a.ingredientId,
+                        );
                         return (
                           <TableRow key={a.alertId}>
-                            <TableCell className="font-semibold">{a.ingredientName}</TableCell>
+                            <TableCell className="font-semibold">
+                              {a.ingredientName}
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1.5 tabular-nums text-sm">
-                                <span className="text-orange-600 dark:text-orange-400 font-semibold">{fmt(a.currentActualQty)}</span>
+                                <span className="text-orange-600 dark:text-orange-400 font-semibold">
+                                  {fmt(a.currentActualQty)}
+                                </span>
                                 <span className="text-muted-foreground">/</span>
                                 <span>{fmt(a.reorderThreshold)}</span>
-                                <span className="text-muted-foreground">{a.unitOfMeasure}</span>
+                                <span className="text-muted-foreground">
+                                  {a.unitOfMeasure}
+                                </span>
                               </div>
                             </TableCell>
                             <TableCell>
-                              {a.alertStatus === "active"
-                                ? <Badge variant="destructive">Active</Badge>
-                                : <Badge variant="warning">Ordered</Badge>
-                              }
+                              {a.alertStatus === "active" ? (
+                                <Badge variant="destructive">Active</Badge>
+                              ) : (
+                                <Badge variant="warning">Ordered</Badge>
+                              )}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {formatDateTime(a.alertCreated)}
                             </TableCell>
                             <TableCell className="text-right">
                               {a.alertStatus === "active" && invItem ? (
-                                <Button size="sm" onClick={() => setReorderItem(invItem)}>
+                                <Button
+                                  size="sm"
+                                  onClick={() => setReorderItem(invItem)}
+                                >
                                   <ShoppingCartIcon className="size-3.5" />
                                   Reorder Now
                                 </Button>
                               ) : (
-                                <Badge variant="outline" className="text-muted-foreground">Order placed</Badge>
+                                <Badge
+                                  variant="outline"
+                                  className="text-muted-foreground"
+                                >
+                                  Order placed
+                                </Badge>
                               )}
                             </TableCell>
                           </TableRow>
@@ -1135,7 +1441,9 @@ function InventoryPage() {
             <Card className="rounded-tl-none rounded-t-none">
               <CardHeader className="border-b">
                 <CardTitle className="text-base">Adjustment History</CardTitle>
-                <CardDescription>Last 50 inventory changes for this truck</CardDescription>
+                <CardDescription>
+                  Last 50 inventory changes for this truck
+                </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
                 {loading ? (
@@ -1143,8 +1451,12 @@ function InventoryPage() {
                 ) : history.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-muted-foreground gap-2">
                     <HistoryIcon className="size-10 opacity-30" />
-                    <p className="font-medium text-foreground">No history yet</p>
-                    <p className="text-sm">Adjustments will appear here once recorded</p>
+                    <p className="font-medium text-foreground">
+                      No history yet
+                    </p>
+                    <p className="text-sm">
+                      Adjustments will appear here once recorded
+                    </p>
                   </div>
                 ) : (
                   <Table>
@@ -1161,30 +1473,54 @@ function InventoryPage() {
                     <TableBody>
                       {history.map((h) => {
                         const typeMeta = {
-                          waste:             { label: "Waste",      cls: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300" },
-                          "order-deduction": { label: "Used",       cls: "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300" },
-                          restock:           { label: "Restock",    cls: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300" },
-                          correction:        { label: "Correction", cls: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300" },
+                          waste: {
+                            label: "Waste",
+                            cls: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300",
+                          },
+                          "order-deduction": {
+                            label: "Used",
+                            cls: "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300",
+                          },
+                          restock: {
+                            label: "Restock",
+                            cls: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300",
+                          },
+                          correction: {
+                            label: "Correction",
+                            cls: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300",
+                          },
                         };
-                        const meta = typeMeta[h.adjustmentType] ?? { label: h.adjustmentType, cls: "" };
+                        const meta = typeMeta[h.adjustmentType] ?? {
+                          label: h.adjustmentType,
+                          cls: "",
+                        };
                         return (
                           <TableRow key={h.adjustmentId}>
                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                               {formatTime(h.adjustmentDate)}
                             </TableCell>
-                            <TableCell className="font-medium text-foreground">{h.ingredientName}</TableCell>
+                            <TableCell className="font-medium text-foreground">
+                              {h.ingredientName}
+                            </TableCell>
                             <TableCell>
-                              <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${meta.cls}`}>
+                              <span
+                                className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${meta.cls}`}
+                              >
                                 {meta.label}
                               </span>
                             </TableCell>
-                            <TableCell className={`tabular-nums font-semibold ${h.quantityChange < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}>
-                              {h.quantityChange > 0 ? "+" : ""}{fmt(h.quantityChange)} {h.unitOfMeasure}
+                            <TableCell
+                              className={`tabular-nums font-semibold ${h.quantityChange < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"}`}
+                            >
+                              {h.quantityChange > 0 ? "+" : ""}
+                              {fmt(h.quantityChange)} {h.unitOfMeasure}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                               {h.reason || "—"}
                             </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{h.adjustedBy}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {h.adjustedBy}
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -1202,14 +1538,21 @@ function InventoryPage() {
 
       <ExpireDialog
         open={expireItems !== null}
-        onOpenChange={(o) => { if (!o) setExpireItems(null); }}
+        onOpenChange={(o) => {
+          if (!o) setExpireItems(null);
+        }}
         expiredItems={expireItems ?? []}
         onConfirm={handleConfirmExpire}
         loading={expireLoading}
       />
 
       {/* ── Pending Supply Orders Notice (auto-opens for managers/admins) ── */}
-      <Dialog open={pendingOrdersNotice !== null} onOpenChange={(o) => { if (!o) setPendingOrdersNotice(null); }}>
+      <Dialog
+        open={pendingOrdersNotice !== null}
+        onOpenChange={(o) => {
+          if (!o) setPendingOrdersNotice(null);
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <div className="flex items-center gap-2 mb-1">
@@ -1217,12 +1560,14 @@ function InventoryPage() {
                 <PackageIcon className="size-5 text-amber-600 dark:text-amber-400" />
               </div>
               <DialogTitle className="text-base">
-                {(pendingOrdersNotice ?? []).length} Supply Order{(pendingOrdersNotice ?? []).length !== 1 ? "s" : ""} Awaiting Receipt
+                {(pendingOrdersNotice ?? []).length} Supply Order
+                {(pendingOrdersNotice ?? []).length !== 1 ? "s" : ""} Awaiting
+                Receipt
               </DialogTitle>
             </div>
             <DialogDescription>
-              The following supply orders have been placed and are ready to be received.
-              Confirm delivery to restock inventory automatically.
+              The following supply orders have been placed and are ready to be
+              received. Confirm delivery to restock inventory automatically.
             </DialogDescription>
           </DialogHeader>
 
@@ -1234,20 +1579,30 @@ function InventoryPage() {
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-sm">PO-{order.poId}</span>
-                    <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 dark:text-amber-400">
+                    <span className="font-semibold text-sm">
+                      PO-{order.poId}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="text-xs border-amber-300 text-amber-700 dark:text-amber-400"
+                    >
                       {order.status}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {order.supplierName} · {order.items.length} ingredient{order.items.length !== 1 ? "s" : ""} · ${fmt(order.totalCost)}
+                    {order.supplierName} · {order.items.length} ingredient
+                    {order.items.length !== 1 ? "s" : ""} · $
+                    {fmt(order.totalCost)}
                   </p>
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
                   className="shrink-0 gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50 dark:text-amber-400"
-                  onClick={() => { setPendingOrdersNotice(null); setPendingActiveOrder(order); }}
+                  onClick={() => {
+                    setPendingOrdersNotice(null);
+                    setPendingActiveOrder(order);
+                  }}
                 >
                   Receive
                 </Button>
@@ -1256,7 +1611,10 @@ function InventoryPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setPendingOrdersNotice(null)}>
+            <Button
+              variant="secondary"
+              onClick={() => setPendingOrdersNotice(null)}
+            >
               Dismiss
             </Button>
           </DialogFooter>
@@ -1266,7 +1624,9 @@ function InventoryPage() {
       <ReceiveOrderDialog
         order={pendingActiveOrder}
         open={!!pendingActiveOrder}
-        onOpenChange={(o) => { if (!o) setPendingActiveOrder(null); }}
+        onOpenChange={(o) => {
+          if (!o) setPendingActiveOrder(null);
+        }}
         onConfirm={handlePendingReceive}
         loading={pendingReceiveLoading}
       />
@@ -1289,11 +1649,14 @@ function InventoryPage() {
 
       {/* ── Toast ───────────────────────────────────────────────── */}
       {toast && (
-        <div className={`fixed bottom-5 right-5 z-50 flex items-start gap-3 rounded-xl border bg-card shadow-xl px-4 py-3.5 max-w-sm text-sm animate-in slide-in-from-bottom-4 ${toast.type === "error" ? "border-destructive/50" : "border-emerald-500/50"}`}>
-          {toast.type === "error"
-            ? <AlertTriangleIcon className="size-4 text-destructive mt-0.5 shrink-0" />
-            : <CheckCircle2Icon  className="size-4 text-emerald-500 mt-0.5 shrink-0" />
-          }
+        <div
+          className={`fixed bottom-5 right-5 z-50 flex items-start gap-3 rounded-xl border bg-card shadow-xl px-4 py-3.5 max-w-sm text-sm animate-in slide-in-from-bottom-4 ${toast.type === "error" ? "border-destructive/50" : "border-emerald-500/50"}`}
+        >
+          {toast.type === "error" ? (
+            <AlertTriangle className="size-4 text-destructive mt-0.5 shrink-0" />
+          ) : (
+            <CheckCircle2Icon className="size-4 text-emerald-500 mt-0.5 shrink-0" />
+          )}
           <span>{toast.msg}</span>
         </div>
       )}

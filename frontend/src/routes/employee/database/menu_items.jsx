@@ -15,6 +15,7 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 import {
   Select,
   SelectContent,
@@ -67,6 +68,8 @@ function MenuItemsDatabaseComponent() {
   const [editRecipeOpen, setEditRecipeOpen] = useState(false);
   const [editRecipeForm, setEditRecipeForm] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
+  const { alertConfig, showAlert, hideAlert, AlertPopupComponent } =
+    useAlertPopup();
 
   const fetchMenuItems = useCallback(async () => {
     try {
@@ -128,7 +131,11 @@ function MenuItemsDatabaseComponent() {
     const fd = new FormData(form);
 
     if (pendingRecipeIngredients.length === 0) {
-      alert("At least one recipe ingredient is required.");
+      showAlert({
+        title: "Missing Ingredients",
+        description: "At least one recipe ingredient is required.",
+        variant: "warning",
+      });
       return;
     }
 
@@ -157,7 +164,11 @@ function MenuItemsDatabaseComponent() {
       setPendingRecipeIngredients([]);
       fetchMenuItems();
     } else {
-      alert(data.error || "Failed to create menu item");
+      showAlert({
+        title: "Error Creating Menu Item",
+        description: data.error || "Failed to create menu item",
+        variant: "error",
+      });
     }
   };
 
@@ -187,7 +198,11 @@ function MenuItemsDatabaseComponent() {
       setEditOpen(false);
       fetchMenuItems();
     } else {
-      alert(data.error || "Failed to update menu item");
+      showAlert({
+        title: "Error Updating Menu Item",
+        description: data.error || "Failed to update menu item",
+        variant: "error",
+      });
     }
   };
 
@@ -203,17 +218,35 @@ function MenuItemsDatabaseComponent() {
       fetchMenuItems();
     } else {
       const data = await res.json();
-      alert(data.error || "Failed to delete menu item");
+      showAlert({
+        title: "Error Deleting Menu Item",
+        description: data.error || "Failed to delete menu item",
+        variant: "error",
+      });
     }
   };
 
-  const handleAddRecipeIngredient = (ingredient_id, quantity_needed, instructions) => {
+  const handleAddRecipeIngredient = (
+    ingredient_id,
+    quantity_needed,
+    instructions,
+  ) => {
     if (!ingredient_id || !quantity_needed) {
-      alert("Please select an ingredient and enter a quantity.");
+      showAlert({
+        title: "Missing Information",
+        description: "Please select an ingredient and enter a quantity.",
+        variant: "warning",
+      });
       return;
     }
-    if (pendingRecipeIngredients.some((r) => r.ingredient_id === ingredient_id)) {
-      alert("This ingredient is already in the recipe.");
+    if (
+      pendingRecipeIngredients.some((r) => r.ingredient_id === ingredient_id)
+    ) {
+      showAlert({
+        title: "Duplicate Ingredient",
+        description: "This ingredient is already in the recipe.",
+        variant: "warning",
+      });
       return;
     }
     setPendingRecipeIngredients((prev) => [
@@ -224,26 +257,39 @@ function MenuItemsDatabaseComponent() {
 
   const handleRemovePendingRecipeIngredient = (ingredient_id) => {
     setPendingRecipeIngredients((prev) =>
-      prev.filter((r) => r.ingredient_id !== ingredient_id)
+      prev.filter((r) => r.ingredient_id !== ingredient_id),
     );
   };
 
-  const handleDeleteRecipeIngredient = async (recipe_id) => {
-    if (!confirm("Delete this recipe ingredient?")) return;
+  const [deleteRecipeOpen, setDeleteRecipeOpen] = useState(false);
+  const [deleteRecipeId, setDeleteRecipeId] = useState(null);
+
+  const handleDeleteRecipeIngredient = async () => {
     const res = await fetch("/api/recipes", {
       method: "DELETE",
       headers: authHeaders(),
-      body: JSON.stringify({ recipe_id }),
+      body: JSON.stringify({ recipe_id: deleteRecipeId }),
     });
     if (res.ok) {
+      setDeleteRecipeOpen(false);
+      setDeleteRecipeId(null);
       fetchMenuItems();
     } else {
       const data = await res.json();
-      alert(data.error || "Failed to delete recipe ingredient");
+      showAlert({
+        title: "Error Deleting Ingredient",
+        description: data.error || "Failed to delete recipe ingredient",
+        variant: "error",
+      });
     }
   };
 
-  const handleAddExistingRecipeIngredient = async (menu_item_id, ingredient_id, quantity_needed, instructions) => {
+  const handleAddExistingRecipeIngredient = async (
+    menu_item_id,
+    ingredient_id,
+    quantity_needed,
+    instructions,
+  ) => {
     const res = await fetch("/api/recipes", {
       method: "POST",
       headers: authHeaders(),
@@ -258,7 +304,11 @@ function MenuItemsDatabaseComponent() {
     if (res.ok) {
       fetchMenuItems();
     } else {
-      alert(data.error || "Failed to add recipe ingredient");
+      showAlert({
+        title: "Error Adding Ingredient",
+        description: data.error || "Failed to add recipe ingredient",
+        variant: "error",
+      });
     }
   };
 
@@ -293,13 +343,19 @@ function MenuItemsDatabaseComponent() {
       setEditRecipeOpen(false);
       fetchMenuItems();
     } else {
-      alert(data.error || "Failed to update recipe ingredient");
+      showAlert({
+        title: "Error Updating Ingredient",
+        description: data.error || "Failed to update recipe ingredient",
+        variant: "error",
+      });
     }
   };
 
   const getIngredientName = (id) => {
     const ing = ingredients.find((i) => i.ingredient_id === id);
-    return ing ? `${ing.ingredient_name} (${ing.unit_of_measure})` : `ID: ${id}`;
+    return ing
+      ? `${ing.ingredient_name} (${ing.unit_of_measure})`
+      : `ID: ${id}`;
   };
 
   const filteredMenuItems = menuItems.filter((item) => {
@@ -310,9 +366,7 @@ function MenuItemsDatabaseComponent() {
       item.category_name?.toLowerCase().includes(q) ||
       item.description?.toLowerCase().includes(q) ||
       item.price?.toString().includes(q) ||
-      item.recipes?.some((r) =>
-        r.ingredient_name?.toLowerCase().includes(q)
-      )
+      item.recipes?.some((r) => r.ingredient_name?.toLowerCase().includes(q))
     );
   });
 
@@ -331,6 +385,16 @@ function MenuItemsDatabaseComponent() {
 
   return (
     <div className="p-6 space-y-6 w-full">
+      <AlertPopupComponent />
+      <AlertPopup
+        open={deleteRecipeOpen}
+        onOpenChange={setDeleteRecipeOpen}
+        title="Delete Recipe Ingredient"
+        description="Are you sure you want to remove this ingredient from the recipe?"
+        variant="destructive"
+        onConfirm={handleDeleteRecipeIngredient}
+        confirmLabel="Delete"
+      />
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold">Menu Items</h1>
@@ -345,7 +409,10 @@ function MenuItemsDatabaseComponent() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-64"
           />
-          <Button onClick={openCreateDialog} className="bg-amber-600 hover:bg-amber-700 text-white shrink-0">
+          <Button
+            onClick={openCreateDialog}
+            className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"
+          >
             <Plus className="mr-2 size-4" />
             Add Menu Item
           </Button>
@@ -378,7 +445,10 @@ function MenuItemsDatabaseComponent() {
                     </div>
                   )}
                   <div className="absolute top-2 right-2">
-                    <Badge variant="secondary" className="bg-white/90 dark:bg-black/70">
+                    <Badge
+                      variant="secondary"
+                      className="bg-white/90 dark:bg-black/70"
+                    >
                       {item.category_name || "Uncategorized"}
                     </Badge>
                   </div>
@@ -386,7 +456,9 @@ function MenuItemsDatabaseComponent() {
 
                 <div className="p-4 flex-1 flex flex-col">
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="font-semibold text-base leading-tight">{item.item_name}</h3>
+                    <h3 className="font-semibold text-base leading-tight">
+                      {item.item_name}
+                    </h3>
                     <span className="text-amber-600 dark:text-amber-400 font-bold whitespace-nowrap">
                       ${parseFloat(item.price).toFixed(2)}
                     </span>
@@ -435,7 +507,8 @@ function MenuItemsDatabaseComponent() {
                                     {r.ingredient_name}
                                   </div>
                                   <div className="text-muted-foreground text-xs">
-                                    {parseFloat(r.quantity_needed)} {r.unit_of_measure}
+                                    {parseFloat(r.quantity_needed)}{" "}
+                                    {r.unit_of_measure}
                                     {r.instructions && (
                                       <span className="ml-1 italic text-[10px]">
                                         — {r.instructions}
@@ -445,7 +518,10 @@ function MenuItemsDatabaseComponent() {
                                 </div>
                                 <button
                                   type="button"
-                                  onClick={() => handleDeleteRecipeIngredient(r.recipe_id)}
+                                  onClick={() => {
+                                    setDeleteRecipeId(r.recipe_id);
+                                    setDeleteRecipeOpen(true);
+                                  }}
                                   className="shrink-0 text-muted-foreground hover:text-destructive transition-colors p-0.5"
                                   title="Remove ingredient"
                                 >
@@ -472,6 +548,7 @@ function MenuItemsDatabaseComponent() {
                           menuItemId={item.menu_item_id}
                           ingredients={ingredients}
                           onAdd={handleAddExistingRecipeIngredient}
+                          onError={showAlert}
                         />
                       </div>
                     )}
@@ -515,7 +592,11 @@ function MenuItemsDatabaseComponent() {
                 <Label>
                   Item Name <span className="text-destructive">*</span>
                 </Label>
-                <Input name="item_name" required placeholder="e.g., Chicken Shawarma Wrap" />
+                <Input
+                  name="item_name"
+                  required
+                  placeholder="e.g., Chicken Shawarma Wrap"
+                />
               </div>
               <div className="flex-1 min-w-[200px] space-y-1">
                 <Label>Category</Label>
@@ -536,23 +617,37 @@ function MenuItemsDatabaseComponent() {
                 <Label>
                   Price ($) <span className="text-destructive">*</span>
                 </Label>
-                <Input name="price" type="number" step="0.01" min="0" required placeholder="0.00" />
+                <Input
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  required
+                  placeholder="0.00"
+                />
               </div>
             </div>
             <div className="space-y-1">
               <Label>Image URL</Label>
-              <Input name="image_url" type="url" placeholder="https://example.com/image.jpg" />
+              <Input
+                name="image_url"
+                type="url"
+                placeholder="https://example.com/image.jpg"
+              />
             </div>
             <div className="space-y-1">
               <Label>Description</Label>
-              <Textarea name="description" placeholder="Describe the dish..." rows={2} />
+              <Textarea
+                name="description"
+                placeholder="Describe the dish..."
+                rows={2}
+              />
             </div>
 
             <div className="border-t pt-4">
               <div className="flex items-center justify-between mb-3">
                 <Label>
-                  Recipe Ingredients{" "}
-                  <span className="text-destructive">*</span>
+                  Recipe Ingredients <span className="text-destructive">*</span>
                 </Label>
                 {pendingRecipeIngredients.length > 0 && (
                   <span className="text-xs text-muted-foreground">
@@ -580,7 +675,9 @@ function MenuItemsDatabaseComponent() {
                     )}
                     <button
                       type="button"
-                      onClick={() => handleRemovePendingRecipeIngredient(r.ingredient_id)}
+                      onClick={() =>
+                        handleRemovePendingRecipeIngredient(r.ingredient_id)
+                      }
                       className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
                     >
                       <X className="size-3.5" />
@@ -589,7 +686,8 @@ function MenuItemsDatabaseComponent() {
                 ))}
                 {pendingRecipeIngredients.length === 0 && (
                   <p className="text-xs text-muted-foreground text-center py-2">
-                    No ingredients added yet. Use the form below to add at least one.
+                    No ingredients added yet. Use the form below to add at least
+                    one.
                   </p>
                 )}
               </div>
@@ -631,7 +729,11 @@ function MenuItemsDatabaseComponent() {
                 <Label>
                   Item Name <span className="text-destructive">*</span>
                 </Label>
-                <Input name="item_name" defaultValue={editForm.item_name} required />
+                <Input
+                  name="item_name"
+                  defaultValue={editForm.item_name}
+                  required
+                />
               </div>
               <div className="flex-1 min-w-[200px] space-y-1">
                 <Label>Category</Label>
@@ -664,11 +766,19 @@ function MenuItemsDatabaseComponent() {
             </div>
             <div className="space-y-1">
               <Label>Image URL</Label>
-              <Input name="image_url" type="url" defaultValue={editForm.image_url} />
+              <Input
+                name="image_url"
+                type="url"
+                defaultValue={editForm.image_url}
+              />
             </div>
             <div className="space-y-1">
               <Label>Description</Label>
-              <Textarea name="description" rows={2} defaultValue={editForm.description} />
+              <Textarea
+                name="description"
+                rows={2}
+                defaultValue={editForm.description}
+              />
             </div>
             <div className="space-y-1">
               <Label>Availability</Label>
@@ -683,10 +793,17 @@ function MenuItemsDatabaseComponent() {
               </Select>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white">
+              <Button
+                type="submit"
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
                 Save Changes
               </Button>
             </div>
@@ -705,14 +822,16 @@ function MenuItemsDatabaseComponent() {
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm">
-              Are you sure you want to delete <strong>"{selectedItem?.item_name}"</strong>?
+              Are you sure you want to delete{" "}
+              <strong>"{selectedItem?.item_name}"</strong>?
             </p>
             {selectedItem?.recipes && selectedItem.recipes.length > 0 && (
               <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm">
                 <AlertTriangle className="size-4 text-amber-500 mt-0.5 shrink-0" />
                 <p className="text-amber-800 dark:text-amber-300">
                   This will also permanently remove{" "}
-                  <strong>{selectedItem.recipes.length}</strong> associated recipe
+                  <strong>{selectedItem.recipes.length}</strong> associated
+                  recipe
                   {selectedItem.recipes.length !== 1 ? "s" : ""}.
                 </p>
               </div>
@@ -738,7 +857,8 @@ function MenuItemsDatabaseComponent() {
             <div className="space-y-1">
               <Label>Ingredient</Label>
               <div className="flex h-9 w-full min-w-0 rounded-md border border-input bg-muted/50 px-3 py-1 text-sm text-muted-foreground">
-                {editRecipeForm.ingredient_name} ({editRecipeForm.unit_of_measure})
+                {editRecipeForm.ingredient_name} (
+                {editRecipeForm.unit_of_measure})
               </div>
             </div>
             <div className="space-y-1">
@@ -764,10 +884,17 @@ function MenuItemsDatabaseComponent() {
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setEditRecipeOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditRecipeOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white">
+              <Button
+                type="submit"
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
                 Save Changes
               </Button>
             </div>
@@ -840,7 +967,7 @@ function PendingRecipeBuilder({ ingredients, onAdd }) {
   );
 }
 
-function InlineRecipeForm({ menuItemId, ingredients, onAdd }) {
+function InlineRecipeForm({ menuItemId, ingredients, onAdd, onError }) {
   const [ingredient_id, setIngredientId] = useState("");
   const [quantity_needed, setQuantityNeeded] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -848,7 +975,11 @@ function InlineRecipeForm({ menuItemId, ingredients, onAdd }) {
 
   const handleAdd = async () => {
     if (!ingredient_id || !quantity_needed) {
-      alert("Please select an ingredient and enter a quantity.");
+      onError?.({
+        title: "Missing Information",
+        description: "Please select an ingredient and enter a quantity.",
+        variant: "warning",
+      });
       return;
     }
     setAdding(true);

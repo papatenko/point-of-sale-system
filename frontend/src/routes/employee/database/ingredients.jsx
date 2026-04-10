@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 
 export const Route = createFileRoute("/employee/database/ingredients")({
   component: IngredientsDatabaseComponent,
@@ -55,6 +56,7 @@ function IngredientsDatabaseComponent() {
   const [editOpen, setEditOpen] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const { alertConfig, showAlert, hideAlert, AlertPopupComponent } = useAlertPopup();
 
   const fetchIngredients = async () => {
     try {
@@ -203,15 +205,24 @@ function IngredientsDatabaseComponent() {
         fetchIngredients();
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to delete ingredient");
+        showAlert({
+          title: "Error Deleting Ingredient",
+          description: data.error || "Failed to delete ingredient",
+          variant: "error",
+        });
       }
     } catch {
-      alert("Failed to delete ingredient");
+      showAlert({
+        title: "Error",
+        description: "Failed to delete ingredient",
+        variant: "error",
+      });
     }
   };
 
   return (
     <div className="p-6 space-y-6 w-full">
+      <AlertPopupComponent />
       <div className="flex justify-between items-center w-full">
         <div>
           <h1 className="text-2xl font-bold">Ingredients</h1>

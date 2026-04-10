@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { DataTable } from "@/components/database/data-table";
 import { AddDialog } from "@/components/database/add-dialog";
+import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 
 export const Route = createFileRoute("/employee/database/suppliers")({
   component: SuppliersDatabaseComponent,
@@ -33,6 +34,7 @@ function SuppliersDatabaseComponent() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const { alertConfig, showAlert, hideAlert, AlertPopupComponent } = useAlertPopup();
 
   const fetchSuppliers = async () => {
     try {
@@ -106,15 +108,24 @@ function SuppliersDatabaseComponent() {
         fetchSuppliers();
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to delete supplier");
+        showAlert({
+          title: "Error Deleting Supplier",
+          description: data.error || "Failed to delete supplier",
+          variant: "error",
+        });
       }
     } catch {
-      alert("Failed to delete supplier");
+      showAlert({
+        title: "Error",
+        description: "Failed to delete supplier",
+        variant: "error",
+      });
     }
   };
 
   return (
     <div className="p-6 space-y-6 w-full">
+      <AlertPopupComponent />
       <div className="flex justify-between items-center w-full">
         <div>
           <h1 className="text-2xl font-bold">Suppliers</h1>

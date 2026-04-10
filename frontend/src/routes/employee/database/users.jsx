@@ -26,6 +26,7 @@ import {
 import { GENDER_OPTIONS } from "@/constants/gender";
 import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
 import { Pencil, Users, UserCircle, AlertTriangle } from "lucide-react";
+import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 
 export const Route = createFileRoute("/employee/database/users")({
   component: UsersDatabaseComponent,
@@ -78,6 +79,10 @@ function UsersDatabaseComponent() {
   const [activeTab, setActiveTab] = useState("employees");
   const [deleteCustomerOpen, setDeleteCustomerOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [deleteEmployeeOpen, setDeleteEmployeeOpen] = useState(false);
+  const [deleteEmployeeEmail, setDeleteEmployeeEmail] = useState(null);
+  const { alertConfig, showAlert, hideAlert, AlertPopupComponent } =
+    useAlertPopup();
 
   const fetchEmployees = useCallback(async () => {
     try {
@@ -188,23 +193,29 @@ function UsersDatabaseComponent() {
     }
   };
 
-  const handleDeleteEmployee = async (email) => {
-    const confirmed = confirm(
-      `Delete employee "${email}"? This will also remove the user account.`,
-    );
-    if (!confirmed) return;
+  const confirmDeleteEmployee = (email) => {
+    setDeleteEmployeeEmail(email);
+    setDeleteEmployeeOpen(true);
+  };
 
+  const handleDeleteEmployee = async () => {
     const res = await fetch("/api/employees", {
       method: "DELETE",
       headers: authHeaders(),
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email: deleteEmployeeEmail }),
     });
 
     if (res.ok) {
+      setDeleteEmployeeOpen(false);
+      setDeleteEmployeeEmail(null);
       fetchEmployees();
     } else {
       const data = await res.json();
-      alert(data.error || "Failed to delete employee");
+      showAlert({
+        title: "Error Deleting Employee",
+        description: data.error || "Failed to delete employee",
+        variant: "error",
+      });
     }
   };
 
@@ -223,7 +234,11 @@ function UsersDatabaseComponent() {
       fetchCustomers();
     } else {
       const data = await res.json();
-      alert(data.error || "Failed to delete customer");
+      showAlert({
+        title: "Error Deleting Customer",
+        description: data.error || "Failed to delete customer",
+        variant: "error",
+      });
     }
   };
 
@@ -262,6 +277,16 @@ function UsersDatabaseComponent() {
 
   return (
     <div className="p-6 space-y-6 w-full">
+      <AlertPopupComponent />
+      <AlertPopup
+        open={deleteEmployeeOpen}
+        onOpenChange={setDeleteEmployeeOpen}
+        title="Delete Employee"
+        description={`Are you sure you want to delete "${deleteEmployeeEmail}"? This will also remove the user account.`}
+        variant="destructive"
+        onConfirm={handleDeleteEmployee}
+        confirmLabel="Delete"
+      />
       <div className="flex justify-between items-center w-full">
         <div>
           <h1 className="text-2xl font-bold">Users</h1>
@@ -313,9 +338,17 @@ function UsersDatabaseComponent() {
             columns={EMPLOYEE_COLUMNS}
             data={filteredEmployees}
             pageSize={10}
-            searchKeys={["first_name", "last_name", "email", "phone_number", "role", "gender_name", "ethnicity_name"]}
+            searchKeys={[
+              "first_name",
+              "last_name",
+              "email",
+              "phone_number",
+              "role",
+              "gender_name",
+              "ethnicity_name",
+            ]}
             deleteIdKey="email"
-            onDelete={handleDeleteEmployee}
+            onDelete={confirmDeleteEmployee}
             loading={loading}
             emptyMessage="No employees found"
             truckOptions={truckOptions}
@@ -330,7 +363,15 @@ function UsersDatabaseComponent() {
             columns={CUSTOMER_COLUMNS}
             data={customers}
             pageSize={10}
-            searchKeys={["email", "first_name", "last_name", "default_address", "phone_number", "gender_name", "ethnicity_name"]}
+            searchKeys={[
+              "email",
+              "first_name",
+              "last_name",
+              "default_address",
+              "phone_number",
+              "gender_name",
+              "ethnicity_name",
+            ]}
             deleteIdKey="email"
             onDelete={(email) => {
               const c = customers.find((x) => x.email === email);
@@ -443,10 +484,18 @@ function DataTableWithEdit({
       } else {
         const ud = await userRes.json();
         const ed = await empRes.json();
-        alert(ud.error || ed.error || "Failed to update employee");
+        showAlert({
+          title: "Error Updating Employee",
+          description: ud.error || ed.error || "Failed to update employee",
+          variant: "error",
+        });
       }
     } catch {
-      alert("Failed to update employee");
+      showAlert({
+        title: "Error",
+        description: "Failed to update employee",
+        variant: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
