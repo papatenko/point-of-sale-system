@@ -117,7 +117,7 @@ function PosScreen() {
                   <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-border text-foreground">
                     {category}
                   </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {grouped[category].map((item) => (
                       <MenuCard
                         key={item.menu_item_id}
@@ -125,6 +125,7 @@ function PosScreen() {
                         qty={getQty(item.menu_item_id)}
                         onAdd={() => handleAdd(item)}
                         onQty={(q) => handleQty(item.menu_item_id, q)}
+                        compact
                       />
                     ))}
                   </div>

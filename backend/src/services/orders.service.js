@@ -15,7 +15,8 @@ export async function listOrders(db, req, url) {
   const status     = searchParams.get("status");
   const search     = searchParams.get("search");
   const truckParam = searchParams.get("truck");
-  const date       = searchParams.get("date"); // YYYY-MM-DD
+  const dateFrom   = searchParams.get("dateFrom"); // YYYY-MM-DD
+  const dateTo     = searchParams.get("dateTo");   // YYYY-MM-DD
   const page       = parseInt(searchParams.get("page") ?? "0", 10); // 0 = no pagination
   const PAGE_SIZE  = 20;
 
@@ -74,9 +75,13 @@ export async function listOrders(db, req, url) {
     params.push(`%${search}%`, `%${search}%`);
   }
 
-  if (date) {
-    where += ` AND DATE(c.date_created) = ?`;
-    params.push(date);
+  if (dateFrom) {
+    where += ` AND DATE(c.date_created) >= ?`;
+    params.push(dateFrom);
+  }
+  if (dateTo) {
+    where += ` AND DATE(c.date_created) <= ?`;
+    params.push(dateTo);
   }
 
   // For paginated (past) queries sort by date desc; for live queues sort by status priority

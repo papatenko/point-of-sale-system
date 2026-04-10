@@ -116,7 +116,8 @@ function CustomerOrdersPage() {
   // Past orders
   const [pastOrders, setPastOrders] = useState([]);
   const [pastLoading, setPastLoading] = useState(true);
-  const [filterDate, setFilterDate] = useState("");
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
   const showCompleted = true;
   const showCancelled = true;
   const [page, setPage] = useState(1);
@@ -151,7 +152,8 @@ function CustomerOrdersPage() {
     }
     try {
       const params = { status: statuses.join(","), page };
-      if (filterDate) params.date = filterDate;
+      if (filterDateFrom) params.dateFrom = filterDateFrom;
+      if (filterDateTo) params.dateTo = filterDateTo;
       const data = await getOrders(params);
       setPastOrders(Array.isArray(data.orders) ? data.orders : []);
       setTotalPages(data.pages ?? 1);
@@ -160,7 +162,7 @@ function CustomerOrdersPage() {
     } finally {
       setPastLoading(false);
     }
-  }, [showCompleted, showCancelled, filterDate, page]);
+  }, [showCompleted, showCancelled, filterDateFrom, filterDateTo, page]);
 
   // Initial fetch
   useEffect(() => { fetchActive(); }, [fetchActive]);
@@ -172,8 +174,8 @@ function CustomerOrdersPage() {
     return () => clearInterval(id);
   }, [fetchActive]);
 
-  // Reset page when date filter changes
-  useEffect(() => { setPage(1); }, [filterDate]);
+  // Reset page when date filters change
+  useEffect(() => { setPage(1); }, [filterDateFrom, filterDateTo]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
@@ -207,12 +209,21 @@ function CustomerOrdersPage() {
       <section>
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h2 className="text-base font-semibold text-foreground">Order History</h2>
-          <input
-            type="date"
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-            className="text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-2 focus:ring-amber-400"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={filterDateFrom}
+              onChange={(e) => setFilterDateFrom(e.target.value)}
+              className="text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-2 focus:ring-amber-400"
+            />
+            <span className="text-muted-foreground text-sm">–</span>
+            <input
+              type="date"
+              value={filterDateTo}
+              onChange={(e) => setFilterDateTo(e.target.value)}
+              className="text-sm border border-border rounded-lg px-3 py-1.5 bg-background focus:outline-none focus:ring-2 focus:ring-amber-400"
+            />
+          </div>
         </div>
 
         {pastLoading ? (
