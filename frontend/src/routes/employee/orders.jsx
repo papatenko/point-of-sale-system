@@ -55,8 +55,10 @@ function OrdersPage() {
     pastOrders,
     search,
     setSearch,
-    filterDate,
-    setFilterDate,
+    filterDateFrom,
+    setFilterDateFrom,
+    filterDateTo,
+    setFilterDateTo,
     showCompleted,
     setShowCompleted,
     showCancelled,
@@ -162,13 +164,20 @@ function OrdersPage() {
               />
             </div>
 
-            {/* Date picker */}
+            {/* Date range */}
             <div className="flex items-center gap-1.5 border border-border rounded-lg px-3 py-1.5 bg-background">
-              <Calendar size={14} className="text-muted-foreground" />
+              <Calendar size={14} className="text-muted-foreground shrink-0" />
               <input
                 type="date"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
+                value={filterDateFrom}
+                onChange={(e) => setFilterDateFrom(e.target.value)}
+                className="text-sm focus:outline-none bg-transparent"
+              />
+              <span className="text-muted-foreground text-xs">–</span>
+              <input
+                type="date"
+                value={filterDateTo}
+                onChange={(e) => setFilterDateTo(e.target.value)}
                 className="text-sm focus:outline-none bg-transparent"
               />
             </div>

@@ -1,18 +1,18 @@
 import { Plus, Minus } from "lucide-react";
 
-export function MenuCard({ item, qty, onAdd, onQty }) {
+export function MenuCard({ item, qty, onAdd, onQty, compact = false }) {
   return (
     <div className="bg-background rounded-xl shadow-sm border border-border p-4 flex justify-between items-start gap-4 hover:shadow-md transition-shadow">
       <div className="flex-1 min-w-0">
         <h3 className="font-semibold text-foreground">{item.item_name}</h3>
-        {item.image_url && (
+        {!compact && item.image_url && (
           <img
             src={item.image_url}
             alt={item.item_name}
             className="w-full h-40 object-cover rounded-md my-2"
           />
         )}
-        {item.description && (
+        {!compact && item.description && (
           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
             {item.description}
           </p>
