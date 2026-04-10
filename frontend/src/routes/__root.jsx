@@ -88,6 +88,8 @@ function ProfileDropdown({ user, onLogout }) {
               </Link>
               <div className="border-t border-border my-1" />
             </>
+
+            
           )}
 
           <Link
@@ -164,6 +166,16 @@ function RootLayout() {
                     <Link to="/order">Order Online</Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
+
+                <NavigationMenuItem>
+                    <NavigationMenuLink
+                      asChild
+                      className={navigationMenuTriggerStyle()}
+                    >
+                      <Link to="/customer/uma">Uma</Link>
+                    </NavigationMenuLink>
+                </NavigationMenuItem>
+
                 {user?.user_type === "customer" && (
                   <NavigationMenuItem>
                     <NavigationMenuLink
@@ -172,7 +184,8 @@ function RootLayout() {
                     >
                       <Link to="/orders">My Orders</Link>
                     </NavigationMenuLink>
-                  </NavigationMenuItem>
+                  </NavigationMenuItem> 
+
                 )}
               </NavigationMenuList>
             </NavigationMenu>

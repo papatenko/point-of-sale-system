@@ -59,6 +59,10 @@ router.get("/api/employees", async (_, db) =>
 router.post("/api/employees", async (body, db) =>
   EmployeeService.createEmployee(db, body),
 );
+router.put("/api/employees", async (body, db) => {
+  const { email, role, license_plate } = body;
+  return EmployeeService.updateEmployee(db, email, { role, license_plate });
+});
 router.delete("/api/employees", async (body, db) => {
   const { email } = body;
   return EmployeeService.deleteEmployee(db, email);
@@ -75,6 +79,9 @@ router.delete("/api/ingredients", async (body, db) => {
   const { ingredient_id } = body;
   return IngredientService.deleteIngredient(db, ingredient_id);
 });
+router.put("/api/ingredients", async (body, db) =>
+  IngredientService.updateIngredient(db, body),
+);
 
 // Trucks
 router.get("/api/trucks", async (_, db) => TruckService.getAllTrucks(db));
@@ -106,10 +113,27 @@ router.get("/api/menu", async (_, db) =>
   MenuItemService.getAvailableMenuItems(db),
 );
 router.get("/api/menu-items", async (_, db) =>
-  MenuItemService.getAllMenuItems(db),
+  MenuItemService.getAllMenuItemsWithRecipes(db),
 );
 router.post("/api/menu-items", async (body, db) =>
   MenuItemService.createMenuItem(db, body),
+);
+router.post("/api/menu-items-with-recipes", async (body, db) => {
+  const { item_name, category, description, price, image_url, recipes } = body;
+  if (!item_name || !price) {
+    return { error: "Missing required fields: item_name, price" };
+  }
+  if (!recipes || recipes.length === 0) {
+    return { error: "At least one recipe ingredient is required" };
+  }
+  return await MenuItemService.createMenuItemWithRecipes(
+    db,
+    { item_name, category, description, price, image_url },
+    recipes,
+  );
+});
+router.put("/api/menu-items", async (body, db) =>
+  MenuItemService.updateMenuItem(db, body),
 );
 router.delete("/api/menu-items", async (body, db) => {
   const { menu_item_id } = body;

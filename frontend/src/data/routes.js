@@ -6,15 +6,10 @@ import {
   Beef,
   Users,
   Utensils,
-  UtensilsCrossed,
   Truck,
-  Scroll,
   Archive,
-  UserCircle,
   Database,
   ClipboardList,
-  Briefcase,
-  Settings,
 } from "lucide-react";
 
 export const EMPLOYEE_ROUTES = [
@@ -52,16 +47,9 @@ export const EMPLOYEE_ROUTES = [
 
 export const DATABASE_MANAGEMENT_ROUTES = [
   {
-    name: "Employees",
-    url: "/employee/database/employees",
+    name: "Users",
+    url: "/employee/database/users",
     icon: Users,
-    roles: ["admin"],
-    category: "people",
-  },
-  {
-    name: "Customers",
-    url: "/employee/database/customers",
-    icon: UserCircle,
     roles: ["admin"],
     category: "people",
   },
@@ -69,13 +57,6 @@ export const DATABASE_MANAGEMENT_ROUTES = [
     name: "Menu Items",
     url: "/employee/database/menu_items",
     icon: Utensils,
-    roles: ["admin"],
-    category: "products",
-  },
-  {
-    name: "Recipes",
-    url: "/employee/database/recipes",
-    icon: Scroll,
     roles: ["admin"],
     category: "products",
   },

@@ -94,6 +94,15 @@ function toDetailObjects(rows) {
     }));
 }
 
+const REPORT_DETAIL_ROW_LIMIT = 500;
+
+function orderTypeLabel(raw) {
+  const s = String(raw || "");
+  if (s === "walk-in") return "Walk-in";
+  if (s === "online-pickup") return "Online pickup";
+  return s;
+}
+
 export async function getReportStats(db, url) {
   const range = parseReportDateRange(url);
   if (range?.error) {
@@ -549,6 +558,221 @@ export async function getReportStats(db, url) {
     soldByCatRows.reduce((sum, r) => sum + (Number(r.total) || 0), 0) +
     (Number(soldUncat?.total) || 0);
 
+  const ethnicityUserDetailExtra = hasEthnicityFilter
+    ? ethnicityFilter.unspecified
+      ? { sql: " AND u.ethnicity IS NULL", params: [] }
+      : { sql: " AND u.ethnicity = ?", params: [ethnicityFilter.raceId] }
+    : { sql: "", params: [] };
+
+  const placedSelect = checkoutPlacedAtSql("c");
+
+  const [
+    detailEthnicityUsers,
+    detailMenuItems,
+    detailIngredients,
+    detailOrders,
+    detailOrderLineItems,
+  ] = await Promise.all([
+    hasCheckoutBackedUserFilter
+      ? db.query(
+          `
+      SELECT DISTINCT
+        u.email AS email,
+        u.first_name AS firstName,
+        u.last_name AS lastName,
+        u.phone_number AS phoneNumber,
+        COALESCE(rl.race, 'Not specified') AS ethnicity
+      FROM users u
+      LEFT JOIN race_lookup rl ON rl.race_id = u.ethnicity
+      INNER JOIN checkout c ON c.customer_email = u.email
+      ${checkoutWhereC.sql}${ethnicityUserDetailExtra.sql}
+      ORDER BY ethnicity, u.email
+      LIMIT ${REPORT_DETAIL_ROW_LIMIT}
+    `,
+          [...checkoutWhereC.params, ...ethnicityUserDetailExtra.params],
+        )
+      : db.query(
+          `
+      SELECT
+        u.email AS email,
+        u.first_name AS firstName,
+        u.last_name AS lastName,
+        u.phone_number AS phoneNumber,
+        COALESCE(rl.race, 'Not specified') AS ethnicity
+      FROM users u
+      LEFT JOIN race_lookup rl ON rl.race_id = u.ethnicity
+      ${hasEthnicityFilter ? (ethnicityFilter.unspecified ? "WHERE u.ethnicity IS NULL" : "WHERE u.ethnicity = ?") : ""}
+      ORDER BY ethnicity, u.email
+      LIMIT ${REPORT_DETAIL_ROW_LIMIT}
+    `,
+          hasEthnicityFilter && !ethnicityFilter.unspecified
+            ? [ethnicityFilter.raceId]
+            : [],
+        ),
+    hasScopedOrderFilters
+      ? db.query(
+          `
+      SELECT DISTINCT
+        m.menu_item_id AS menuItemId,
+        m.item_name AS itemName,
+        COALESCE(mc.category_name, 'Uncategorized') AS categoryName,
+        m.price AS price,
+        m.is_available AS isAvailable
+      FROM menu_items m
+      LEFT JOIN menu_category_lookup mc ON mc.category_id = m.category
+      INNER JOIN order_items oi ON oi.menu_item_id = m.menu_item_id
+      INNER JOIN checkout ch ON ch.checkout_id = oi.order_id
+      ${checkoutWhereCh.sql}
+      ORDER BY categoryName, m.item_name
+      LIMIT ${REPORT_DETAIL_ROW_LIMIT}
+    `,
+          checkoutWhereCh.params,
+        )
+      : db.query(
+          `
+      SELECT
+        m.menu_item_id AS menuItemId,
+        m.item_name AS itemName,
+        COALESCE(mc.category_name, 'Uncategorized') AS categoryName,
+        m.price AS price,
+        m.is_available AS isAvailable
+      FROM menu_items m
+      LEFT JOIN menu_category_lookup mc ON mc.category_id = m.category
+      ORDER BY categoryName, m.item_name
+      LIMIT ${REPORT_DETAIL_ROW_LIMIT}
+    `,
+        ),
+    hasScopedOrderFilters
+      ? db.query(
+          `
+      SELECT DISTINCT
+        i.ingredient_id AS ingredientId,
+        i.ingredient_name AS ingredientName,
+        COALESCE(NULLIF(TRIM(i.category), ''), 'Uncategorized') AS categoryName
+      FROM ingredients i
+      INNER JOIN recipe_ingredient ri ON ri.ingredient_id = i.ingredient_id
+      INNER JOIN order_items oi ON oi.menu_item_id = ri.menu_item_id
+      INNER JOIN checkout ch ON ch.checkout_id = oi.order_id
+      ${checkoutWhereCh.sql}
+      ORDER BY categoryName, i.ingredient_name
+      LIMIT ${REPORT_DETAIL_ROW_LIMIT}
+    `,
+          checkoutWhereCh.params,
+        )
+      : db.query(
+          `
+      SELECT
+        i.ingredient_id AS ingredientId,
+        i.ingredient_name AS ingredientName,
+        COALESCE(NULLIF(TRIM(i.category), ''), 'Uncategorized') AS categoryName
+      FROM ingredients i
+      ORDER BY categoryName, i.ingredient_name
+      LIMIT ${REPORT_DETAIL_ROW_LIMIT}
+    `,
+        ),
+    db.query(
+      `
+      SELECT
+        c.checkout_id AS checkoutId,
+        c.order_number AS orderNumber,
+        ${placedSelect} AS orderPlacedAt,
+        c.order_type AS orderType,
+        c.license_plate AS licensePlate,
+        ft.truck_name AS truckName,
+        c.customer_email AS customerEmail,
+        CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) AS customerName,
+        c.order_status AS orderStatus,
+        c.payment_status AS paymentStatus,
+        c.payment_method AS paymentMethod,
+        c.total_price AS totalPrice
+      FROM checkout c
+      LEFT JOIN food_trucks ft ON ft.license_plate = c.license_plate
+      LEFT JOIN users u ON u.email = c.customer_email
+      ${checkoutWhereC.sql}
+      ORDER BY c.checkout_id DESC
+      LIMIT ${REPORT_DETAIL_ROW_LIMIT}
+    `,
+      checkoutWhereC.params,
+    ),
+    db.query(
+      `
+      SELECT
+        c.checkout_id AS checkoutId,
+        c.order_number AS orderNumber,
+        ${placedSelect} AS orderPlacedAt,
+        c.order_type AS orderType,
+        c.license_plate AS licensePlate,
+        ft.truck_name AS truckName,
+        c.customer_email AS customerEmail,
+        m.item_name AS itemName,
+        COALESCE(mc.category_name, 'Uncategorized') AS menuCategoryName,
+        oi.quantity AS quantity,
+        oi.line_total_price AS lineTotalPrice
+      FROM order_items oi
+      INNER JOIN checkout c ON c.checkout_id = oi.order_id
+      INNER JOIN menu_items m ON m.menu_item_id = oi.menu_item_id
+      LEFT JOIN menu_category_lookup mc ON mc.category_id = m.category
+      LEFT JOIN food_trucks ft ON ft.license_plate = c.license_plate
+      ${checkoutWhereC.sql}
+      ORDER BY c.checkout_id DESC, oi.order_item_id
+      LIMIT ${REPORT_DETAIL_ROW_LIMIT}
+    `,
+      checkoutWhereC.params,
+    ),
+  ]).then((results) => results.map((r) => r[0]));
+
+  const reportDetails = {
+    rowLimit: REPORT_DETAIL_ROW_LIMIT,
+    ethnicityUsers: detailEthnicityUsers.map((r) => ({
+      email: r.email,
+      firstName: r.firstName,
+      lastName: r.lastName,
+      phoneNumber: r.phoneNumber ?? null,
+      ethnicity: r.ethnicity,
+    })),
+    menuItems: detailMenuItems.map((r) => ({
+      menuItemId: Number(r.menuItemId),
+      itemName: r.itemName,
+      categoryName: r.categoryName,
+      price: Number(r.price),
+      isAvailable: Boolean(r.isAvailable),
+    })),
+    ingredients: detailIngredients.map((r) => ({
+      ingredientId: Number(r.ingredientId),
+      ingredientName: r.ingredientName,
+      categoryName: r.categoryName,
+    })),
+    orders: detailOrders.map((r) => ({
+      checkoutId: Number(r.checkoutId),
+      orderNumber: r.orderNumber,
+      orderPlacedAt: r.orderPlacedAt,
+      orderType: r.orderType,
+      orderTypeLabel: orderTypeLabel(r.orderType),
+      licensePlate: r.licensePlate,
+      truckName: r.truckName ?? null,
+      customerEmail: r.customerEmail ?? null,
+      customerName: String(r.customerName || "").trim() || null,
+      orderStatus: r.orderStatus,
+      paymentStatus: r.paymentStatus,
+      paymentMethod: r.paymentMethod,
+      totalPrice: Number(r.totalPrice),
+    })),
+    orderLineItems: detailOrderLineItems.map((r) => ({
+      checkoutId: Number(r.checkoutId),
+      orderNumber: r.orderNumber,
+      orderPlacedAt: r.orderPlacedAt,
+      orderType: r.orderType,
+      orderTypeLabel: orderTypeLabel(r.orderType),
+      licensePlate: r.licensePlate,
+      truckName: r.truckName ?? null,
+      customerEmail: r.customerEmail ?? null,
+      itemName: r.itemName,
+      menuCategoryName: r.menuCategoryName,
+      quantity: Number(r.quantity) || 0,
+      lineTotalPrice: Number(r.lineTotalPrice),
+    })),
+  };
+
   return {
     totalIngredients: hasScopedOrderFilters
       ? computedTotalIngredients
@@ -618,6 +842,7 @@ export async function getReportStats(db, url) {
       total: Number(r.total) || 0,
       details: splitCsv(r.details),
     })),
+    reportDetails,
     filters: {
       startDate: range?.start ?? null,
       endDate: range?.end ?? null,
