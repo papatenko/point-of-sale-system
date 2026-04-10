@@ -172,7 +172,7 @@ if (
               <label className="block text-sm font-medium text-foreground mb-1">
                 Phone Number
               </label>
-              <input
+              {/* <input
                 type="tel"
                 value={formData.phone_number}
                  onBeforeInput={(e) => {
@@ -183,6 +183,22 @@ if (
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, phone_number: e.target.value }))
                 }
+                className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
+                placeholder="Optional"
+              /> */}
+              <input
+                type="tel"
+                value={formData.phone_number}
+                inputMode="numeric"
+                maxLength={11}
+                onChange={(e) => {
+                  const onlyNumbers = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
+
+                  setFormData((p) => ({
+                    ...p,
+                    phone_number: onlyNumbers,
+                  }));
+                }}
                 className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
                 placeholder="Optional"
               />
