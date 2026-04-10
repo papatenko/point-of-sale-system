@@ -74,7 +74,7 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cartItems = useSelector((s) => s.cart.items);
-  const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const cartTotal = cartItems.reduce((sum, i) => sum + (i.quantity >= 2 ? i.price * (i.quantity - 1) : i.price * i.quantity), 0);
   const user = useSelector((s) => s.auth.user);
 
   // Auth guard
@@ -358,7 +358,10 @@ function CheckoutPage() {
             <div className="bg-background rounded-xl shadow-sm border p-6 sticky top-4">
               <h2 className="text-base font-semibold mb-4 text-foreground">Order Summary</h2>
               <div className="space-y-3">
-                {cartItems.map((item) => (
+                {cartItems.map((item) => {
+                  const original   = item.price * item.quantity;
+                  const discounted = item.quantity >= 2 ? item.price * (item.quantity - 1) : null;
+                  return (
                   <div
                     key={item.menuItemId}
                     className="flex justify-between text-sm"
@@ -367,11 +370,19 @@ function CheckoutPage() {
                       {item.name}{" "}
                       <span className="text-muted-foreground">×{item.quantity}</span>
                     </span>
-                    <span className="font-medium text-foreground">
-                      ${(item.price * item.quantity).toFixed(2)}
-                    </span>
+                    <div className="text-right">
+                      {discounted !== null ? (
+                        <>
+                          <p className="text-xs line-through text-muted-foreground/70">${original.toFixed(2)}</p>
+                          <p className="font-semibold text-amber-600 dark:text-amber-400">${discounted.toFixed(2)}</p>
+                        </>
+                      ) : (
+                        <span className="font-medium text-foreground">${original.toFixed(2)}</span>
+                      )}
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="border-t mt-4 pt-4 flex justify-between font-bold text-base text-foreground">
                 <span>Total</span>

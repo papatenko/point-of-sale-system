@@ -2,11 +2,13 @@ export function formatDateTime(raw) {
   if (!raw) return null;
   const iso = typeof raw === "string" ? raw.replace(" ", "T") : raw;
   const d = new Date(iso);
-  return d.toLocaleString([], {
+  return d.toLocaleString("en-US", {
     month: "short",
-    day: "numeric",
-    hour: "2-digit",
+    day:   "numeric",
+    year:  "numeric",
+    hour:  "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
 }
 
