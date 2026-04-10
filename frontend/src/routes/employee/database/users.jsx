@@ -81,6 +81,9 @@ function UsersDatabaseComponent() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [deleteEmployeeOpen, setDeleteEmployeeOpen] = useState(false);
   const [deleteEmployeeEmail, setDeleteEmployeeEmail] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [editForm, setEditForm] = useState({});
   const { alertConfig, showAlert, hideAlert, AlertPopupComponent } =
     useAlertPopup();
 
@@ -242,6 +245,74 @@ function UsersDatabaseComponent() {
     }
   };
 
+  const openEditDialog = (employee) => {
+    setSelectedEmployee(employee);
+    setEditForm({
+      email: employee.email,
+      first_name: employee.first_name || "",
+      last_name: employee.last_name || "",
+      phone_number: employee.phone_number || "",
+      role: employee.role || "",
+      license_plate: employee.license_plate || "",
+      gender: employee.gender ? String(employee.gender) : "",
+      ethnicity: employee.ethnicity ? String(employee.ethnicity) : "",
+    });
+    setEditOpen(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const userRes = await fetch("/api/users", {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          email: fd.get("email"),
+          first_name: fd.get("first_name"),
+          last_name: fd.get("last_name"),
+          phone_number: fd.get("phone_number") || null,
+          gender: fd.get("gender") ? parseInt(fd.get("gender")) : null,
+          ethnicity: fd.get("ethnicity") ? parseInt(fd.get("ethnicity")) : null,
+        }),
+      });
+
+      const empRes = await fetch("/api/employees", {
+        method: "PUT",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          email: fd.get("email"),
+          role: fd.get("role"),
+          license_plate: fd.get("license_plate"),
+        }),
+      });
+
+      if (userRes.ok && empRes.ok) {
+        setEditOpen(false);
+        fetchEmployees();
+      } else {
+        const ud = await userRes.json();
+        const ed = await empRes.json();
+        showAlert({
+          title: "Error Updating Employee",
+          description: ud.error || ed.error || "Failed to update employee",
+          variant: "error",
+        });
+      }
+    } catch {
+      showAlert({
+        title: "Error",
+        description: "Failed to update employee",
+        variant: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const CREATE_FIELDS = [
     { name: "email", label: "Email", type: "email", required: true },
     { name: "first_name", label: "First Name", type: "text", required: true },
@@ -287,6 +358,158 @@ function UsersDatabaseComponent() {
         onConfirm={handleDeleteEmployee}
         confirmLabel="Delete"
       />
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Employee</DialogTitle>
+          </DialogHeader>
+          {selectedEmployee && (
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px] space-y-1">
+                  <Label>Email</Label>
+                  <Input
+                    value={editForm.email}
+                    disabled
+                    className="opacity-60 cursor-not-allowed"
+                  />
+                  <input type="hidden" name="email" value={editForm.email} />
+                </div>
+                <div className="flex-1 min-w-[200px] space-y-1">
+                  <Label>Role</Label>
+                  <Select
+                    name="role"
+                    value={editForm.role}
+                    onValueChange={(v) => setEditForm((p) => ({ ...p, role: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROLE_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px] space-y-1">
+                  <Label>First Name</Label>
+                  <Input
+                    name="first_name"
+                    defaultValue={editForm.first_name}
+                    required
+                  />
+                </div>
+                <div className="flex-1 min-w-[200px] space-y-1">
+                  <Label>Last Name</Label>
+                  <Input
+                    name="last_name"
+                    defaultValue={editForm.last_name}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px] space-y-1">
+                  <Label>Phone</Label>
+                  <Input
+                    name="phone_number"
+                    defaultValue={editForm.phone_number}
+                  />
+                </div>
+                <div className="flex-1 min-w-[200px] space-y-1">
+                  <Label>Truck</Label>
+                  <Select
+                    name="license_plate"
+                    value={editForm.license_plate}
+                    onValueChange={(v) =>
+                      setEditForm((p) => ({ ...p, license_plate: v }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {truckOptions.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px] space-y-1">
+                  <Label>Gender</Label>
+                  <Select
+                    name="gender"
+                    value={editForm.gender}
+                    onValueChange={(v) =>
+                      setEditForm((p) => ({ ...p, gender: v }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GENDER_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1 min-w-[200px] space-y-1">
+                  <Label>Ethnicity</Label>
+                  <Select
+                    name="ethnicity"
+                    value={editForm.ethnicity}
+                    onValueChange={(v) =>
+                      setEditForm((p) => ({ ...p, ethnicity: v }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ETHNICITY_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditOpen(false)}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <div className="flex justify-between items-center w-full">
         <div>
           <h1 className="text-2xl font-bold">Users</h1>
@@ -334,7 +557,7 @@ function UsersDatabaseComponent() {
             </span>
           </div>
 
-          <DataTableWithEdit
+          <DataTable
             columns={EMPLOYEE_COLUMNS}
             data={filteredEmployees}
             pageSize={10}
@@ -349,12 +572,9 @@ function UsersDatabaseComponent() {
             ]}
             deleteIdKey="email"
             onDelete={confirmDeleteEmployee}
+            onEdit={openEditDialog}
             loading={loading}
             emptyMessage="No employees found"
-            truckOptions={truckOptions}
-            genderOptions={GENDER_OPTIONS}
-            ethnicityOptions={ETHNICITY_OPTIONS}
-            onUpdated={fetchEmployees}
           />
         </TabsContent>
 
@@ -414,285 +634,5 @@ function UsersDatabaseComponent() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function DataTableWithEdit({
-  columns,
-  data,
-  pageSize,
-  searchKeys,
-  deleteIdKey,
-  onDelete,
-  loading,
-  emptyMessage,
-  truckOptions,
-  genderOptions,
-  ethnicityOptions,
-  onUpdated,
-}) {
-  const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const openEdit = (row) => {
-    setEditForm({
-      email: row.email,
-      first_name: row.first_name || "",
-      last_name: row.last_name || "",
-      phone_number: row.phone_number || "",
-      role: row.role || "",
-      license_plate: row.license_plate || "",
-      gender: row.gender ? String(row.gender) : "",
-      ethnicity: row.ethnicity ? String(row.ethnicity) : "",
-    });
-    setEditOpen(true);
-  };
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    const fd = new FormData(e.target);
-    setIsSubmitting(true);
-
-    try {
-      const userRes = await fetch("/api/users", {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify({
-          email: fd.get("email"),
-          first_name: fd.get("first_name"),
-          last_name: fd.get("last_name"),
-          phone_number: fd.get("phone_number") || null,
-          gender: fd.get("gender") ? parseInt(fd.get("gender")) : null,
-          ethnicity: fd.get("ethnicity") ? parseInt(fd.get("ethnicity")) : null,
-        }),
-      });
-
-      const empRes = await fetch("/api/employees", {
-        method: "PUT",
-        headers: authHeaders(),
-        body: JSON.stringify({
-          email: fd.get("email"),
-          role: fd.get("role"),
-          license_plate: fd.get("license_plate"),
-        }),
-      });
-
-      if (userRes.ok && empRes.ok) {
-        setEditOpen(false);
-        onUpdated();
-      } else {
-        const ud = await userRes.json();
-        const ed = await empRes.json();
-        showAlert({
-          title: "Error Updating Employee",
-          description: ud.error || ed.error || "Failed to update employee",
-          variant: "error",
-        });
-      }
-    } catch {
-      showAlert({
-        title: "Error",
-        description: "Failed to update employee",
-        variant: "error",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const columnsWithEdit = useMemo(
-    () => [
-      ...columns,
-      {
-        key: "actions",
-        label: "Actions",
-        render: (row) => (
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => openEdit(row)}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground p-1.5"
-              title="Edit"
-            >
-              <Pencil className="size-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => onDelete(row.email)}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-destructive/10 hover:text-destructive p-1.5"
-              title="Delete"
-            >
-              ×
-            </button>
-          </div>
-        ),
-      },
-    ],
-    [columns, onDelete],
-  );
-
-  return (
-    <>
-      <DataTable
-        columns={columnsWithEdit}
-        data={data}
-        pageSize={pageSize}
-        searchKeys={searchKeys}
-        deleteIdKey={deleteIdKey}
-        onDelete={onDelete}
-        loading={loading}
-        emptyMessage={emptyMessage}
-      />
-
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit Employee</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleEditSubmit} className="space-y-4">
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>Email</Label>
-                <Input
-                  value={editForm.email}
-                  disabled
-                  className="opacity-60 cursor-not-allowed"
-                />
-                <input type="hidden" name="email" value={editForm.email} />
-              </div>
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>Role</Label>
-                <Select
-                  name="role"
-                  value={editForm.role}
-                  onValueChange={(v) => setEditForm((p) => ({ ...p, role: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ROLE_OPTIONS.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>
-                        {o.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>First Name</Label>
-                <Input
-                  name="first_name"
-                  defaultValue={editForm.first_name}
-                  required
-                />
-              </div>
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>Last Name</Label>
-                <Input
-                  name="last_name"
-                  defaultValue={editForm.last_name}
-                  required
-                />
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>Phone</Label>
-                <Input
-                  name="phone_number"
-                  defaultValue={editForm.phone_number}
-                />
-              </div>
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>Truck</Label>
-                <Select
-                  name="license_plate"
-                  value={editForm.license_plate}
-                  onValueChange={(v) =>
-                    setEditForm((p) => ({ ...p, license_plate: v }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {truckOptions.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>Gender</Label>
-                <Select
-                  name="gender"
-                  value={editForm.gender}
-                  onValueChange={(v) =>
-                    setEditForm((p) => ({ ...p, gender: v }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {genderOptions.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>
-                        {o.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>Ethnicity</Label>
-                <Select
-                  name="ethnicity"
-                  value={editForm.ethnicity}
-                  onValueChange={(v) =>
-                    setEditForm((p) => ({ ...p, ethnicity: v }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ethnicityOptions.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>
-                        {o.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditOpen(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="bg-amber-600 hover:bg-amber-700 text-white"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }
