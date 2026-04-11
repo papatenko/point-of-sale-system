@@ -105,12 +105,13 @@ export async function listOrders(db, req, url) {
                               u.phone_number AS customer_phone,
                               ft.current_location AS truck_location,
                               GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ' | ') AS items,
-                              (SELECT COUNT(*) > 0
+                              (SELECT GROUP_CONCAT(DISTINCT mi2.item_name ORDER BY mi2.item_name SEPARATOR ' | ')
                                FROM order_items oi2
                                JOIN recipe_ingredient ri ON ri.menu_item_id = oi2.menu_item_id
                                LEFT JOIN truck_inventory ti
                                       ON ti.ingredient_id = ri.ingredient_id
                                      AND ti.license_plate = c.license_plate
+                               JOIN menu_items mi2 ON mi2.menu_item_id = oi2.menu_item_id
                                WHERE oi2.order_id = c.checkout_id
                                  AND (ti.quantity_on_hand IS NULL
                                       OR ti.quantity_on_hand < ri.quantity_needed * oi2.quantity)
@@ -135,12 +136,13 @@ export async function listOrders(db, req, url) {
                             u.phone_number AS customer_phone,
                             ft.current_location AS truck_location,
                             GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ' | ') AS items,
-                            (SELECT COUNT(*) > 0
+                            (SELECT GROUP_CONCAT(DISTINCT mi2.item_name ORDER BY mi2.item_name SEPARATOR ' | ')
                              FROM order_items oi2
                              JOIN recipe_ingredient ri ON ri.menu_item_id = oi2.menu_item_id
                              LEFT JOIN truck_inventory ti
                                     ON ti.ingredient_id = ri.ingredient_id
                                    AND ti.license_plate = c.license_plate
+                             JOIN menu_items mi2 ON mi2.menu_item_id = oi2.menu_item_id
                              WHERE oi2.order_id = c.checkout_id
                                AND (ti.quantity_on_hand IS NULL
                                     OR ti.quantity_on_hand < ri.quantity_needed * oi2.quantity)
@@ -188,10 +190,26 @@ export async function updateOrderItems(db, orderId, items) {
   return { success: true };
 }
 
-export async function updateOrderStatus(db, orderId, newStatus) {
+export async function updateOrderStatus(db, orderId, newStatus, req = null) {
   const allowed = ["preparing", "ready", "completed", "cancelled"];
   if (!allowed.includes(newStatus)) {
     throw new Error(`Invalid status: ${newStatus}`);
+  }
+
+  // Customer auth: can only cancel their own pending orders
+  const authHeader = req?.headers?.authorization ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+  const payload = verifyToken(token);
+  if (payload?.user_type === "customer") {
+    if (newStatus !== "cancelled") throw new Error("Customers can only cancel orders.");
+    const [[owned]] = await db.query(
+      `SELECT customer_email, order_status FROM checkout WHERE checkout_id = ?`,
+      [orderId],
+    );
+    if (!owned || owned.customer_email !== payload.email)
+      throw new Error("Not authorized to cancel this order.");
+    if (owned.order_status !== "pending")
+      throw new Error("Only pending orders can be cancelled.");
   }
 
   // Preparing can only be set from pending (manual promotion)

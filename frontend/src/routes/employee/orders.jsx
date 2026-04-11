@@ -527,10 +527,10 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {!!order.inventory_warning && (
+          {!!order.inventory_warning && !["completed", "cancelled"].includes(order.order_status) && (
             <div className="flex items-center gap-1 text-amber-600 text-xs font-medium bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-full px-2 py-0.5">
               <AlertTriangle size={12} />
-              Low Stock
+              Low Stock: {order.inventory_warning.split(" | ").join(", ")}
             </div>
           )}
           <Badge

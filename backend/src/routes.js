@@ -160,8 +160,8 @@ router.get("/api/orders", async (_, db, req, url) =>
 router.get("/api/orders/:id", async (_, db, _req, url) =>
   OrderService.getOrderById(db, url),
 );
-router.patch("/api/orders/:id/status", async (body, db, _req, _url, params) =>
-  OrderService.updateOrderStatus(db, params.id, body.status),
+router.patch("/api/orders/:id/status", async (body, db, req, _url, params) =>
+  OrderService.updateOrderStatus(db, params.id, body.status, req),
 );
 router.put("/api/orders/:id/items", async (body, db, _req, _url, params) =>
   OrderService.updateOrderItems(db, params.id, body.items),

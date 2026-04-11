@@ -2,9 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCart, addItem, updateQuantity } from "@/redux/cartSlice";
-import { X, CheckCircle } from "lucide-react";
+import { X, CheckCircle, Search, MapPin, Clock } from "lucide-react";
 import { MenuCard } from "@/components/order/menu-card";
 import { CartPanel } from "@/components/order/cart-panel";
+
+function formatHour(timeStr) {
+  if (!timeStr) return "";
+  const [h, m] = timeStr.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return m === 0 ? `${hour} ${ampm}` : `${hour}:${String(m).padStart(2, "0")} ${ampm}`;
+}
 
 export const Route = createFileRoute("/employee/pos")({
   component: PosScreen,
@@ -13,6 +21,8 @@ export const Route = createFileRoute("/employee/pos")({
 function PosScreen() {
   const [menu, setMenu] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [truckInfo, setTruckInfo] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -29,14 +39,19 @@ function PosScreen() {
   const licensePlate = user?.license_plate ?? null;
 
   useEffect(() => {
-    fetch("/api/menu")
-      .then((r) => r.json())
-      .then((data) => {
-        setMenu(Array.isArray(data) ? data : []);
+    Promise.all([
+      fetch("/api/menu").then((r) => r.json()),
+      fetch("/api/trucks").then((r) => r.json()),
+    ])
+      .then(([menuData, truckData]) => {
+        setMenu(Array.isArray(menuData) ? menuData : []);
+        if (Array.isArray(truckData) && licensePlate) {
+          setTruckInfo(truckData.find((t) => t.license_plate === licensePlate) ?? null);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [licensePlate]);
 
   const grouped = menu.reduce((acc, item) => {
     const cat = item.category_name;
@@ -109,8 +124,44 @@ function PosScreen() {
         <div className="flex gap-8">
           {/* Menu */}
           <div className="flex-1 min-w-0">
+            {/* Search */}
+            <div className="relative mb-6">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search menu items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 text-sm border border-border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-amber-400"
+              />
+            </div>
+
             {loading ? (
               <div className="text-muted-foreground py-12 text-center">Loading menu...</div>
+            ) : searchQuery.trim() ? (
+              // Flat search results
+              (() => {
+                const q = searchQuery.toLowerCase();
+                const results = menu.filter((item) =>
+                  item.item_name.toLowerCase().includes(q),
+                );
+                return results.length === 0 ? (
+                  <p className="text-muted-foreground text-sm text-center py-12">No items match "{searchQuery}"</p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {results.map((item) => (
+                      <MenuCard
+                        key={item.menu_item_id}
+                        item={item}
+                        qty={getQty(item.menu_item_id)}
+                        onAdd={() => handleAdd(item)}
+                        onQty={(q) => handleQty(item.menu_item_id, q)}
+                        compact
+                      />
+                    ))}
+                  </div>
+                );
+              })()
             ) : (
               sortedCategories.map((category) => (
                 <section key={category} className="mb-10">
@@ -136,10 +187,22 @@ function PosScreen() {
 
           {/* Desktop sidebar */}
           <div className="hidden lg:flex flex-col w-80 flex-shrink-0 gap-4">
-            {/* Truck badge */}
+            {/* Truck details */}
             {licensePlate && (
-              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
-                <span className="font-semibold">Truck:</span> {licensePlate}
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-sm text-amber-800 dark:text-amber-300 space-y-1">
+                <p className="font-bold text-base tracking-wide">{licensePlate.toUpperCase()}</p>
+                {truckInfo?.current_location && (
+                  <p className="flex items-center gap-1.5">
+                    <MapPin size={13} className="shrink-0" />
+                    {truckInfo.current_location}
+                  </p>
+                )}
+                {truckInfo?.operating_hours_start && truckInfo?.operating_hours_end && (
+                  <p className="flex items-center gap-1.5">
+                    <Clock size={13} className="shrink-0" />
+                    {formatHour(truckInfo.operating_hours_start)} – {formatHour(truckInfo.operating_hours_end)}
+                  </p>
+                )}
               </div>
             )}
 
