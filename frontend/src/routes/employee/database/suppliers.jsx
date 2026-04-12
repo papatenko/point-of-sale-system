@@ -16,6 +16,7 @@ const COLUMNS = [
   { key: "contact_person", label: "Contact" },
   { key: "email", label: "Email" },
   { key: "phone_number", label: "Phone" },
+  { key: "address", label: "Address" },
 ];
 
 const CREATE_FIELDS = [
@@ -202,7 +203,7 @@ function SuppliersDatabaseComponent() {
         columns={COLUMNS}
         data={suppliers}
         pageSize={10}
-        searchKeys={["supplier_name", "contact_person", "email"]}
+        searchKeys={["supplier_name", "contact_person", "email", "address"]}
         deleteIdKey="supplier_id"
         onDelete={handleDelete}
         onEdit={openEditDialog}

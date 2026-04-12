@@ -7,6 +7,7 @@ export const NAME_MAX_LENGTH = 50;
 export const NAME_REGEX = /^[a-zA-Z][a-zA-Z\s\-']*$/;
 
 export function formatPhoneNumber(value) {
+  if (!value) return "";
   const digits = value.replace(/[^0-9]/g, "").slice(0, 11);
   if (digits.length === 0) return "";
   if (digits.length === 10) {
