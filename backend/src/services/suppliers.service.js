@@ -38,3 +38,28 @@ export async function deleteSupplier(db, supplier_id) {
     message: "Supplier deleted successfully",
   };
 }
+
+export async function updateSupplier(db, data) {
+  const { supplier_id, supplier_name, contact_person, email, phone_number, address } = data;
+
+  if (!supplier_id) {
+    return { error: "supplier_id is required" };
+  }
+
+  const result = await SupplierModel.update(db, supplier_id, {
+    supplier_name,
+    contact_person,
+    email,
+    phone_number,
+    address,
+  });
+
+  if (result.affectedRows === 0) {
+    return { error: "Supplier not found" };
+  }
+
+  return {
+    success: true,
+    message: "Supplier updated successfully",
+  };
+}
