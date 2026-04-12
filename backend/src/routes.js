@@ -103,6 +103,9 @@ router.get("/api/suppliers", async (_, db) =>
 router.post("/api/suppliers", async (body, db) =>
   SupplierService.createSupplier(db, body),
 );
+router.put("/api/suppliers", async (body, db) =>
+  SupplierService.updateSupplier(db, body),
+);
 router.delete("/api/suppliers", async (body, db) => {
   const { supplier_id } = body;
   return SupplierService.deleteSupplier(db, supplier_id);

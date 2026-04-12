@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { DataTable } from "@/components/database/data-table";
 import { AddDialog } from "@/components/database/add-dialog";
+import { EditDialog } from "@/components/common/edit-dialog";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 
 export const Route = createFileRoute("/employee/database/suppliers")({
@@ -34,7 +35,10 @@ function SuppliersDatabaseComponent() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const { alertConfig, showAlert, hideAlert, AlertPopupComponent } = useAlertPopup();
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const { alertConfig, showAlert, hideAlert, AlertPopupComponent } =
+    useAlertPopup();
 
   const fetchSuppliers = async () => {
     try {
@@ -85,6 +89,57 @@ function SuppliersDatabaseComponent() {
       }
     } catch {
       setError("Failed to create supplier");
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEditDialog = (supplier) => {
+    setSelectedSupplier(supplier);
+    setEditOpen(true);
+  };
+
+  const handleEditSubmit = async (formData) => {
+    setIsSubmitting(true);
+    setError(null);
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch("/api/suppliers", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          supplier_id: selectedSupplier.supplier_id,
+          supplier_name: formData.supplier_name,
+          contact_person: formData.contact_person || null,
+          email: formData.email || null,
+          phone_number: formData.phone_number || null,
+          address: formData.address || null,
+        }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        fetchSuppliers();
+        return true;
+      } else {
+        showAlert({
+          title: "Error Updating Supplier",
+          description: data.error || "Failed to update supplier",
+          variant: "error",
+        });
+        return false;
+      }
+    } catch {
+      showAlert({
+        title: "Error",
+        description: "Failed to update supplier",
+        variant: "error",
+      });
       return false;
     } finally {
       setIsSubmitting(false);
@@ -149,8 +204,22 @@ function SuppliersDatabaseComponent() {
         searchKeys={["supplier_name", "contact_person", "email"]}
         deleteIdKey="supplier_id"
         onDelete={handleDelete}
+        onEdit={openEditDialog}
         loading={loading}
         emptyMessage="No suppliers found"
+      />
+
+      <EditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        mode="edit"
+        title="Edit Supplier"
+        fields={CREATE_FIELDS}
+        initialData={selectedSupplier || {}}
+        onSubmit={handleEditSubmit}
+        onSuccess={() => {}}
+        isSubmitting={isSubmitting}
+        submitLabel="Save Changes"
       />
     </div>
   );

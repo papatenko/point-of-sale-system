@@ -28,3 +28,24 @@ export async function remove(db, supplierId) {
   );
   return result;
 }
+
+export async function update(db, supplierId, data) {
+  const [result] = await db.query(
+    `UPDATE suppliers SET
+     supplier_name = COALESCE(?, supplier_name),
+     contact_person = ?,
+     email = ?,
+     phone_number = ?,
+     address = ?
+     WHERE supplier_id = ?`,
+    [
+      data.supplier_name,
+      data.contact_person,
+      data.email,
+      data.phone_number,
+      data.address,
+      supplierId,
+    ]
+  );
+  return result;
+}
