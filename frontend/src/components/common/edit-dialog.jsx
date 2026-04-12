@@ -80,7 +80,7 @@ export function EditDialog({
   };
 
   const getDefaultValue = (field) => {
-    if (field.formatOnChange && fieldValues[field.name] !== undefined) {
+    if ((field.formatOnChange || field.sanitizeOnChange) && fieldValues[field.name] !== undefined) {
       return fieldValues[field.name];
     }
     if (mode === "edit" && initialData[field.name] !== undefined) {
@@ -150,7 +150,8 @@ export function EditDialog({
                     maxLength={field.maxLength}
                     placeholder={field.placeholder}
                     required={field.required}
-                    defaultValue={getDefaultValue(field)}
+                    defaultValue={field.formatOnChange || field.sanitizeOnChange ? undefined : getDefaultValue(field)}
+                    value={field.formatOnChange || field.sanitizeOnChange ? getDefaultValue(field) : undefined}
                     disabled={field.disabled || (mode === "edit" && readOnlyFields.includes(field.name))}
                     onChange={(e) => handleFieldChange(field, e.target.value)}
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm disabled:opacity-50"
