@@ -4,6 +4,7 @@ import { DataTable } from "@/components/database/data-table";
 import { AddDialog } from "@/components/database/add-dialog";
 import { EditDialog } from "@/components/common/edit-dialog";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
+import { PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
 
 export const Route = createFileRoute("/employee/database/suppliers")({
   component: SuppliersDatabaseComponent,
@@ -26,7 +27,7 @@ const CREATE_FIELDS = [
   },
   { name: "contact_person", label: "Contact Person", type: "text" },
   { name: "email", label: "Email", type: "email" },
-  { name: "phone_number", label: "Phone", type: "text" },
+  { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
   { name: "address", label: "Address", type: "text" },
 ];
 
@@ -75,7 +76,7 @@ function SuppliersDatabaseComponent() {
           supplier_name: formData.supplier_name,
           contact_person: formData.contact_person || null,
           email: formData.email || null,
-          phone_number: formData.phone_number || null,
+          phone_number: normalizePhoneNumber(formData.phone_number),
           address: formData.address || null,
         }),
       });
@@ -117,7 +118,7 @@ function SuppliersDatabaseComponent() {
           supplier_name: formData.supplier_name,
           contact_person: formData.contact_person || null,
           email: formData.email || null,
-          phone_number: formData.phone_number || null,
+          phone_number: normalizePhoneNumber(formData.phone_number),
           address: formData.address || null,
         }),
       });

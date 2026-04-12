@@ -19,6 +19,7 @@ import { GENDER_OPTIONS } from "@/constants/gender";
 import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
 import { Users, UserCircle, AlertTriangle } from "lucide-react";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
+import { PHONE_MIN_LENGTH, PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
 
 export const Route = createFileRoute("/employee/database/users")({
   component: UsersDatabaseComponent,
@@ -146,7 +147,7 @@ function UsersDatabaseComponent() {
           first_name: formData.first_name,
           last_name: formData.last_name,
           password: formData.password,
-          phone_number: formData.phone_number || null,
+          phone_number: normalizePhoneNumber(formData.phone_number),
           gender: formData.gender ? parseInt(formData.gender) : null,
           ethnicity: formData.ethnicity ? parseInt(formData.ethnicity) : null,
         }),
@@ -264,7 +265,7 @@ function UsersDatabaseComponent() {
           email: selectedEmployee.email,
           first_name: formData.first_name,
           last_name: formData.last_name,
-          phone_number: formData.phone_number || null,
+          phone_number: normalizePhoneNumber(formData.phone_number),
           gender: formData.gender ? parseInt(formData.gender) : null,
           ethnicity: formData.ethnicity ? parseInt(formData.ethnicity) : null,
         }),
@@ -309,7 +310,7 @@ function UsersDatabaseComponent() {
     { name: "email", label: "Email", type: "email" },
     { name: "first_name", label: "First Name", type: "text", required: true },
     { name: "last_name", label: "Last Name", type: "text", required: true },
-    { name: "phone_number", label: "Phone", type: "text" },
+    { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
     {
       name: "role",
       label: "Role",
@@ -342,7 +343,7 @@ function UsersDatabaseComponent() {
     { name: "first_name", label: "First Name", type: "text", required: true },
     { name: "last_name", label: "Last Name", type: "text", required: true },
     { name: "password", label: "Password", type: "password", required: true },
-    { name: "phone_number", label: "Phone", type: "text" },
+    { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
     {
       name: "role",
       label: "Role",

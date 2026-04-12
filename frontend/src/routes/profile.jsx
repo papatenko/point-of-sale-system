@@ -5,6 +5,7 @@ import { setLogin } from "@/redux/authSlice";
 import { GENDER_OPTIONS } from "@/constants/gender";
 import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
 import { getCurrentUser, updateProfile } from "@/services/auth";
+import { PHONE_MAX_LENGTH, getPhoneError, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -65,11 +66,9 @@ function ProfilePage() {
   return;
 }
 
-if (
-  formData.phone_number &&
-  formData.phone_number.length < 10 || formData.phone_number.length > 11 
-) {
-  setError("phone number  must be 10 - 11 digits");
+const phoneError = getPhoneError(formData.phone_number);
+if (phoneError) {
+  setError(phoneError);
   setSaving(false);
   return;
 }
@@ -78,7 +77,7 @@ if (
       const data = await updateProfile({
         first_name: formData.first_name,
         last_name: formData.last_name,
-        phone_number: formData.phone_number || null,
+        phone_number: normalizePhoneNumber(formData.phone_number),
         gender: formData.gender ? parseInt(formData.gender) : null,
         ethnicity: formData.ethnicity ? parseInt(formData.ethnicity) : null,
         password: formData.password || undefined,
@@ -189,14 +188,12 @@ if (
               <input
                 type="tel"
                 value={formData.phone_number}
-                inputMode="numeric"
-                maxLength={11}
+                maxLength={PHONE_MAX_LENGTH}
                 onChange={(e) => {
-                  const onlyNumbers = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
-
+                  const formatted = formatPhoneNumber(e.target.value);
                   setFormData((p) => ({
                     ...p,
-                    phone_number: onlyNumbers,
+                    phone_number: formatted,
                   }));
                 }}
                 className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"

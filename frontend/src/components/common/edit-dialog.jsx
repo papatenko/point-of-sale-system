@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,9 +20,32 @@ export function EditDialog({
   isSubmitting = false,
   submitLabel,
 }) {
+  const [fieldValues, setFieldValues] = useState({});
+
+  useEffect(() => {
+    if (open) {
+      const initial = {};
+      fields.forEach((field) => {
+        if (field.formatOnChange) {
+          initial[field.name] = field.formatValue
+            ? field.formatValue(initialData[field.name])
+            : initialData[field.name] || "";
+        }
+      });
+      setFieldValues(initial);
+    }
+  }, [open, fields, initialData]);
+
+  const handleFieldChange = useCallback((field, value) => {
+    const formatted = field.formatOnChange && field.formatValue
+      ? field.formatValue(value)
+      : value;
+    setFieldValues((prev) => ({ ...prev, [field.name]: formatted }));
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!onSubmit) {
       console.error("EditDialog: onSubmit prop is required but was not provided");
       return;
@@ -29,7 +53,13 @@ export function EditDialog({
 
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
-    
+
+    Object.entries(fieldValues).forEach(([key, value]) => {
+      if (data[key] !== value) {
+        data[key] = value;
+      }
+    });
+
     try {
       const result = await onSubmit(data);
       if (result !== false) {
@@ -46,6 +76,9 @@ export function EditDialog({
   };
 
   const getDefaultValue = (field) => {
+    if (field.formatOnChange && fieldValues[field.name] !== undefined) {
+      return fieldValues[field.name];
+    }
     if (mode === "edit" && initialData[field.name] !== undefined) {
       return initialData[field.name];
     }
@@ -109,10 +142,13 @@ export function EditDialog({
                     step={field.step}
                     min={field.min}
                     max={field.max}
+                    minLength={field.minLength}
+                    maxLength={field.maxLength}
                     placeholder={field.placeholder}
                     required={field.required}
                     defaultValue={getDefaultValue(field)}
                     disabled={field.disabled || (mode === "edit" && readOnlyFields.includes(field.name))}
+                    onChange={(e) => handleFieldChange(field, e.target.value)}
                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm disabled:opacity-50"
                   />
                 )}

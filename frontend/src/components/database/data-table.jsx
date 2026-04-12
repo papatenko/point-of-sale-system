@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 import { Trash2 } from "lucide-react";
+import { formatPhoneNumber } from "@/utils/constraints";
 
 export function DataTable({
   columns,
@@ -84,8 +85,11 @@ export function DataTable({
     });
   };
 
-  const formatValue = (value, format) => {
+  const formatValue = (value, format, colKey) => {
     if (format) return format(value);
+    if (colKey === "phone_number" && value) {
+      return formatPhoneNumber(value);
+    }
     return value ?? "-";
   };
 
@@ -137,7 +141,7 @@ export function DataTable({
                 <TableRow key={item[deleteIdKey] || index}>
                   {columns.map((col) => (
                     <TableCell key={col.key}>
-                      {formatValue(item[col.key], col.format)}
+                      {formatValue(item[col.key], col.format, col.key)}
                     </TableCell>
                   ))}
                   <TableCell>

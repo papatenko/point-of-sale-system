@@ -20,11 +20,21 @@ export function AddDialog({
   children = null,
 }) {
   const [open, setOpen] = useState(false);
+  const [fieldValues, setFieldValues] = useState({});
+
+  const handleFieldChange = (field, value) => {
+    const formatted = field.formatOnChange && field.formatValue
+      ? field.formatValue(value)
+      : value;
+    setFieldValues((prev) => ({ ...prev, [field.name]: formatted }));
+  };
 
   const handleFormSubmit = async (data) => {
-    const result = await onSubmit(data);
+    const mergedData = { ...data, ...fieldValues };
+    const result = await onSubmit(mergedData);
     if (result !== false) {
       setOpen(false);
+      setFieldValues({});
     }
   };
 
@@ -37,6 +47,7 @@ export function AddDialog({
 
   const handleCancel = () => {
     setOpen(false);
+    setFieldValues({});
   };
 
   return (
@@ -71,6 +82,8 @@ export function AddDialog({
         ) : fields.length > 0 ? (
           <SimpleForm
             fields={fields}
+            fieldValues={fieldValues}
+            onFieldChange={handleFieldChange}
             onSubmit={handleFormSubmit}
             onCancel={handleCancel}
             isSubmitting={isSubmitting}
@@ -83,7 +96,7 @@ export function AddDialog({
   );
 }
 
-function SimpleForm({ fields, onSubmit, onCancel, isSubmitting, error, submitLabel }) {
+function SimpleForm({ fields, fieldValues, onFieldChange, onSubmit, onCancel, isSubmitting, error, submitLabel }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -126,8 +139,13 @@ function SimpleForm({ fields, onSubmit, onCancel, isSubmitting, error, submitLab
                 type={field.type || "text"}
                 step={field.step}
                 min={field.min}
+                max={field.max}
+                minLength={field.minLength}
+                maxLength={field.maxLength}
                 placeholder={field.placeholder}
                 required={field.required}
+                defaultValue={field.defaultValue || ""}
+                onChange={(e) => onFieldChange(field, e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
               />
             )}

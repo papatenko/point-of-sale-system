@@ -4,6 +4,7 @@ import { DataTable } from "@/components/database/data-table";
 import { AddDialog } from "@/components/database/add-dialog";
 import { EditDialog } from "@/components/common/edit-dialog";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
+import { PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
 
 export const Route = createFileRoute("/employee/database/food-trucks")({
   component: FoodTrucksDatabaseComponent,
@@ -32,7 +33,7 @@ const CREATE_FIELDS = [
   },
   { name: "truck_name", label: "Truck Name", type: "text", required: true },
   { name: "current_location", label: "Location", type: "text" },
-  { name: "phone_number", label: "Phone", type: "text" },
+  { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
   { name: "operating_hours_start", label: "Opens (e.g., 09:00)", type: "text" },
   { name: "operating_hours_end", label: "Closes (e.g., 22:00)", type: "text" },
 ];
@@ -82,7 +83,7 @@ function FoodTrucksDatabaseComponent() {
           license_plate: formData.license_plate,
           truck_name: formData.truck_name,
           current_location: formData.current_location || null,
-          phone_number: formData.phone_number || null,
+          phone_number: normalizePhoneNumber(formData.phone_number),
           accepts_online_orders: true,
           operating_hours_start: formData.operating_hours_start || null,
           operating_hours_end: formData.operating_hours_end || null,
@@ -125,7 +126,7 @@ function FoodTrucksDatabaseComponent() {
           license_plate: selectedTruck.license_plate,
           truck_name: formData.truck_name,
           current_location: formData.current_location || null,
-          phone_number: formData.phone_number || null,
+          phone_number: normalizePhoneNumber(formData.phone_number),
           accepts_online_orders: true,
           operating_hours_start: formData.operating_hours_start || null,
           operating_hours_end: formData.operating_hours_end || null,
