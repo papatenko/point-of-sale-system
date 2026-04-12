@@ -86,8 +86,32 @@ export async function expireInventory(db, body) {
   return { success: true, expired };
 }
 
+export async function addIngredientToInventory(db, body) {
+  const { licensePlate, ingredientId, quantityOnHand, reorderThreshold, expirationDate } = body;
+  if (!licensePlate || !ingredientId || quantityOnHand == null || reorderThreshold == null) {
+    throw new Error("Missing required fields: licensePlate, ingredientId, quantityOnHand, reorderThreshold");
+  }
+  if (parseFloat(quantityOnHand) < 0) throw new Error("quantityOnHand cannot be negative");
+  if (parseFloat(reorderThreshold) < 0) throw new Error("reorderThreshold cannot be negative");
+
+  const existing = await InventoryModel.findInventoryItem(db, licensePlate, ingredientId);
+  if (existing) {
+    throw new Error("This ingredient is already in the truck's inventory");
+  }
+
+  await InventoryModel.addIngredientToTruck(db, {
+    licensePlate,
+    ingredientId: parseInt(ingredientId),
+    quantityOnHand: parseFloat(quantityOnHand),
+    reorderThreshold: parseFloat(reorderThreshold),
+    expirationDate: expirationDate || null,
+  });
+
+  return { success: true };
+}
+
 export async function reorderInventory(db, body) {
-  const { licensePlate, ingredientId, quantityOrdered, createdBy } = body;
+  const { licensePlate, ingredientId, quantityOrdered, createdBy, supplierId } = body;
   if (!licensePlate || !ingredientId || !quantityOrdered || !createdBy) {
     throw new Error("Missing required fields: licensePlate, ingredientId, quantityOrdered, createdBy");
   }
@@ -110,15 +134,17 @@ export async function reorderInventory(db, body) {
   if (!ing) {
     throw new Error("Ingredient not found");
   }
-  if (!ing.preferred_supplier_id) {
-    throw new Error("No preferred supplier set for this ingredient");
+
+  const resolvedSupplierId = supplierId ?? ing.preferred_supplier_id;
+  if (!resolvedSupplierId) {
+    throw new Error("No supplier selected and no preferred supplier set for this ingredient");
   }
 
   const unitCost = parseFloat(ing.current_unit_cost);
   const lineTotal = (unitCost * parseFloat(quantityOrdered)).toFixed(2);
 
   const orderResult = await InventoryModel.createSupplyOrder(db, {
-    supplier_id: ing.preferred_supplier_id,
+    supplier_id: resolvedSupplierId,
     license_plate: licensePlate,
     created_by: createdBy,
     status: "ordered",

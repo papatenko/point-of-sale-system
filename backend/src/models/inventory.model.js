@@ -28,9 +28,12 @@ export async function findByLicensePlate(db, licensePlate) {
        (SELECT COUNT(*) FROM reorder_alerts ra
         WHERE ra.license_plate = ti.license_plate
           AND ra.ingredient_id  = ti.ingredient_id
-          AND ra.alert_status   = 'active') AS has_active_alert
+          AND ra.alert_status   = 'active') AS has_active_alert,
+       i.preferred_supplier_id,
+       s.supplier_name AS preferred_supplier_name
       FROM truck_inventory ti
       JOIN ingredients i ON ti.ingredient_id = i.ingredient_id
+      LEFT JOIN suppliers s ON i.preferred_supplier_id = s.supplier_id
       WHERE ti.license_plate = ?
       ORDER BY i.category, i.ingredient_name`,
     [licensePlate],
@@ -49,6 +52,8 @@ export async function findByLicensePlate(db, licensePlate) {
     lastRestocked: r.last_restocked,
     needsReorder: r.needs_reorder === 1,
     hasActiveAlert: r.has_active_alert > 0,
+    preferredSupplierId: r.preferred_supplier_id ?? null,
+    preferredSupplierName: r.preferred_supplier_name ?? null,
   }));
 }
 
@@ -374,6 +379,19 @@ export async function resolveReorderAlerts(db, licensePlate, ingredientId, resol
        AND alert_status IN ('active', 'ordered')`,
     [resolvedBy, licensePlate, ingredientId],
   );
+}
+
+/**
+ * Add a new ingredient row to truck_inventory.
+ */
+export async function addIngredientToTruck(db, { licensePlate, ingredientId, quantityOnHand, reorderThreshold, expirationDate }) {
+  const [result] = await db.query(
+    `INSERT INTO truck_inventory
+       (license_plate, ingredient_id, quantity_on_hand, reorder_threshold, expiration_date)
+     VALUES (?, ?, ?, ?, ?)`,
+    [licensePlate, ingredientId, quantityOnHand, reorderThreshold, expirationDate || null],
+  );
+  return result;
 }
 
 /**

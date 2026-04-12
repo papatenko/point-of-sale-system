@@ -200,6 +200,9 @@ router.get("/api/inventory/pending-orders", async (_, db, req, url) =>
 router.post("/api/inventory/receive-order", async (body, db, req) =>
   InventoryService.receiveSupplyOrder(db, body, req),
 );
+router.post("/api/inventory/add-ingredient", async (body, db) =>
+  InventoryService.addIngredientToInventory(db, body),
+);
 
 // Backup
 router.get("/api/backup", async () => BackupService.createBackup());

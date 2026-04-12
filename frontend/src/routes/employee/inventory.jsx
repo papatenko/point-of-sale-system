@@ -15,6 +15,7 @@ import {
   Trash2Icon,
   ChevronDownIcon,
   ChevronUpIcon,
+  PlusIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -600,9 +601,126 @@ function AdjustDialog({ item, open, onOpenChange, onConfirm, loading }) {
   );
 }
 
+// ─── Add Ingredient to Inventory Dialog ───────────────────────────────────────
+function AddIngredientDialog({ open, onOpenChange, onConfirm, loading, availableIngredients }) {
+  const [ingredientId, setIngredientId] = useState("");
+  const [qty, setQty] = useState("0");
+  const [threshold, setThreshold] = useState("");
+  const [expirationDate, setExpirationDate] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setIngredientId("");
+      setQty("0");
+      setThreshold("");
+      setExpirationDate("");
+    }
+  }, [open]);
+
+  const selected = availableIngredients.find((i) => String(i.ingredient_id) === ingredientId);
+  const invalid = !ingredientId || threshold === "" || parseFloat(threshold) < 0 || parseFloat(qty) < 0;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add Ingredient to Inventory</DialogTitle>
+          <DialogDescription>
+            Add an ingredient to this truck&apos;s inventory for the first time.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-2">
+          <div className="grid gap-1.5">
+            <label className="text-sm font-medium">Ingredient</label>
+            <Select value={ingredientId} onValueChange={setIngredientId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select an ingredient…" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableIngredients.map((i) => (
+                  <SelectItem key={i.ingredient_id} value={String(i.ingredient_id)}>
+                    {i.ingredient_name}
+                    {i.category && (
+                      <span className="ml-1.5 text-xs text-muted-foreground">({i.category})</span>
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selected && (
+            <div className="rounded-lg border bg-muted/50 px-3 py-2 text-sm flex items-center justify-between">
+              <span className="text-muted-foreground">Unit of measure</span>
+              <span className="font-semibold">{selected.unit_of_measure}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1.5">
+              <label className="text-sm font-medium">
+                Initial qty{selected ? ` (${selected.unit_of_measure})` : ""}
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <label className="text-sm font-medium">
+                Reorder threshold{selected ? ` (${selected.unit_of_measure})` : ""}
+              </label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={threshold}
+                onChange={(e) => setThreshold(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-1.5">
+            <label className="text-sm font-medium">Expiration date <span className="text-muted-foreground font-normal">(optional)</span></label>
+            <Input
+              type="date"
+              value={expirationDate}
+              onChange={(e) => setExpirationDate(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            disabled={loading || invalid}
+            onClick={() =>
+              onConfirm({
+                ingredientId: parseInt(ingredientId, 10),
+                quantityOnHand: parseFloat(qty),
+                reorderThreshold: parseFloat(threshold),
+                expirationDate: expirationDate || null,
+              })
+            }
+          >
+            {loading ? "Adding…" : "Add to Inventory"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Reorder Dialog ───────────────────────────────────────────────────────────
-function ReorderDialog({ item, open, onOpenChange, onConfirm, loading }) {
+function ReorderDialog({ item, open, onOpenChange, onConfirm, loading, suppliers }) {
   const [qty, setQty] = useState("");
+  const [supplierId, setSupplierId] = useState("");
   const suggested = item
     ? Math.max(
         item.reorderThreshold * 3 - item.quantityOnHand,
@@ -610,8 +728,11 @@ function ReorderDialog({ item, open, onOpenChange, onConfirm, loading }) {
       ).toFixed(2)
     : "0";
   useEffect(() => {
-    if (open) setQty(suggested);
-  }, [open, suggested]);
+    if (open) {
+      setQty(suggested);
+      setSupplierId(item?.preferredSupplierId ? String(item.preferredSupplierId) : "");
+    }
+  }, [open, suggested, item?.preferredSupplierId]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -651,6 +772,24 @@ function ReorderDialog({ item, open, onOpenChange, onConfirm, loading }) {
             ))}
           </div>
           <div className="grid gap-1.5">
+            <label className="text-sm font-medium">Supplier</label>
+            <Select value={supplierId} onValueChange={setSupplierId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a supplier…" />
+              </SelectTrigger>
+              <SelectContent>
+                {suppliers.map((s) => (
+                  <SelectItem key={s.supplier_id} value={String(s.supplier_id)}>
+                    {s.supplier_name}
+                    {s.supplier_id === item?.preferredSupplierId && (
+                      <span className="ml-1.5 text-xs text-muted-foreground">(preferred)</span>
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
             <label className="text-sm font-medium">
               Quantity to order ({item?.unitOfMeasure})
             </label>
@@ -669,8 +808,8 @@ function ReorderDialog({ item, open, onOpenChange, onConfirm, loading }) {
             Cancel
           </Button>
           <Button
-            disabled={loading || !qty || parseFloat(qty) <= 0}
-            onClick={() => onConfirm({ qty: parseFloat(qty) })}
+            disabled={loading || !qty || parseFloat(qty) <= 0 || !supplierId}
+            onClick={() => onConfirm({ qty: parseFloat(qty), supplierId: parseInt(supplierId, 10) })}
           >
             {loading ? "Ordering…" : "Place Order"}
           </Button>
@@ -704,6 +843,10 @@ function InventoryPage() {
   const [modalLoading, setModalLoading] = useState(false);
   const [expireLoading, setExpireLoading] = useState(false);
   const [productionLoading, setProductionLoading] = useState(false);
+
+  const [suppliers, setSuppliers] = useState([]);
+  const [allIngredients, setAllIngredients] = useState([]);
+  const [addIngredientOpen, setAddIngredientOpen] = useState(false);
 
   // Supply shipments (manager/admin only)
   const [pendingOrders, setPendingOrders] = useState([]);
@@ -785,6 +928,17 @@ function InventoryPage() {
     loadData(selectedTruck);
   }, [selectedTruck, loadData]);
 
+  useEffect(() => {
+    fetch("/api/suppliers")
+      .then((r) => r.json())
+      .then((data) => setSuppliers(Array.isArray(data) ? data : []))
+      .catch(() => {});
+    fetch("/api/ingredients")
+      .then((r) => r.json())
+      .then((data) => setAllIngredients(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
+
   // Auto-detect expired items
   useEffect(() => {
     if (inventory.length === 0 || loading) return;
@@ -858,7 +1012,7 @@ function InventoryPage() {
     setModalLoading(false);
   };
 
-  const handleReorder = async ({ qty }) => {
+  const handleReorder = async ({ qty, supplierId }) => {
     setModalLoading(true);
     try {
       const res = await fetch("/api/inventory/reorder", {
@@ -869,6 +1023,7 @@ function InventoryPage() {
           ingredientId: reorderItem.ingredientId,
           quantityOrdered: qty,
           createdBy: currentUser,
+          supplierId,
         }),
       });
       const data = await res.json();
@@ -877,6 +1032,25 @@ function InventoryPage() {
         `Order placed — PO #${data.poId} for ${fmt(qty)} ${reorderItem.unitOfMeasure}`,
       );
       setReorderItem(null);
+      loadData(selectedTruck);
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+    setModalLoading(false);
+  };
+
+  const handleAddIngredient = async ({ ingredientId, quantityOnHand, reorderThreshold, expirationDate }) => {
+    setModalLoading(true);
+    try {
+      const res = await fetch("/api/inventory/add-ingredient", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ licensePlate: selectedTruck, ingredientId, quantityOnHand, reorderThreshold, expirationDate }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      showToast("Ingredient added to inventory");
+      setAddIngredientOpen(false);
       loadData(selectedTruck);
     } catch (err) {
       showToast(err.message, "error");
@@ -973,6 +1147,19 @@ function InventoryPage() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Add Ingredient button — managers / admins only */}
+            {isManagerOrAdmin(authUser) && (
+              <Button
+                size="sm"
+                onClick={() => setAddIngredientOpen(true)}
+                disabled={!selectedTruck}
+                className="gap-2"
+              >
+                <PlusIcon className="size-4" />
+                Add Ingredient
+              </Button>
+            )}
+
             {/* Receive Shipments button — managers / admins only */}
             {isManagerOrAdmin(authUser) && (
               <Button
@@ -1543,6 +1730,16 @@ function InventoryPage() {
       {/* ── Dialogs ─────────────────────────────────────────────── */}
       {/* Removed UseMenuItemDialog and DailyProductionDialog */}
 
+      <AddIngredientDialog
+        open={addIngredientOpen}
+        onOpenChange={setAddIngredientOpen}
+        onConfirm={handleAddIngredient}
+        loading={modalLoading}
+        availableIngredients={allIngredients.filter(
+          (ing) => !inventory.some((inv) => inv.ingredientId === ing.ingredient_id),
+        )}
+      />
+
       <ExpireDialog
         open={expireItems !== null}
         onOpenChange={(o) => {
@@ -1585,6 +1782,7 @@ function InventoryPage() {
         onOpenChange={(o) => !o && setReorderItem(null)}
         onConfirm={handleReorder}
         loading={modalLoading}
+        suppliers={suppliers}
       />
 
       {/* ── Toast ───────────────────────────────────────────────── */}
