@@ -308,8 +308,8 @@ function UsersDatabaseComponent() {
 
   const EDIT_FIELDS = [
     { name: "email", label: "Email", type: "email" },
-    { name: "first_name", label: "First Name", type: "text", required: true },
-    { name: "last_name", label: "Last Name", type: "text", required: true },
+    { name: "first_name", label: "First Name", type: "text", required: true, sanitizeOnChange: true },
+    { name: "last_name", label: "Last Name", type: "text", required: true, sanitizeOnChange: true },
     { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
     {
       name: "role",
@@ -340,8 +340,8 @@ function UsersDatabaseComponent() {
 
   const CREATE_FIELDS = [
     { name: "email", label: "Email", type: "email", required: true },
-    { name: "first_name", label: "First Name", type: "text", required: true },
-    { name: "last_name", label: "Last Name", type: "text", required: true },
+    { name: "first_name", label: "First Name", type: "text", required: true, sanitizeOnChange: true },
+    { name: "last_name", label: "Last Name", type: "text", required: true, sanitizeOnChange: true },
     { name: "password", label: "Password", type: "password", required: true },
     { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
     {

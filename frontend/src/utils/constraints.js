@@ -2,6 +2,10 @@ export const PHONE_MIN_LENGTH = 10;
 export const PHONE_MAX_LENGTH = 17;
 export const PHONE_PLACEHOLDER = "(123) 456-7890";
 
+export const NAME_MIN_LENGTH = 1;
+export const NAME_MAX_LENGTH = 50;
+export const NAME_REGEX = /^[a-zA-Z][a-zA-Z\s\-']*$/;
+
 export function formatPhoneNumber(value) {
   const digits = value.replace(/[^0-9]/g, "").slice(0, 11);
   if (digits.length === 0) return "";
@@ -35,4 +39,33 @@ export function getPhoneError(phone) {
     return "Phone number must be 10-11 digits";
   }
   return null;
+}
+
+export function validateName(name) {
+  if (!name) return false;
+  const trimmed = name.trim();
+  if (trimmed.length < NAME_MIN_LENGTH || trimmed.length > NAME_MAX_LENGTH) {
+    return false;
+  }
+  return NAME_REGEX.test(trimmed);
+}
+
+export function getNameError(name) {
+  if (!name) return "Name is required";
+  const trimmed = name.trim();
+  if (trimmed.length < NAME_MIN_LENGTH) {
+    return "Name must be at least 1 character";
+  }
+  if (trimmed.length > NAME_MAX_LENGTH) {
+    return `Name must be no more than ${NAME_MAX_LENGTH} characters`;
+  }
+  if (!NAME_REGEX.test(trimmed)) {
+    return "Name must start with a letter and contain only letters, spaces, hyphens, or apostrophes";
+  }
+  return null;
+}
+
+export function sanitizeName(name) {
+  if (!name) return "";
+  return name.replace(/[^a-zA-Z\s\-']/g, "");
 }

@@ -5,7 +5,7 @@ import { setLogin } from "@/redux/authSlice";
 import { GENDER_OPTIONS } from "@/constants/gender";
 import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
 import { getCurrentUser, updateProfile } from "@/services/auth";
-import { PHONE_MAX_LENGTH, getPhoneError, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
+import { PHONE_MAX_LENGTH, getPhoneError, formatPhoneNumber, normalizePhoneNumber, NAME_REGEX, sanitizeName } from "@/utils/constraints";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -135,12 +135,12 @@ if (phoneError) {
                 type="text"
                 value={formData.first_name}
                 onBeforeInput={(e) => {
-                  if (e.data && !/^[a-zA-Z]$/.test(e.data)) {
+                  if (e.data && !NAME_REGEX.test(e.data)) {
                     e.preventDefault();
                   }
                 }}
                 onChange={(e) =>
-                  setFormData((p) => ({ ...p, first_name: e.target.value }))
+                  setFormData((p) => ({ ...p, first_name: sanitizeName(e.target.value) }))
                 }
                 className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
                 required
@@ -155,12 +155,12 @@ if (phoneError) {
                 type="text"
                 value={formData.last_name}
                 onBeforeInput={(e) => {
-                  if (e.data && !/^[a-zA-Z]$/.test(e.data)) {
+                  if (e.data && !NAME_REGEX.test(e.data)) {
                     e.preventDefault();
                   }
                 }}
                 onChange={(e) =>
-                  setFormData((p) => ({ ...p, last_name: e.target.value }))
+                  setFormData((p) => ({ ...p, last_name: sanitizeName(e.target.value) }))
                 }
                 className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
                 required

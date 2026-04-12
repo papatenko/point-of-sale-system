@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { sanitizeName } from "@/utils/constraints";
 
 export function EditDialog({
   open,
@@ -37,10 +38,13 @@ export function EditDialog({
   }, [open, fields, initialData]);
 
   const handleFieldChange = useCallback((field, value) => {
-    const formatted = field.formatOnChange && field.formatValue
-      ? field.formatValue(value)
-      : value;
-    setFieldValues((prev) => ({ ...prev, [field.name]: formatted }));
+    let processedValue = value;
+    if (field.sanitizeOnChange) {
+      processedValue = sanitizeName(value);
+    } else if (field.formatOnChange && field.formatValue) {
+      processedValue = field.formatValue(value);
+    }
+    setFieldValues((prev) => ({ ...prev, [field.name]: processedValue }));
   }, []);
 
   const handleSubmit = async (e) => {
