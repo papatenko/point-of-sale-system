@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { DataTable } from "@/components/database/data-table";
 import { AddDialog } from "@/components/database/add-dialog";
+import { EditDialog } from "@/components/common/edit-dialog";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
+import { PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
 
 export const Route = createFileRoute("/employee/database/food-trucks")({
   component: FoodTrucksDatabaseComponent,
@@ -31,7 +33,7 @@ const CREATE_FIELDS = [
   },
   { name: "truck_name", label: "Truck Name", type: "text", required: true },
   { name: "current_location", label: "Location", type: "text" },
-  { name: "phone_number", label: "Phone", type: "text" },
+  { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
   { name: "operating_hours_start", label: "Opens (e.g., 09:00)", type: "text" },
   { name: "operating_hours_end", label: "Closes (e.g., 22:00)", type: "text" },
 ];
@@ -41,7 +43,10 @@ function FoodTrucksDatabaseComponent() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const { alertConfig, showAlert, hideAlert, AlertPopupComponent } = useAlertPopup();
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedTruck, setSelectedTruck] = useState(null);
+  const { alertConfig, showAlert, hideAlert, AlertPopupComponent } =
+    useAlertPopup();
 
   const fetchTrucks = async () => {
     try {
@@ -78,7 +83,7 @@ function FoodTrucksDatabaseComponent() {
           license_plate: formData.license_plate,
           truck_name: formData.truck_name,
           current_location: formData.current_location || null,
-          phone_number: formData.phone_number || null,
+          phone_number: normalizePhoneNumber(formData.phone_number),
           accepts_online_orders: true,
           operating_hours_start: formData.operating_hours_start || null,
           operating_hours_end: formData.operating_hours_end || null,
@@ -94,6 +99,58 @@ function FoodTrucksDatabaseComponent() {
       }
     } catch {
       setError("Failed to create truck");
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEditDialog = (truck) => {
+    setSelectedTruck(truck);
+    setEditOpen(true);
+  };
+
+  const handleEditSubmit = async (formData) => {
+    setIsSubmitting(true);
+    setError(null);
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch("/api/trucks", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          license_plate: selectedTruck.license_plate,
+          truck_name: formData.truck_name,
+          current_location: formData.current_location || null,
+          phone_number: normalizePhoneNumber(formData.phone_number),
+          accepts_online_orders: true,
+          operating_hours_start: formData.operating_hours_start || null,
+          operating_hours_end: formData.operating_hours_end || null,
+        }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        fetchTrucks();
+        return true;
+      } else {
+        showAlert({
+          title: "Error Updating Truck",
+          description: data.error || "Failed to update truck",
+          variant: "error",
+        });
+        return false;
+      }
+    } catch {
+      showAlert({
+        title: "Error",
+        description: "Failed to update truck",
+        variant: "error",
+      });
       return false;
     } finally {
       setIsSubmitting(false);
@@ -158,8 +215,23 @@ function FoodTrucksDatabaseComponent() {
         searchKeys={["truck_name", "license_plate", "current_location"]}
         deleteIdKey="license_plate"
         onDelete={handleDelete}
+        onEdit={openEditDialog}
         loading={loading}
         emptyMessage="No trucks found"
+      />
+
+      <EditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        mode="edit"
+        title="Edit Truck"
+        fields={CREATE_FIELDS}
+        initialData={selectedTruck || {}}
+        readOnlyFields={["license_plate"]}
+        onSubmit={handleEditSubmit}
+        onSuccess={() => {}}
+        isSubmitting={isSubmitting}
+        submitLabel="Save Changes"
       />
     </div>
   );

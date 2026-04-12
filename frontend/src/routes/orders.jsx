@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
-import { getOrders } from "@/services/orders";
+import { getOrders, updateOrderStatus } from "@/services/orders";
 
 export const Route = createFileRoute("/orders")({
   component: CustomerOrdersPage,
@@ -36,7 +36,8 @@ function formatDateTime(raw, isUtc = false) {
   });
 }
 
-function OrderCard({ order }) {
+function OrderCard({ order, onCancel }) {
+  const [cancelling, setCancelling] = useState(false);
   const items = order.items ? order.items.split(" | ") : [];
   const scheduledLabel = order.scheduled_time
     ? formatDateTime(order.scheduled_time, false)
@@ -102,6 +103,22 @@ function OrderCard({ order }) {
           ${parseFloat(order.total_price).toFixed(2)}
         </span>
       </div>
+
+      {order.order_status === "pending" && onCancel && (
+        <div className="pt-3">
+          <button
+            onClick={async () => {
+              setCancelling(true);
+              try { await onCancel(order.checkout_id); }
+              finally { setCancelling(false); }
+            }}
+            disabled={cancelling}
+            className="text-sm px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 font-medium transition-colors disabled:opacity-50"
+          >
+            {cancelling ? "Cancelling..." : "Cancel Order"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -199,7 +216,14 @@ function CustomerOrdersPage() {
         ) : (
           <div className="space-y-4">
             {activeOrders.map((o) => (
-              <OrderCard key={o.checkout_id} order={o} />
+              <OrderCard
+                key={o.checkout_id}
+                order={o}
+                onCancel={async (id) => {
+                  await updateOrderStatus(id, "cancelled");
+                  fetchActive();
+                }}
+              />
             ))}
           </div>
         )}

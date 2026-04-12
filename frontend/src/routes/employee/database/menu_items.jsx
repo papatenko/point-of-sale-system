@@ -15,6 +15,7 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { EditDialog } from "@/components/common/edit-dialog";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 import {
   Select,
@@ -44,6 +45,42 @@ const CATEGORY_OPTIONS = [
   { value: "3", label: "Sides" },
   { value: "4", label: "Desserts" },
   { value: "5", label: "Drinks" },
+];
+
+const AVAILABILITY_OPTIONS = [
+  { value: "true", label: "Available" },
+  { value: "false", label: "Unavailable" },
+];
+
+const EDIT_FIELDS = [
+  { name: "item_name", label: "Item Name", type: "text", required: true },
+  {
+    name: "category",
+    label: "Category",
+    type: "select",
+    options: CATEGORY_OPTIONS,
+  },
+  {
+    name: "price",
+    label: "Price ($)",
+    type: "number",
+    step: "0.01",
+    min: 0,
+    required: true,
+  },
+  { name: "image_url", label: "Image URL", type: "url" },
+  {
+    name: "description",
+    label: "Description",
+    type: "textarea",
+    rows: 2,
+  },
+  {
+    name: "is_available",
+    label: "Availability",
+    type: "select",
+    options: AVAILABILITY_OPTIONS,
+  },
 ];
 
 function authHeaders() {
@@ -108,13 +145,9 @@ function MenuItemsDatabaseComponent() {
   };
 
   const openEditDialog = (item) => {
-    setSelectedItem(item);
-    setEditForm({
-      item_name: item.item_name,
+    setSelectedItem({
+      ...item,
       category: item.category ? String(item.category) : "",
-      price: item.price,
-      description: item.description || "",
-      image_url: item.image_url || "",
       is_available: item.is_available ? "true" : "false",
     });
     setEditOpen(true);
@@ -172,19 +205,15 @@ function MenuItemsDatabaseComponent() {
     }
   };
 
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const fd = new FormData(form);
-
+  const handleEditSubmit = async (formData) => {
     const body = {
       menu_item_id: selectedItem.menu_item_id,
-      item_name: fd.get("item_name"),
-      category: fd.get("category") ? parseInt(fd.get("category")) : null,
-      price: parseFloat(fd.get("price")),
-      description: fd.get("description") || null,
-      image_url: fd.get("image_url") || null,
-      is_available: fd.get("is_available") === "true",
+      item_name: formData.item_name,
+      category: formData.category ? parseInt(formData.category) : null,
+      price: parseFloat(formData.price),
+      description: formData.description || null,
+      image_url: formData.image_url || null,
+      is_available: formData.is_available === "true",
     };
 
     const res = await fetch("/api/menu-items", {
@@ -195,14 +224,15 @@ function MenuItemsDatabaseComponent() {
     const data = await res.json();
 
     if (res.ok) {
-      setEditOpen(false);
       fetchMenuItems();
+      return true;
     } else {
       showAlert({
         title: "Error Updating Menu Item",
         description: data.error || "Failed to update menu item",
         variant: "error",
       });
+      return false;
     }
   };
 
@@ -718,98 +748,18 @@ function MenuItemsDatabaseComponent() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Edit Menu Item</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleEditSubmit} className="space-y-4">
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>
-                  Item Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  name="item_name"
-                  defaultValue={editForm.item_name}
-                  required
-                />
-              </div>
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>Category</Label>
-                <Select name="category" defaultValue={editForm.category}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORY_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1 min-w-[200px] space-y-1">
-                <Label>
-                  Price ($) <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  defaultValue={editForm.price}
-                  required
-                />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <Label>Image URL</Label>
-              <Input
-                name="image_url"
-                type="url"
-                defaultValue={editForm.image_url}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Description</Label>
-              <Textarea
-                name="description"
-                rows={2}
-                defaultValue={editForm.description}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label>Availability</Label>
-              <Select name="is_available" defaultValue={editForm.is_available}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">Available</SelectItem>
-                  <SelectItem value="false">Unavailable</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="bg-amber-600 hover:bg-amber-700 text-white"
-              >
-                Save Changes
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <EditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        mode="edit"
+        title="Edit Menu Item"
+        fields={EDIT_FIELDS}
+        initialData={selectedItem || {}}
+        onSubmit={handleEditSubmit}
+        onSuccess={() => {}}
+        isSubmitting={false}
+        submitLabel="Save Changes"
+      />
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>

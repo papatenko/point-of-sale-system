@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { DataTable } from "@/components/database/data-table";
 import { AddDialog } from "@/components/database/add-dialog";
+import { EditDialog } from "@/components/common/edit-dialog";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
+import { PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
 
 export const Route = createFileRoute("/employee/database/suppliers")({
   component: SuppliersDatabaseComponent,
@@ -14,6 +16,7 @@ const COLUMNS = [
   { key: "contact_person", label: "Contact" },
   { key: "email", label: "Email" },
   { key: "phone_number", label: "Phone" },
+  { key: "address", label: "Address" },
 ];
 
 const CREATE_FIELDS = [
@@ -25,7 +28,7 @@ const CREATE_FIELDS = [
   },
   { name: "contact_person", label: "Contact Person", type: "text" },
   { name: "email", label: "Email", type: "email" },
-  { name: "phone_number", label: "Phone", type: "text" },
+  { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
   { name: "address", label: "Address", type: "text" },
 ];
 
@@ -34,7 +37,10 @@ function SuppliersDatabaseComponent() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const { alertConfig, showAlert, hideAlert, AlertPopupComponent } = useAlertPopup();
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const { alertConfig, showAlert, hideAlert, AlertPopupComponent } =
+    useAlertPopup();
 
   const fetchSuppliers = async () => {
     try {
@@ -71,7 +77,7 @@ function SuppliersDatabaseComponent() {
           supplier_name: formData.supplier_name,
           contact_person: formData.contact_person || null,
           email: formData.email || null,
-          phone_number: formData.phone_number || null,
+          phone_number: normalizePhoneNumber(formData.phone_number),
           address: formData.address || null,
         }),
       });
@@ -85,6 +91,57 @@ function SuppliersDatabaseComponent() {
       }
     } catch {
       setError("Failed to create supplier");
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEditDialog = (supplier) => {
+    setSelectedSupplier(supplier);
+    setEditOpen(true);
+  };
+
+  const handleEditSubmit = async (formData) => {
+    setIsSubmitting(true);
+    setError(null);
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch("/api/suppliers", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          supplier_id: selectedSupplier.supplier_id,
+          supplier_name: formData.supplier_name,
+          contact_person: formData.contact_person || null,
+          email: formData.email || null,
+          phone_number: normalizePhoneNumber(formData.phone_number),
+          address: formData.address || null,
+        }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        fetchSuppliers();
+        return true;
+      } else {
+        showAlert({
+          title: "Error Updating Supplier",
+          description: data.error || "Failed to update supplier",
+          variant: "error",
+        });
+        return false;
+      }
+    } catch {
+      showAlert({
+        title: "Error",
+        description: "Failed to update supplier",
+        variant: "error",
+      });
       return false;
     } finally {
       setIsSubmitting(false);
@@ -146,11 +203,25 @@ function SuppliersDatabaseComponent() {
         columns={COLUMNS}
         data={suppliers}
         pageSize={10}
-        searchKeys={["supplier_name", "contact_person", "email"]}
+        searchKeys={["supplier_name", "contact_person", "email", "address"]}
         deleteIdKey="supplier_id"
         onDelete={handleDelete}
+        onEdit={openEditDialog}
         loading={loading}
         emptyMessage="No suppliers found"
+      />
+
+      <EditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        mode="edit"
+        title="Edit Supplier"
+        fields={CREATE_FIELDS}
+        initialData={selectedSupplier || {}}
+        onSubmit={handleEditSubmit}
+        onSuccess={() => {}}
+        isSubmitting={isSubmitting}
+        submitLabel="Save Changes"
       />
     </div>
   );

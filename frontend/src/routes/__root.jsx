@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { useSelector, useDispatch } from "react-redux";
 import { setLogout } from "@/redux/authSlice";
+import { clearCart } from "@/redux/cartSlice";
 import { useState, useRef, useEffect } from "react";
 import {
   LogOut,
@@ -129,6 +130,7 @@ function RootLayout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     dispatch(setLogout());
+    dispatch(clearCart());
     navigate({ to: "/auth/login" });
   };
 

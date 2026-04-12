@@ -4,6 +4,13 @@ import { useDispatch } from "react-redux";
 import { setLogin } from "@/redux/authSlice";
 import { Link } from "@tanstack/react-router";
 import { register } from "@/services/auth";
+import {
+  PHONE_MIN_LENGTH,
+  PHONE_PLACEHOLDER,
+  formatPhoneNumber,
+  normalizePhoneNumber,
+  sanitizeName,
+} from "@/utils/constraints";
 
 export const Route = createFileRoute("/auth/signup")({
   component: SignupComponent,
@@ -18,31 +25,20 @@ function SignupComponent() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
-
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-
   const handlePhoneChange = (e) => {
-      let value = e.target.value;
-      let onlyNumbers = value.replace(/[^0-9]/g, "");
+    const formatted = formatPhoneNumber(e.target.value);
+    setPhoneNumber(formatted);
 
-      //luego de 11 no te deja escribir mas numeros
-      if (onlyNumbers.length > 11) {
-        onlyNumbers = onlyNumbers.slice(0, 11);
-      }
-
-      setPhoneNumber(onlyNumbers);
-
-      if (onlyNumbers.length < 10) {
-        setError("Must be at least 10 digits");
-      } else {
-        setError("");
-      }
-    };
-    
-
+    const digits = formatted.replace(/[^0-9]/g, "");
+    if (digits.length > 0 && digits.length < PHONE_MIN_LENGTH) {
+      setError(`Must be at least ${PHONE_MIN_LENGTH} digits`);
+    } else {
+      setError("");
+    }
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -54,11 +50,12 @@ function SignupComponent() {
       setLoading(false);
       return;
     }
-     if (phoneNumber.length < 10 || phoneNumber.length > 11) {
-    setError("Phone number must be 10–11 digits");
-    setLoading(false);
-    return;
-  }
+    const digits = phoneNumber.replace(/[^0-9]/g, "");
+    if (digits.length > 0 && digits.length < PHONE_MIN_LENGTH) {
+      setError(`Phone number must be at least ${PHONE_MIN_LENGTH} digits`);
+      setLoading(false);
+      return;
+    }
 
     try {
       const data = await register({
@@ -66,7 +63,7 @@ function SignupComponent() {
         password,
         first_name: firstName,
         last_name: lastName,
-        phone_number: phoneNumber,
+        phone_number: normalizePhoneNumber(phoneNumber),
       });
 
       localStorage.setItem("token", data.token);
@@ -91,7 +88,9 @@ function SignupComponent() {
         onSubmit={handleSignup}
         className="p-8 bg-background shadow-md rounded-xl w-96 space-y-4 border border-border"
       >
-        <h2 className="text-2xl font-bold mb-2 text-foreground">Create Account</h2>
+        <h2 className="text-2xl font-bold mb-2 text-foreground">
+          Create Account
+        </h2>
 
         {error && (
           <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
@@ -112,13 +111,7 @@ function SignupComponent() {
             type="text"
             placeholder="John"
             value={firstName}
-            // onChange={(e) => setFirstName(e.target.value)}
-            onChange={(e) => {
-              const value = e.target.value;
-              const onlyLetters = value.replace(/[^a-zA-Z]/g, "");
-
-              setFirstName(onlyLetters);
-            }}
+            onChange={(e) => setFirstName(sanitizeName(e.target.value))}
             className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
             autoComplete="given-name"
             required
@@ -138,13 +131,7 @@ function SignupComponent() {
             type="text"
             placeholder="Doe"
             value={lastName}
-            // onChange={(e) => setLastName(e.target.value)}
-            onChange={(e) => {
-            const value= e.target.value;
-            const onlyLetters = value.replace(/[^a-zA-Z]/g, "");
-
-            setLastName(onlyLetters);
-          }}
+            onChange={(e) => setLastName(sanitizeName(e.target.value))}
             className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
             autoComplete="family-name"
             required
@@ -162,22 +149,10 @@ function SignupComponent() {
             type="tel"
             value={phoneNumber}
             onChange={handlePhoneChange}
-            placeholder="1234567890"
-            className={`w-full p-2.5 border rounded-lg text-sm transition
-              ${
-                error
-                  ? "border-red-500 focus:ring-2 focus:ring-red-400"
-                  : "border-input focus:ring-2 focus:ring-amber-400"
-              }
-              bg-background text-foreground`}
+            placeholder={PHONE_PLACEHOLDER}
+            className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
             required
           />
-
-      {error && (
-        <p className="text-red-400 text-xs mt-1">
-          {error}
-        </p>
-      )}
         </div>
 
         <div>
@@ -218,6 +193,7 @@ function SignupComponent() {
             autoComplete="new-password"
             required
           />
+          {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
         </div>
 
         <button
