@@ -8,7 +8,6 @@ import * as MenuItemService from "./services/menuItems.service.js";
 import * as RecipeService from "./services/recipes.service.js";
 import * as OrderService from "./services/orders.service.js";
 import * as InventoryService from "./services/inventory.service.js";
-import * as BackupService from "./services/backup.service.js";
 import * as CustomerService from "./services/customer.service.js";
 import * as CheckoutService from "./services/checkout.service.js";
 import * as ReportModel from "./models/report.model.js";
@@ -203,9 +202,6 @@ router.post("/api/inventory/receive-order", async (body, db, req) =>
 router.post("/api/inventory/add-ingredient", async (body, db) =>
   InventoryService.addIngredientToInventory(db, body),
 );
-
-// Backup
-router.get("/api/backup", async () => BackupService.createBackup());
 
 // Customers
 router.get("/api/customers", async (_, db) =>

@@ -8,7 +8,6 @@ import {
   Utensils,
   Truck,
   Archive,
-  Database,
   ClipboardList,
 } from "lucide-react";
 
@@ -80,12 +79,5 @@ export const DATABASE_MANAGEMENT_ROUTES = [
     icon: Truck,
     roles: ["admin"],
     category: "business",
-  },
-  {
-    name: "Backup",
-    url: "/employee/database/backup",
-    icon: Database,
-    roles: ["admin"],
-    category: "system",
   },
 ];
