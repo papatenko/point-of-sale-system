@@ -60,8 +60,8 @@ router.post("/api/employees", async (body, db) =>
   EmployeeService.createEmployee(db, body),
 );
 router.put("/api/employees", async (body, db) => {
-  const { email, role, license_plate } = body;
-  return EmployeeService.updateEmployee(db, email, { role, license_plate });
+  const { email, role, license_plate, is_active } = body;
+  return EmployeeService.updateEmployee(db, email, { role, license_plate, is_active });
 });
 router.delete("/api/employees", async (body, db) => {
   const { email } = body;
