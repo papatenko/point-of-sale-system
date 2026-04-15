@@ -86,9 +86,9 @@ function ConfirmationPage() {
   }
 
   const paymentLabels = {
-    cash: "Cash at Pickup",
-    credit: "Credit Card at Pickup",
-    debit: "Debit Card at Pickup",
+    cash: "Cash",
+    credit: "Credit Card",
+    debit: "Debit Card",
   };
 
   return (

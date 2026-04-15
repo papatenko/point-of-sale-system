@@ -428,9 +428,79 @@ function EditOrderModal({ order, onClose, onSaved }) {
   );
 }
 
+const CANCEL_REASONS = [
+  "Customer Request",
+  "Out of Stock",
+  "Duplicate Order",
+  "Payment Issue",
+  "Kitchen Error",
+  "Other",
+];
+
+function CancelReasonModal({ orderNumber, onClose, onConfirm }) {
+  const [reason, setReason] = useState(CANCEL_REASONS[0]);
+  const [confirming, setConfirming] = useState(false);
+
+  const handleConfirm = async () => {
+    setConfirming(true);
+    try {
+      await onConfirm(reason);
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-background rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-lg text-foreground">
+            Cancel Order #{orderNumber}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        <p className="text-sm text-muted-foreground mb-3">
+          Select a reason for cancellation:
+        </p>
+        <select
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          className="w-full text-sm border border-border rounded-lg px-3 py-2 bg-background focus:outline-none focus:ring-2 focus:ring-amber-400 mb-5"
+        >
+          {CANCEL_REASONS.map((r) => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={onClose}
+            disabled={confirming}
+            className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors"
+          >
+            Back
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={confirming}
+            className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors disabled:opacity-50"
+          >
+            {confirming ? "Cancelling..." : "Confirm Cancel"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
   const [updating, setUpdating] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const isReady = order.order_status === "ready";
   const isPreparing = order.order_status === "preparing";
@@ -447,10 +517,10 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
 
   const createdLabel = formatDateTime(order.date_created);
 
-  const handleUpdate = async (newStatus) => {
+  const handleUpdate = async (newStatus, cancelReason = null) => {
     setUpdating(true);
     try {
-      await updateOrderStatus(order.checkout_id, newStatus);
+      await updateOrderStatus(order.checkout_id, newStatus, cancelReason);
       refreshCurrent?.();
       if (newStatus === "completed" || newStatus === "cancelled")
         refreshPast?.();
@@ -579,6 +649,21 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
               {order.customer_phone && ` · ${order.customer_phone}`}
             </span>
           )}
+
+          {order.cashier_email && (
+            <span>
+              Cashier:{" "}
+              {order.cashier_first_name
+                ? `${order.cashier_first_name} ${order.cashier_last_name}`
+                : order.cashier_email}
+            </span>
+          )}
+
+          {order.order_status === "cancelled" && order.cancel_reason && (
+            <span className="text-red-500 dark:text-red-400">
+              Cancel Reason: {order.cancel_reason}
+            </span>
+          )}
         </div>
 
         {/* Action buttons */}
@@ -621,7 +706,7 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
               </button>
             )}
             <button
-              onClick={() => handleUpdate("cancelled")}
+              onClick={() => setShowCancelModal(true)}
               disabled={updating}
               className="text-xs px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 font-medium transition-colors disabled:opacity-50"
             >
@@ -635,6 +720,17 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
             order={order}
             onClose={() => setShowEdit(false)}
             onSaved={() => refreshCurrent?.()}
+          />
+        )}
+
+        {showCancelModal && (
+          <CancelReasonModal
+            orderNumber={order.order_number}
+            onClose={() => setShowCancelModal(false)}
+            onConfirm={async (reason) => {
+              await handleUpdate("cancelled", reason);
+              setShowCancelModal(false);
+            }}
           />
         )}
       </CardContent>

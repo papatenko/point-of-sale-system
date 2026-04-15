@@ -163,10 +163,10 @@ router.get("/api/orders/:id", async (_, db, _req, url) =>
   OrderService.getOrderById(db, url),
 );
 router.patch("/api/orders/:id/status", async (body, db, req, _url, params) =>
-  OrderService.updateOrderStatus(db, params.id, body.status, req),
+  OrderService.updateOrderStatus(db, params.id, body.status, req, body.cancel_reason ?? null),
 );
-router.put("/api/orders/:id/items", async (body, db, _req, _url, params) =>
-  OrderService.updateOrderItems(db, params.id, body.items),
+router.put("/api/orders/:id/items", async (body, db, req, _url, params) =>
+  OrderService.updateOrderItems(db, params.id, body.items, req),
 );
 
 // Inventory
