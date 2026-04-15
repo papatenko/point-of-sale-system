@@ -407,7 +407,7 @@ function UsersDatabaseComponent() {
   return (
     <div className="p-6 space-y-6 w-full">
       <AlertPopupComponent />
-      <AlertPopup
+      {/* <AlertPopup
         open={deleteEmployeeOpen}
         onOpenChange={setDeleteEmployeeOpen}
         title="Delete Employee"
@@ -415,7 +415,7 @@ function UsersDatabaseComponent() {
         variant="destructive"
         onConfirm={handleDeleteEmployee}
         confirmLabel="Delete"
-      />
+      /> */}
 
       <EditDialog
         open={editOpen}
@@ -553,7 +553,7 @@ function UsersDatabaseComponent() {
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDeleteCustomer}>
-              Delete
+              Delete 
             </Button>
           </DialogFooter>
         </DialogContent>

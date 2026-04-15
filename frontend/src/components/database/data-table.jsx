@@ -162,14 +162,14 @@ export function DataTable({
                           <Pencil className="size-4" />
                         </Button>
                       )}
-                      <Button
+                      {/* <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDelete(item[deleteIdKey])}
                         disabled={!deleteIdKey}
                       >
                         <Trash2 className="size-4" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </TableCell>
                 </TableRow>
