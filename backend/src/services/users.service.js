@@ -20,7 +20,8 @@ export async function getMyProfile(req, db) {
     FROM users u
     LEFT JOIN gender_lookup g ON u.gender = g.gender_id
     LEFT JOIN race_lookup r ON u.ethnicity = r.race_id
-    WHERE u.email = ?`,
+    WHERE u.email = ?  
+    AND u.user_type IS NOT NULL`,
     [email],
   );
 
@@ -38,7 +39,7 @@ export async function updateMyProfile(req, body, db) {
     return { error: "first_name and last_name are required" };
 
   const [[existing]] = await db.query(
-    "SELECT email FROM users WHERE email = ?",
+    "SELECT email FROM users WHERE email = ? AND user_type IS NOT NULL",
     [email],
   );
   if (!existing) return { error: "User not found" };

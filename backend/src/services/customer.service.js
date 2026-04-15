@@ -45,8 +45,8 @@ export async function deleteCustomer(db, email) {
   }
 
   await CustomerModel.remove(db, email);
-  await CustomerModel.removeUser(db, email);
-
+  // Soft delete del usuario
+   
   return {
     success: true,
     message: "Customer and associated user deleted successfully",

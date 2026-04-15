@@ -61,7 +61,7 @@ export async function deleteEmployee(db, email) {
   }
 
   await EmployeeModel.remove(db, email);
-  await EmployeeModel.removeUser(db, email);
+  // await EmployeeModel.removeUser(db, email);
 
   return {
     success: true,

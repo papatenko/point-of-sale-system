@@ -12,6 +12,7 @@ export async function findAll(db) {
     FROM users u
     LEFT JOIN gender_lookup g ON u.gender = g.gender_id
     LEFT JOIN race_lookup r ON u.ethnicity = r.race_id
+    WHERE u.user_type IS NOT NULL
     ORDER BY u.last_name, u.first_name
   `);
   return rows;
@@ -19,7 +20,7 @@ export async function findAll(db) {
 
 export async function findByEmail(db, email) {
   const [[row]] = await db.query(
-    "SELECT email FROM users WHERE email = ?",
+    "SELECT email FROM users WHERE email = ? AND user_type IS NOT NULL",
     [email],
   );
   return row;
@@ -47,28 +48,81 @@ export async function update(db, email, data) {
   );
 }
 
-export async function remove(db, email) {
-  await db.query("DELETE FROM users WHERE email = ?", [email]);
-}
-
 export async function create(db, data) {
+  // 1. Buscamos si el usuario existe físicamente
+  const [[existing]] = await db.query(
+    "SELECT email, user_type FROM users WHERE email = ?", 
+    [data.email]
+  );
+
+  if (existing) {
+    // SI EXISTE Y ES NULL -> Lo reactivamos
+    if (existing.user_type === null) {
+      const [result] = await db.query(
+        `UPDATE users SET 
+          first_name = ?, last_name = ?, password = ?, phone_number = ?, 
+          user_type = ?, gender = ?, ethnicity = ? 
+         WHERE email = ?`,
+        [
+          data.first_name,
+          data.last_name,
+          data.password,
+          data.phone_number || null,
+          data.user_type || "employee",
+          data.gender || null,
+          data.ethnicity || null,
+          data.email
+        ]
+      );
+      return { insertId: data.email, affectedRows: result.affectedRows };
+    } 
+    
+    // SI EXISTE Y NO ES NULL -> No hacemos nada (el service manejará el error de duplicado)
+    // Lanzamos un error manual o dejamos que el Service lo cachee
+    throw new Error("User already exists and is active");
+  }
+
+  // 2. Si no existe físicamente, hacemos el INSERT normal
   const [result] = await db.query(
     `INSERT INTO users 
      (email, first_name, last_name, password, phone_number, user_type, gender, ethnicity)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      data.email,
-      data.first_name,
-      data.last_name,
-      data.password,
-      data.phone_number || null,
-      data.user_type || "employee",
-      data.gender || null,
-      data.ethnicity || null,
+      data.email, data.first_name, data.last_name, data.password,
+      data.phone_number || null, data.user_type || "employee",
+      data.gender || null, data.ethnicity || null,
     ]
   );
   return result;
 }
+
+export async function remove(db, email) {
+  await db.query(
+    `UPDATE users 
+     SET user_type = NULL 
+     WHERE email = ?`,
+    [email]
+  );
+}
+
+// export async function create(db, data) {
+//   const [result] = await db.query(
+//     `INSERT INTO users 
+//      (email, first_name, last_name, password, phone_number, user_type, gender, ethnicity)
+//      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+//     [
+//       data.email,
+//       data.first_name,
+//       data.last_name,
+//       data.password,
+//       data.phone_number || null,
+//       data.user_type || "employee",
+//       data.gender || null,
+//       data.ethnicity || null,
+//     ]
+//   );
+//   return result;
+// }
 
 export async function findAllGenders(db) {
   const [rows] = await db.query(`

@@ -4,7 +4,7 @@ import { useDispatch } from "react-redux";
 import { setLogin } from "@/redux/authSlice";
 import { GENDER_OPTIONS } from "@/constants/gender";
 import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
-import { getCurrentUser, updateProfile } from "@/services/auth";
+import { getCurrentUser, updateProfile, deleteUser } from "@/services/auth";
 import { PHONE_MAX_LENGTH, getPhoneError, formatPhoneNumber, normalizePhoneNumber, NAME_REGEX, sanitizeName } from "@/utils/constraints";
 
 export const Route = createFileRoute("/profile")({
@@ -66,6 +66,8 @@ function ProfilePage() {
   return;
 }
 
+
+
 const phoneError = getPhoneError(formData.phone_number);
 if (phoneError) {
   setError(phoneError);
@@ -106,8 +108,47 @@ if (phoneError) {
       </div>
     );
   }
+// Modifica la función handleDeleteAccount
+const handleDeleteAccount = async () => {
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete your account? This action will deactivate your account permanently. You will not be able to log in again."
+  );
 
+  if (!confirmDelete) return;
 
+  setSaving(true); // ← Agrega esto para mostrar loading
+  setError(null);
+  setMessage(null);
+
+  try {
+    const userEmail = formData.email;
+    
+    if (!userEmail) {
+      throw new Error("User email not found");
+    }
+
+    const response = await deleteUser(userEmail);
+    
+    if (response.success) {
+      // Limpiar sesión
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      
+      dispatch(setLogin({ token: null, user: null }));
+      
+      // Redirigir al login con mensaje
+      navigate({ 
+        to: "/auth/login",
+        state: { message: "Your account has been deactivated successfully" }
+      });
+    } else {
+      throw new Error(response.error || "Failed to delete account");
+    }
+  } catch (err) {
+    setError(err.message || "An error occurred while deleting your account");
+    setSaving(false); // ← Importante: quitar loading si hay error
+  }
+};
   return (
     <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-md mx-auto">
@@ -268,7 +309,21 @@ if (phoneError) {
             </button>
           </form>
         </div>
+        <div className="pt-6 border-t border-border">
+        <button
+          type="button"
+          onClick={handleDeleteAccount}
+          className="w-full py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+        >
+          Delete Account
+        </button>
+
+        <p className="text-xs text-muted-foreground mt-2 text-center">
+          This will deactivate your account permanently
+        </p>
       </div>
+      </div>
+      
     </div>
   );
 }

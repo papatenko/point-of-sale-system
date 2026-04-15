@@ -40,8 +40,11 @@ router.put("/api/users", async (body, db) => {
   const { email, ...data } = body;
   return UserService.updateUser(db, email, data);
 });
-router.delete("/api/users", async (body, db) => {
-  const { email } = body;
+router.delete("/api/users/:email", async (_, db, _req, url, params) => {
+  const email = params.email;
+
+  if (!email) return { error: "email is required" };
+
   return UserService.deleteUser(db, email);
 });
 router.get("/api/users/genders", async (_, db) =>
@@ -62,8 +65,11 @@ router.put("/api/employees", async (body, db) => {
   const { email, role, license_plate, is_active } = body;
   return EmployeeService.updateEmployee(db, email, { role, license_plate, is_active });
 });
-router.delete("/api/employees", async (body, db) => {
-  const { email } = body;
+router.delete("/api/employees/:email", async (_, db, _req, url, params) => {
+  const email = params.email;
+
+  if (!email) return { error: "email is required" };
+
   return EmployeeService.deleteEmployee(db, email);
 });
 
@@ -210,11 +216,13 @@ router.get("/api/customers", async (_, db) =>
 router.post("/api/customers", async (body, db) =>
   CustomerService.createCustomer(db, body),
 );
-router.delete("/api/customers", async (body, db) => {
-  const { email } = body;
+router.delete("/api/customers/:email", async (_, db, _req, url, params) => {
+  const email = params.email;
+
+  if (!email) return { error: "email is required" };
+
   return CustomerService.deleteCustomer(db, email);
 });
-
 // Checkout — customer online orders
 router.post("/api/checkout", async (body, db, req) =>
   CheckoutService.createCheckout(

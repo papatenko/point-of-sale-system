@@ -7,6 +7,7 @@ export async function findAll(db) {
     JOIN users u ON e.email = u.email
     LEFT JOIN gender_lookup g ON u.gender = g.gender_id
     LEFT JOIN race_lookup r ON u.ethnicity = r.race_id
+
     ORDER BY u.last_name, u.first_name
   `);
   return rows;
@@ -14,7 +15,12 @@ export async function findAll(db) {
 
 export async function findByEmail(db, email) {
   const [[row]] = await db.query(
-    "SELECT email FROM employees WHERE email = ?",
+    `SELECT e.email 
+     FROM employees e
+     JOIN users u ON e.email = u.email
+     WHERE e.email = ?
+     AND u.user_type IS NOT NULL 
+     AND e.is_active = 1`,
     [email]
   );
   return row;
@@ -51,13 +57,36 @@ export async function createManager(db, email) {
   return result;
 }
 
+// export async function remove(db, email) {
+//   await db.query(
+//     `UPDATE employees 
+//      SET is_active = 0 
+//      WHERE email = ?`,
+//     [email]
+//   );
+// }
 export async function remove(db, email) {
-  await db.query("DELETE FROM employees WHERE email = ?", [email]);
-}
+  // PASO 1: Desactivar en la tabla de empleados
+  await db.query(
+    `UPDATE employees 
+     SET is_active = 0 
+     WHERE email = ?`,
+    [email]
+  );
 
-export async function removeUser(db, email) {
-  await db.query("DELETE FROM users WHERE email = ?", [email]);
+  // PASO 2: Quitar el tipo de usuario en la tabla principal
+  await db.query(
+    `UPDATE users 
+     SET user_type = NULL 
+     WHERE email = ?`,
+    [email]
+  );
+  
+  return { success: true };
 }
+// export async function removeUser(db, email) {
+//   await db.query("DELETE FROM users WHERE email = ?", [email]);
+// }
 
 export async function update(db, email, data) {
   const fields = [];

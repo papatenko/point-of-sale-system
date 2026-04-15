@@ -24,3 +24,23 @@ export async function updateProfile(data) {
     body: JSON.stringify(data),
   });
 }
+
+// Para usuarios normales (soft delete en users)
+export async function deleteUser(email) {
+  return apiFetch(`/api/users/${email}`, {
+    method: "DELETE",
+  });
+}
+// Para empleados (soft delete con is_active = 0)
+export async function deleteEmployee(email) {
+  return apiFetch(`/api/employees/${email}`, {
+    method: "DELETE",
+  });
+}
+
+// Para clientes (soft delete vía user_type = NULL)
+export async function deleteCustomer(email) {
+  return apiFetch(`/api/customers/${email}`, {
+    method: "DELETE",
+  });
+}

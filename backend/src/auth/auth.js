@@ -9,7 +9,8 @@ export async function login(email, password) {
     `SELECT u.email, u.password, u.first_name, u.user_type, e.role, e.license_plate, e.is_active
      FROM users u
      LEFT JOIN employees e ON u.email = e.email
-     WHERE u.email = ?`,
+     WHERE u.email = ?
+     AND u.user_type IS NOT NULL`,
     [email],
   );
 
@@ -46,6 +47,29 @@ export async function login(email, password) {
 }
 
 // --- Register function ---
+// export async function register(
+//   email,
+//   password,
+//   first_name,
+//   last_name,
+//   phone_number,
+// ) {
+//   const db = await getDatabase();
+
+//   const [users] = await db.query("SELECT email FROM users WHERE email = ?", [
+//     email,
+//   ]);
+//   if (users.length > 0) throw new Error("User already exists");
+
+//   await db.query(
+//     "INSERT INTO users (email, password, first_name, last_name, phone_number, user_type) VALUES (?, ?, ?, ?, ?, 'customer')",
+//     [email, password, first_name, last_name, phone_number],
+//   );
+
+//   return { message: "User created successfully" };
+// }
+
+// --- Register function ---
 export async function register(
   email,
   password,
@@ -55,11 +79,29 @@ export async function register(
 ) {
   const db = await getDatabase();
 
-  const [users] = await db.query("SELECT email FROM users WHERE email = ?", [
-    email,
-  ]);
-  if (users.length > 0) throw new Error("User already exists");
+  // 1. Buscamos si el usuario existe físicamente (aunque sea NULL)
+  const [[existing]] = await db.query(
+    "SELECT email, user_type FROM users WHERE email = ?", 
+    [email]
+  );
 
+  if (existing) {
+    // Caso A: El usuario está "borrado" (user_type IS NULL) -> Lo reactivamos
+    if (existing.user_type === null) {
+      await db.query(
+        `UPDATE users SET 
+          password = ?, first_name = ?, last_name = ?, phone_number = ?, user_type = 'customer'
+         WHERE email = ?`,
+        [password, first_name, last_name, phone_number, email]
+      );
+      return { message: "Account reactivated successfully" };
+    }
+
+    // Caso B: El usuario existe y está activo
+    throw new Error("User already exists");
+  }
+
+  // 2. Si no existe en absoluto, lo creamos de cero
   await db.query(
     "INSERT INTO users (email, password, first_name, last_name, phone_number, user_type) VALUES (?, ?, ?, ?, ?, 'customer')",
     [email, password, first_name, last_name, phone_number],

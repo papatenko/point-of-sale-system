@@ -21,6 +21,8 @@ import { Users, UserCircle, AlertTriangle } from "lucide-react";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 import { EmployeeFilter } from "@/components/common/employee-filter";
 import { PHONE_MIN_LENGTH, PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
+import { deleteEmployee, deleteCustomer } from "@/services/auth";
+
 
 export const Route = createFileRoute("/employee/database/users")({
   component: UsersDatabaseComponent,
@@ -216,22 +218,77 @@ function UsersDatabaseComponent() {
     setDeleteEmployeeOpen(true);
   };
 
-  const handleDeleteEmployee = async () => {
-    const res = await fetch("/api/employees", {
-      method: "DELETE",
-      headers: authHeaders(),
-      body: JSON.stringify({ email: deleteEmployeeEmail }),
-    });
+  // const handleDeleteEmployee = async () => {
+  //   const res = await fetch("/api/employees", {
+  //     method: "DELETE",
+  //     headers: authHeaders(),
+  //     body: JSON.stringify({ email: deleteEmployeeEmail }),
+  //   });
 
-    if (res.ok) {
-      setDeleteEmployeeOpen(false);
-      setDeleteEmployeeEmail(null);
-      fetchEmployees();
-    } else {
-      const data = await res.json();
+  //   if (res.ok) {
+  //     setDeleteEmployeeOpen(false);
+  //     setDeleteEmployeeEmail(null);
+  //     fetchEmployees();
+  //   } else {
+  //     const data = await res.json();
+  //     showAlert({
+  //       title: "Error Deleting Employee",
+  //       description: data.error || "Failed to delete employee",
+  //       variant: "error",
+  //     });
+  //   }
+  // };
+
+
+  
+  // const handleDeleteCustomer = async () => {
+  //   if (!selectedCustomer) return;
+
+  //   const res = await fetch("/api/customers", {
+  //     method: "DELETE",
+  //     headers: authHeaders(),
+  //     body: JSON.stringify({ email: selectedCustomer.email }),
+  //   });
+
+  //   if (res.ok) {
+  //     setDeleteCustomerOpen(false);
+  //     setSelectedCustomer(null);
+  //     fetchCustomers();
+  //   } else {
+  //     const data = await res.json();
+  //     showAlert({
+  //       title: "Error Deleting Customer",
+  //       description: data.error || "Failed to delete customer",
+  //       variant: "error",
+  //     });
+  //   }
+  // };
+
+
+  const handleDeleteEmployee = async () => {
+    try {
+      // Usamos el service directamente
+      const response = await deleteEmployee(deleteEmployeeEmail);
+
+      if (response.success || !response.error) {
+        setDeleteEmployeeOpen(false);
+        setDeleteEmployeeEmail(null);
+        
+        // Refrescamos los datos de las tablas
+        await fetchEmployees();
+        
+        showAlert({
+          title: "Employee Deactivated",
+          description: "Login access removed. Employment history preserved as inactive.",
+          variant: "success",
+        });
+      } else {
+        throw new Error(response.error || "Failed to delete employee");
+      }
+    } catch (err) {
       showAlert({
-        title: "Error Deleting Employee",
-        description: data.error || "Failed to delete employee",
+        title: "Error",
+        description: err.message,
         variant: "error",
       });
     }
@@ -240,26 +297,32 @@ function UsersDatabaseComponent() {
   const handleDeleteCustomer = async () => {
     if (!selectedCustomer) return;
 
-    const res = await fetch("/api/customers", {
-      method: "DELETE",
-      headers: authHeaders(),
-      body: JSON.stringify({ email: selectedCustomer.email }),
-    });
+    try {
+      // Usamos el service directamente
+      const response = await deleteCustomer(selectedCustomer.email);
 
-    if (res.ok) {
-      setDeleteCustomerOpen(false);
-      setSelectedCustomer(null);
-      fetchCustomers();
-    } else {
-      const data = await res.json();
+      if (response.success || !response.error) {
+        setDeleteCustomerOpen(false);
+        setSelectedCustomer(null);
+        
+        await fetchCustomers();
+
+        showAlert({
+          title: "Customer Deleted",
+          description: "The customer account has been deactivated.",
+          variant: "success",
+        });
+      } else {
+        throw new Error(response.error || "Failed to delete customer");
+      }
+    } catch (err) {
       showAlert({
-        title: "Error Deleting Customer",
-        description: data.error || "Failed to delete customer",
+        title: "Error",
+        description: err.message,
         variant: "error",
       });
     }
   };
-
   const openEditDialog = (employee) => {
     setSelectedEmployee(employee);
     setEditForm({
