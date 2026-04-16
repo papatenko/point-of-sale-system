@@ -2,9 +2,15 @@ import { Plus, Minus } from "lucide-react";
 
 export function MenuCard({ item, qty, onAdd, onQty, compact = false }) {
   return (
-    <div className="bg-background rounded-xl shadow-sm border border-border p-4 flex justify-between items-start gap-4 hover:shadow-md transition-shadow">
+    <div className="bg-background rounded-xl shadow-sm border border-border p-4 flex flex-col hover:shadow-md transition-shadow relative">
+      {qty > 0 && (
+        <div className="absolute top-4 right-4 bg-amber-600 dark:bg-amber-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+          {qty}
+        </div>
+      )}
+
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-foreground">{item.item_name}</h3>
+        <h3 className="font-semibold text-foreground pr-8">{item.item_name}</h3>
         {!compact && item.image_url && (
           <img
             src={item.image_url}
@@ -13,12 +19,12 @@ export function MenuCard({ item, qty, onAdd, onQty, compact = false }) {
           />
         )}
         {!compact && item.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             {item.description}
           </p>
         )}
         {qty >= 2 ? (
-          <div className="mt-1 space-y-0.5">
+          <div className="flex justify-between mt-1 space-y-0.5">
             <p className="text-sm line-through text-muted-foreground/70">
               ${parseFloat(item.price).toFixed(2)}
             </p>
@@ -32,33 +38,21 @@ export function MenuCard({ item, qty, onAdd, onQty, compact = false }) {
           </p>
         )}
       </div>
-      <div className="flex-shrink-0 mt-1">
-        {qty === 0 ? (
-          <button
-            onClick={onAdd}
-            className="w-9 h-9 rounded-full bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center transition-colors shadow-sm"
-          >
-            <Plus size={18} />
-          </button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onQty(qty - 1)}
-              className="w-8 h-8 rounded-full border border-input hover:bg-muted flex items-center justify-center transition-colors"
-            >
-              <Minus size={14} />
-            </button>
-            <span className="text-sm font-bold w-5 text-center text-foreground">
-              {qty}
-            </span>
-            <button
-              onClick={() => onQty(qty + 1)}
-              className="w-8 h-8 rounded-full bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center transition-colors"
-            >
-              <Plus size={14} />
-            </button>
-          </div>
-        )}
+
+      <div className="flex items-center justify-center gap-3 mt-2">
+        <button
+          onClick={() => onQty(qty - 1)}
+          className="w-full h-14 rounded-xl border border-input hover:bg-muted flex items-center justify-center transition-colors"
+        >
+          <Minus size={18} />
+        </button>
+
+        <button
+          onClick={() => (qty > 0 ? onQty(qty + 1) : onAdd())}
+          className="w-full h-14 rounded-xl bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white flex items-center justify-center transition-colors shadow-sm"
+        >
+          <Plus size={18} />
+        </button>
       </div>
     </div>
   );
