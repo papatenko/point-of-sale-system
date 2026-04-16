@@ -671,13 +671,15 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
           <div className="flex gap-2 mt-3 flex-wrap">
             {isPending && (
               <>
-                <button
-                  onClick={() => handleUpdate("preparing")}
-                  disabled={updating}
-                  className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-50"
-                >
-                  Mark Preparing
-                </button>
+                {!order.inventory_warning && (
+                  <button
+                    onClick={() => handleUpdate("preparing")}
+                    disabled={updating}
+                    className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors disabled:opacity-50"
+                  >
+                    Mark Preparing
+                  </button>
+                )}
                 <button
                   onClick={() => setShowEdit(true)}
                   disabled={updating}

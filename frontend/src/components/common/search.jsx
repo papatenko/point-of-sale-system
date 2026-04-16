@@ -165,7 +165,7 @@
 
 import { useState } from "react";
 
-export default function SearchPage({ tabla, onSelect }) {
+export default function SearchPage({ tabla, onSelect, placeholder }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -216,7 +216,7 @@ export default function SearchPage({ tabla, onSelect }) {
       <input
         value={query}
         onChange={(e) => handleSearch(e.target.value)}
-        placeholder={`Search in ${tabla}...`}
+        placeholder={placeholder ?? `Search in ${tabla}...`}
         className="w-full p-2 border border-input rounded bg-background text-foreground mb-2"
       />
 
