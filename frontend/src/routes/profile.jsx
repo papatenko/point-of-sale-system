@@ -41,7 +41,7 @@ function ProfilePage() {
           email: data.email || "",
           first_name: data.first_name || "",
           last_name: data.last_name || "",
-          phone_number: data.phone_number || "",
+          phone_number: formatPhoneNumber(data.phone_number) || "",
           gender: data.gender || "",
           ethnicity: data.ethnicity || "",
           password: "",
@@ -169,20 +169,6 @@ if (phoneError) {
               <label className="block text-sm font-medium text-foreground mb-1">
                 Phone Number
               </label>
-              {/* <input
-                type="tel"
-                value={formData.phone_number}
-                 onBeforeInput={(e) => {
-                  if (e.data && !/^[0-9]$/.test(e.data)) {
-                    e.preventDefault();
-                  }
-                }}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, phone_number: e.target.value }))
-                }
-                className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
-                placeholder="Optional"
-              /> */}
               <input
                 type="tel"
                 value={formData.phone_number}

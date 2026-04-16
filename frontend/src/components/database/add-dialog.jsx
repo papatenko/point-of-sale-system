@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { sanitizeName } from "@/utils/constraints";
 
 export function AddDialog({
   triggerLabel = "Add Item",
@@ -23,10 +24,13 @@ export function AddDialog({
   const [fieldValues, setFieldValues] = useState({});
 
   const handleFieldChange = (field, value) => {
-    const formatted = field.formatOnChange && field.formatValue
-      ? field.formatValue(value)
-      : value;
-    setFieldValues((prev) => ({ ...prev, [field.name]: formatted }));
+    let processedValue = value;
+    if (field.sanitizeOnChange) {
+      processedValue = sanitizeName(value);
+    } else if (field.formatOnChange && field.formatValue) {
+      processedValue = field.formatValue(value);
+    }
+    setFieldValues((prev) => ({ ...prev, [field.name]: processedValue }));
   };
 
   const handleFormSubmit = async (data) => {
@@ -144,7 +148,8 @@ function SimpleForm({ fields, fieldValues, onFieldChange, onSubmit, onCancel, is
                 maxLength={field.maxLength}
                 placeholder={field.placeholder}
                 required={field.required}
-                defaultValue={field.defaultValue || ""}
+                defaultValue={field.formatOnChange || field.sanitizeOnChange ? undefined : field.defaultValue}
+                value={field.formatOnChange || field.sanitizeOnChange ? (fieldValues[field.name] ?? "") : undefined}
                 onChange={(e) => onFieldChange(field, e.target.value)}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
               />
