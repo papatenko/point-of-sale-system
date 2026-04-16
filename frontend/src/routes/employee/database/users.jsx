@@ -19,6 +19,7 @@ import { GENDER_OPTIONS } from "@/constants/gender";
 import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
 import { Users, UserCircle, AlertTriangle } from "lucide-react";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
+import { EmployeeFilter } from "@/components/common/employee-filter";
 import { PHONE_MIN_LENGTH, PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
 
 export const Route = createFileRoute("/employee/database/users")({
@@ -41,6 +42,15 @@ const EMPLOYEE_COLUMNS = [
   { key: "license_plate", label: "Truck" },
   { key: "gender_name", label: "Gender" },
   { key: "ethnicity_name", label: "Ethnicity" },
+  {
+    key: "is_active",
+    label: "Status",
+    render: (value) => (
+      <span className={value ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
+        {value ? "Active" : "Inactive"}
+      </span>
+    ),
+  },
 ];
 
 const CUSTOMER_COLUMNS = [
@@ -66,6 +76,7 @@ function UsersDatabaseComponent() {
   const [customers, setCustomers] = useState([]);
   const [trucks, setTrucks] = useState([]);
   const [selectedTruck, setSelectedTruck] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -126,9 +137,20 @@ function UsersDatabaseComponent() {
   }, [trucks]);
 
   const filteredEmployees = useMemo(() => {
-    if (!selectedTruck) return employees;
-    return employees.filter((e) => e.license_plate === selectedTruck);
-  }, [employees, selectedTruck]);
+    let filtered = employees;
+
+    if (selectedTruck) {
+      filtered = filtered.filter((e) => e.license_plate === selectedTruck);
+    }
+
+    if (statusFilter === "active") {
+      filtered = filtered.filter((e) => e.is_active === 1);
+    } else if (statusFilter === "inactive") {
+      filtered = filtered.filter((e) => e.is_active === 0);
+    }
+
+    return filtered;
+  }, [employees, selectedTruck, statusFilter]);
 
   const handleCreateSubmit = async (formData) => {
     setIsSubmitting(true);
@@ -249,6 +271,7 @@ function UsersDatabaseComponent() {
       license_plate: employee.license_plate || "",
       gender: employee.gender ? String(employee.gender) : "",
       ethnicity: employee.ethnicity ? String(employee.ethnicity) : "",
+      is_active: employee.is_active ? "1" : "0",
     });
     setEditOpen(true);
   };
@@ -278,6 +301,7 @@ function UsersDatabaseComponent() {
           email: selectedEmployee.email,
           role: formData.role,
           license_plate: formData.license_plate,
+          is_active: formData.is_active,
         }),
       });
 
@@ -323,6 +347,15 @@ function UsersDatabaseComponent() {
       label: "Truck",
       type: "select",
       options: truckOptions,
+    },
+    {
+      name: "is_active",
+      label: "Employment",
+      type: "select",
+      options: [
+        { value: "1", label: "Active" },
+        { value: "0", label: "Inactive" },
+      ],
     },
     {
       name: "gender",
@@ -374,7 +407,7 @@ function UsersDatabaseComponent() {
   return (
     <div className="p-6 space-y-6 w-full">
       <AlertPopupComponent />
-      <AlertPopup
+      {/* <AlertPopup
         open={deleteEmployeeOpen}
         onOpenChange={setDeleteEmployeeOpen}
         title="Delete Employee"
@@ -382,7 +415,7 @@ function UsersDatabaseComponent() {
         variant="destructive"
         onConfirm={handleDeleteEmployee}
         confirmLabel="Delete"
-      />
+      /> */}
 
       <EditDialog
         open={editOpen}
@@ -434,11 +467,15 @@ function UsersDatabaseComponent() {
         </div>
 
         <TabsContent value="employees" className="mt-4 space-y-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <TruckFilter
               trucks={trucks}
               selectedTruck={selectedTruck}
               onSelect={setSelectedTruck}
+            />
+            <EmployeeFilter
+              statusFilter={statusFilter}
+              onSelect={setStatusFilter}
             />
             <span className="text-sm text-muted-foreground">
               {filteredEmployees.length} of {employees.length} employees
@@ -516,7 +553,7 @@ function UsersDatabaseComponent() {
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDeleteCustomer}>
-              Delete
+              Delete 
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -85,12 +85,19 @@ export function DataTable({
     });
   };
 
-  const formatValue = (value, format, colKey) => {
+  const formatValue = (value, format, colKey, item) => {
     if (format) return format(value);
     if (colKey === "phone_number" && value) {
       return formatPhoneNumber(value);
     }
     return value ?? "-";
+  };
+
+  const renderCell = (col, item) => {
+    if (col.render) {
+      return col.render(item[col.key], item);
+    }
+    return formatValue(item[col.key], col.format, col.key, item);
   };
 
   return (
@@ -141,7 +148,7 @@ export function DataTable({
                 <TableRow key={item[deleteIdKey] || index}>
                   {columns.map((col) => (
                     <TableCell key={col.key}>
-                      {formatValue(item[col.key], col.format, col.key)}
+                      {renderCell(col, item)}
                     </TableCell>
                   ))}
                   <TableCell>
@@ -155,14 +162,14 @@ export function DataTable({
                           <Pencil className="size-4" />
                         </Button>
                       )}
-                      <Button
+                      {/* <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => handleDelete(item[deleteIdKey])}
                         disabled={!deleteIdKey}
                       >
                         <Trash2 className="size-4" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </TableCell>
                 </TableRow>

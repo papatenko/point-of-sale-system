@@ -223,7 +223,6 @@ function RouteComponent() {
   const [truckFilterPlate, setTruckFilterPlate] = useState("");
   const [ethnicityFilter, setEthnicityFilter] = useState("__all__");
   const [orderTypeFilter, setOrderTypeFilter] = useState("__all__");
-  const [topRowsFilter, setTopRowsFilter] = useState("__all__");
   const [trucks, setTrucks] = useState([]);
 
   useEffect(() => {
@@ -319,17 +318,6 @@ function RouteComponent() {
         })
       : "—";
 
-  const applyTopRows = useCallback(
-    (rows) => {
-      if (!Array.isArray(rows)) return [];
-      if (topRowsFilter === "__all__") return rows;
-      const limit = Number(topRowsFilter);
-      if (!Number.isFinite(limit) || limit <= 0) return rows;
-      return rows.slice(0, limit);
-    },
-    [topRowsFilter],
-  );
-
   const ethnicityChartData = useMemo(() => {
     if (!stats?.ethnicityByRace) return [];
     const rows = stats.ethnicityByRace.map((r) => ({
@@ -339,8 +327,8 @@ function RouteComponent() {
     if ((stats.ethnicityUnspecified ?? 0) > 0) {
       rows.push({ name: "Not specified", value: stats.ethnicityUnspecified });
     }
-    return applyTopRows(rows.filter((r) => r.value > 0).sort((a, b) => b.value - a.value));
-  }, [stats, applyTopRows]);
+    return rows.filter((r) => r.value > 0).sort((a, b) => b.value - a.value);
+  }, [stats]);
 
   const usersWithEthnicity = useMemo(() => {
     if (!stats?.ethnicityByRace) return 0;
@@ -354,18 +342,18 @@ function RouteComponent() {
         value: stats?.menuItemsUncategorized ?? 0,
       },
     ]);
-    return applyTopRows(rows);
-  }, [stats, applyTopRows]);
+    return rows;
+  }, [stats]);
 
   const ingredientsChartData = useMemo(() => {
     const rows = buildChartRows(stats?.ingredientsByCategory);
-    return applyTopRows(rows);
-  }, [stats, applyTopRows]);
+    return rows;
+  }, [stats]);
 
   const ordersChartData = useMemo(() => {
     const rows = buildChartRows(stats?.ordersByCategory);
-    return applyTopRows(rows);
-  }, [stats, applyTopRows]);
+    return rows;
+  }, [stats]);
 
   const soldChartData = useMemo(() => {
     const rows = buildChartRows(stats?.itemsSoldByCategory, "categoryName", [
@@ -375,8 +363,8 @@ function RouteComponent() {
         details: stats?.itemsSoldUncategorizedDetails ?? [],
       },
     ]);
-    return applyTopRows(rows);
-  }, [stats, applyTopRows]);
+    return rows;
+  }, [stats]);
 
   /** All trucks (including 0 orders), label by name + plate when helpful */
   const trucksChartData = useMemo(() => {
@@ -392,8 +380,21 @@ function RouteComponent() {
         return { name: label, value: Number(r.total) || 0 };
       })
       .sort((a, b) => b.value - a.value);
-    return applyTopRows(rows);
-  }, [stats, applyTopRows]);
+    return rows;
+  }, [stats]);
+
+  const orderFinalStatusChartData = useMemo(() => {
+    const rows = stats?.reportDetails?.orders ?? [];
+    if (!rows.length) return [];
+    const totals = new Map();
+    for (const row of rows) {
+      const status = String(row.orderStatus || "Unknown").trim() || "Unknown";
+      totals.set(status, (totals.get(status) || 0) + 1);
+    }
+    return [...totals.entries()]
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [stats]);
 
   const ethnicityFilterOptions = useMemo(() => {
     const base = (stats?.ethnicityByRace || [])
@@ -417,7 +418,8 @@ function RouteComponent() {
   const truckFilterActive = Boolean(stats?.filters?.truck);
   const ethnicityUsesOrderDates = Boolean(stats?.filters?.ethnicityUsesOrderDates);
   const activeReportIsOrderBased =
-    activeReport === "ordersByType" ||
+    activeReport === "totalMoneyMade" ||
+    activeReport === "orderFinalStatus" ||
     activeReport === "itemsSoldByCategory" ||
     activeReport === "ordersByTruck";
   const showOrderDateRangeCard =
@@ -426,12 +428,9 @@ function RouteComponent() {
 
   const reportOptions = useMemo(
     () => [
-      { key: "usersByEthnicity", label: "Users by ethnicity" },
-      { key: "menuItemsByCategory", label: "Menu items by category" },
-      { key: "ingredientsByCategory", label: "Ingredients by category" },
-      { key: "ordersByType", label: "Orders by type" },
       { key: "itemsSoldByCategory", label: "Items sold by menu category" },
-      { key: "ordersByTruck", label: "Orders per truck" },
+      { key: "totalMoneyMade", label: "Total money made" },
+      { key: "orderFinalStatus", label: "Final status of orders" },
     ],
     [],
   );
@@ -655,20 +654,37 @@ function RouteComponent() {
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { key: "usersByEthnicity", label: "Total Users", value: stats?.totalUsers ?? "—" },
-              { key: "usersByEthnicity", label: "Total Employees", value: stats?.totalEmployees ?? "—" },
-              { key: "menuItemsByCategory", label: "Total Items on Menu", value: stats?.totalMenuItems ?? "—" },
-              { key: "ingredientsByCategory", label: "Total Ingredients", value: stats?.totalIngredients ?? "—" },
-              { key: "ordersByType", label: "Total Orders", value: stats?.totalOrders ?? "—" },
-              { key: "itemsSoldByCategory", label: "Total Items Sold", value: stats?.totalItemsSold ?? "—" },
-              { key: "ordersByTruck", label: "Total Trucks", value: stats?.totalTrucks ?? "—" },
-              { key: "menuItemsByCategory", label: "Total Suppliers", value: stats?.totalSuppliers ?? "—" },
+              { label: "Total Users", value: stats?.totalUsers ?? "—" },
+              { label: "Total Employees", value: stats?.totalEmployees ?? "—" },
+              { label: "Total Items on Menu", value: stats?.totalMenuItems ?? "—" },
+              { label: "Total Ingredients", value: stats?.totalIngredients ?? "—" },
+              {
+                label: "Total Orders",
+                value: stats?.totalOrders ?? "—",
+                reportKey: "orderFinalStatus",
+              },
+              {
+                label: "Total Items Sold",
+                value: stats?.totalItemsSold ?? "—",
+                reportKey: "itemsSoldByCategory",
+              },
+              { label: "Total Trucks", value: stats?.totalTrucks ?? "—" },
+              { label: "Total Suppliers", value: stats?.totalSuppliers ?? "—" },
+              {
+                label: "Total Money Made",
+                value: stats ? `$${money(stats.grossIncome)}` : "—",
+                reportKey: "totalMoneyMade",
+              },
             ].map((t) => (
               <button
                 key={t.label}
                 type="button"
-                onClick={() => setActiveReport(t.key)}
-                className="text-left rounded-lg border bg-card px-4 py-3 hover:bg-muted/40 transition-colors"
+                onClick={() => {
+                  if (t.reportKey) setActiveReport(t.reportKey);
+                }}
+                className={`text-left rounded-lg border bg-card px-4 py-3 transition-colors ${
+                  t.reportKey ? "hover:bg-muted/40 cursor-pointer" : "cursor-default"
+                }`}
               >
                 <div className="text-xs text-muted-foreground">{t.label}</div>
                 <div className="mt-1 text-lg font-semibold">{t.value}</div>
@@ -770,19 +786,6 @@ function RouteComponent() {
                       {o.label}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid min-w-[180px] gap-1.5">
-              <Label>Top rows</Label>
-              <Select value={topRowsFilter} onValueChange={setTopRowsFilter}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All rows" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__all__">All rows</SelectItem>
-                  <SelectItem value="5">Top 5</SelectItem>
-                  <SelectItem value="10">Top 10</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -952,6 +955,37 @@ function RouteComponent() {
             valueLabel="Units sold"
             emptyMessage="No order line items yet."
             detail={orderLineItemsDetailTable}
+          />
+        )}
+
+        {activeReport === "totalMoneyMade" && (
+          <Card className="mt-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Total money made</CardTitle>
+              <CardDescription>
+                Gross income from non-cancelled and non-refunded orders.
+                {orderFilterActive
+                  ? " Amount only includes orders in the selected date range."
+                  : ""}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold">
+                ${stats != null ? money(stats.grossIncome) : "—"}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {activeReport === "orderFinalStatus" && (
+          <ReportBarChartCard
+            title="Final status of orders"
+            total={stats?.totalOrders}
+            summary="Each bar shows how many orders ended in that final order status."
+            chartData={orderFinalStatusChartData}
+            valueLabel="Orders"
+            emptyMessage="No orders available for the current filters."
+            detail={ordersDetailTable}
           />
         )}
 

@@ -6,7 +6,7 @@ export async function login(email, password) {
   const db = await getDatabase();
 
   const [rows] = await db.query(
-    `SELECT u.email, u.password, u.first_name, u.user_type, e.role, e.license_plate
+    `SELECT u.email, u.password, u.first_name, u.user_type, e.role, e.license_plate, e.is_active
      FROM users u
      LEFT JOIN employees e ON u.email = e.email
      WHERE u.email = ?`,
@@ -20,6 +20,10 @@ export async function login(email, password) {
   // sin bcrypt (temporal)
   if (password !== user.password) {
     throw new Error("Incorrect password");
+  }
+
+  if (user.user_type === "employee" && user.is_active === 0) {
+    throw new Error("Invalid email or password");
   }
 
   const token = signUserToken(

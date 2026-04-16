@@ -8,7 +8,6 @@ import * as MenuItemService from "./services/menuItems.service.js";
 import * as RecipeService from "./services/recipes.service.js";
 import * as OrderService from "./services/orders.service.js";
 import * as InventoryService from "./services/inventory.service.js";
-import * as BackupService from "./services/backup.service.js";
 import * as CustomerService from "./services/customer.service.js";
 import * as CheckoutService from "./services/checkout.service.js";
 import * as ReportModel from "./models/report.model.js";
@@ -60,8 +59,8 @@ router.post("/api/employees", async (body, db) =>
   EmployeeService.createEmployee(db, body),
 );
 router.put("/api/employees", async (body, db) => {
-  const { email, role, license_plate } = body;
-  return EmployeeService.updateEmployee(db, email, { role, license_plate });
+  const { email, role, license_plate, is_active } = body;
+  return EmployeeService.updateEmployee(db, email, { role, license_plate, is_active });
 });
 router.delete("/api/employees", async (body, db) => {
   const { email } = body;
@@ -164,10 +163,10 @@ router.get("/api/orders/:id", async (_, db, _req, url) =>
   OrderService.getOrderById(db, url),
 );
 router.patch("/api/orders/:id/status", async (body, db, req, _url, params) =>
-  OrderService.updateOrderStatus(db, params.id, body.status, req),
+  OrderService.updateOrderStatus(db, params.id, body.status, req, body.cancel_reason ?? null),
 );
-router.put("/api/orders/:id/items", async (body, db, _req, _url, params) =>
-  OrderService.updateOrderItems(db, params.id, body.items),
+router.put("/api/orders/:id/items", async (body, db, req, _url, params) =>
+  OrderService.updateOrderItems(db, params.id, body.items, req),
 );
 
 // Inventory
@@ -203,9 +202,6 @@ router.post("/api/inventory/receive-order", async (body, db, req) =>
 router.post("/api/inventory/add-ingredient", async (body, db) =>
   InventoryService.addIngredientToInventory(db, body),
 );
-
-// Backup
-router.get("/api/backup", async () => BackupService.createBackup());
 
 // Customers
 router.get("/api/customers", async (_, db) =>

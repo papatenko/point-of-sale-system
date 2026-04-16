@@ -104,6 +104,12 @@ function OrderCard({ order, onCancel }) {
         </span>
       </div>
 
+      {order.order_status === "cancelled" && order.cancel_reason && (
+        <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+          Reason: {order.cancel_reason}
+        </p>
+      )}
+
       {order.order_status === "pending" && onCancel && (
         <div className="pt-3">
           <button
@@ -220,7 +226,7 @@ function CustomerOrdersPage() {
                 key={o.checkout_id}
                 order={o}
                 onCancel={async (id) => {
-                  await updateOrderStatus(id, "cancelled");
+                  await updateOrderStatus(id, "cancelled", "Customer Request");
                   fetchActive();
                 }}
               />

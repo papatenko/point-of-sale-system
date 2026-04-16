@@ -160,6 +160,8 @@ CREATE TABLE checkout (
     order_number   VARCHAR(20)   NOT NULL,
     license_plate  VARCHAR(20)   NOT NULL,
     customer_email VARCHAR(100),
+    cashier_email  VARCHAR(100),
+    cancel_reason  ENUM('Customer Request','Out of Stock','Duplicate Order','Payment Issue','Kitchen Error','Other'),
     order_type     ENUM('walk-in', 'online-pickup') NOT NULL,
     order_status   ENUM('pending', 'preparing', 'ready', 'completed', 'cancelled') NOT NULL,
     scheduled_time DATETIME,
@@ -169,7 +171,10 @@ CREATE TABLE checkout (
     CONSTRAINT fk_checkout_truck
         FOREIGN KEY (license_plate)  REFERENCES food_trucks(license_plate),
     CONSTRAINT fk_checkout_customer
-        FOREIGN KEY (customer_email) REFERENCES users(email)
+        FOREIGN KEY (customer_email) REFERENCES users(email),
+    CONSTRAINT fk_checkout_cashier
+        FOREIGN KEY (cashier_email)  REFERENCES employees(email)
+        ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 CREATE TABLE order_items (
@@ -241,12 +246,11 @@ CREATE TABLE inventory_adjustments (
     adjustment_id   INT           NOT NULL AUTO_INCREMENT PRIMARY KEY,
     license_plate   VARCHAR(20)   NOT NULL,
     ingredient_id   INT           NOT NULL,
-    adjustment_type ENUM('restock', 'waste', 'correction', 'order-deduction'),
+    adjustment_type ENUM('restock', 'waste', 'correction', 'order-deduction', 'order-cancel'),
     quantity_change DECIMAL(10,2) NOT NULL,
     reason          TEXT,
     adjusted_by     VARCHAR(100)  NOT NULL,
     adjustment_date TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-    reference_id    INT,
     CONSTRAINT fk_adjinv_truck
         FOREIGN KEY (license_plate) REFERENCES food_trucks(license_plate),
     CONSTRAINT fk_adjinv_ingredient

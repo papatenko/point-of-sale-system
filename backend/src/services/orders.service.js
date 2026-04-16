@@ -101,9 +101,12 @@ export async function listOrders(db, req, url) {
 
     const dataQuery = `SELECT c.checkout_id, c.order_number, c.order_type, c.order_status,
                               c.total_price, c.payment_method, c.customer_email,
+                              c.cashier_email, c.cancel_reason,
                               c.scheduled_time, c.license_plate, c.date_created,
                               u.phone_number AS customer_phone,
                               ft.current_location AS truck_location,
+                              ce.first_name AS cashier_first_name,
+                              ce.last_name  AS cashier_last_name,
                               GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ' | ') AS items,
                               (SELECT GROUP_CONCAT(DISTINCT mi2.item_name ORDER BY mi2.item_name SEPARATOR ' | ')
                                FROM order_items oi2
@@ -121,6 +124,7 @@ export async function listOrders(db, req, url) {
                        LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
                        LEFT JOIN users u ON u.email = c.customer_email
                        LEFT JOIN food_trucks ft ON ft.license_plate = c.license_plate
+                       LEFT JOIN users ce ON ce.email = c.cashier_email
                        ${where}
                        GROUP BY c.checkout_id
                        ${orderBy}
@@ -132,9 +136,12 @@ export async function listOrders(db, req, url) {
   // Non-paginated query (current / scheduled orders)
   const dataQuery = `SELECT c.checkout_id, c.order_number, c.order_type, c.order_status,
                             c.total_price, c.payment_method, c.customer_email,
+                            c.cashier_email, c.cancel_reason,
                             c.scheduled_time, c.license_plate, c.date_created,
                             u.phone_number AS customer_phone,
                             ft.current_location AS truck_location,
+                            ce.first_name AS cashier_first_name,
+                            ce.last_name  AS cashier_last_name,
                             GROUP_CONCAT(CONCAT(oi.quantity, 'x ', mi.item_name) ORDER BY mi.item_name SEPARATOR ' | ') AS items,
                             (SELECT GROUP_CONCAT(DISTINCT mi2.item_name ORDER BY mi2.item_name SEPARATOR ' | ')
                              FROM order_items oi2
@@ -152,6 +159,7 @@ export async function listOrders(db, req, url) {
                      LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
                      LEFT JOIN users u ON u.email = c.customer_email
                      LEFT JOIN food_trucks ft ON ft.license_plate = c.license_plate
+                     LEFT JOIN users ce ON ce.email = c.cashier_email
                      ${where}
                      GROUP BY c.checkout_id
                      ${orderBy}`;
@@ -159,7 +167,7 @@ export async function listOrders(db, req, url) {
   return rows;
 }
 
-export async function updateOrderItems(db, orderId, items) {
+export async function updateOrderItems(db, orderId, items, req = null) {
   if (!items || items.length === 0) throw new Error("Order must have at least one item.");
 
   const [[order]] = await db.query(
@@ -187,19 +195,34 @@ export async function updateOrderItems(db, orderId, items) {
     [total, orderId],
   );
 
+  // Update cashier_email to the employee who edited the order
+  const authHeader = req?.headers?.authorization ?? "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+  const employeeEmail = verifyToken(token)?.email ?? null;
+  if (employeeEmail) {
+    await db.query(
+      `UPDATE checkout SET cashier_email = ? WHERE checkout_id = ?`,
+      [employeeEmail, orderId],
+    );
+  }
+
   return { success: true };
 }
 
-export async function updateOrderStatus(db, orderId, newStatus, req = null) {
+export async function updateOrderStatus(db, orderId, newStatus, req = null, cancelReason = null) {
   const allowed = ["preparing", "ready", "completed", "cancelled"];
   if (!allowed.includes(newStatus)) {
     throw new Error(`Invalid status: ${newStatus}`);
   }
 
-  // Customer auth: can only cancel their own pending orders
+  // Extract actor from JWT
   const authHeader = req?.headers?.authorization ?? "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
   const payload = verifyToken(token);
+  const isEmployee = payload?.user_type !== "customer";
+  const employeeEmail = isEmployee ? (payload?.email ?? null) : null;
+
+  // Customer auth: can only cancel their own pending orders
   if (payload?.user_type === "customer") {
     if (newStatus !== "cancelled") throw new Error("Customers can only cancel orders.");
     const [[owned]] = await db.query(
@@ -223,13 +246,25 @@ export async function updateOrderStatus(db, orderId, newStatus, req = null) {
     }
   }
 
-  // Restore inventory if cancelling a preparing or ready order
+  // Restore inventory and log adjustments if cancelling a preparing or ready order
   if (newStatus === "cancelled") {
     const [[current]] = await db.query(
       `SELECT order_status, license_plate FROM checkout WHERE checkout_id = ?`,
       [orderId],
     );
     if (current && ["preparing", "ready"].includes(current.order_status)) {
+      // Fetch per-ingredient restore amounts
+      const [ingredients] = await db.query(
+        `SELECT ri.ingredient_id,
+                SUM(ri.quantity_needed * oi.quantity) AS total_restore
+         FROM order_items oi
+         JOIN recipe_ingredient ri ON ri.menu_item_id = oi.menu_item_id
+         WHERE oi.order_id = ?
+         GROUP BY ri.ingredient_id`,
+        [orderId],
+      );
+
+      // Restore truck_inventory
       await db.query(
         `UPDATE truck_inventory ti
          JOIN (
@@ -244,12 +279,45 @@ export async function updateOrderStatus(db, orderId, newStatus, req = null) {
          WHERE ti.license_plate = ?`,
         [orderId, current.license_plate],
       );
+
+      // Log each ingredient restore to inventory_adjustments
+      for (const ing of ingredients) {
+        await db.query(
+          `INSERT INTO inventory_adjustments
+             (license_plate, ingredient_id, adjustment_type, quantity_change,
+              reason, adjusted_by)
+           VALUES (?, ?, 'order-cancel', ?, ?, ?)`,
+          [
+            current.license_plate,
+            ing.ingredient_id,
+            ing.total_restore,
+            `Order #${orderId} cancelled`,
+            employeeEmail,
+          ],
+        );
+      }
+    }
+  }
+
+  // Build dynamic SET clause for the checkout UPDATE
+  const setClauses = ["order_status = ?"];
+  const setValues  = [newStatus];
+
+  if (newStatus === "cancelled") {
+    // Always set cancel_reason
+    const reason = isEmployee ? (cancelReason ?? "Other") : "Customer Request";
+    setClauses.push("cancel_reason = ?");
+    setValues.push(reason);
+    // Update cashier_email only when an employee cancels
+    if (employeeEmail) {
+      setClauses.push("cashier_email = ?");
+      setValues.push(employeeEmail);
     }
   }
 
   await db.query(
-    `UPDATE checkout SET order_status = ? WHERE checkout_id = ?`,
-    [newStatus, orderId],
+    `UPDATE checkout SET ${setClauses.join(", ")} WHERE checkout_id = ?`,
+    [...setValues, orderId],
   );
   return { success: true };
 }

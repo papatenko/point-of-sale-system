@@ -71,6 +71,10 @@ export async function update(db, email, data) {
     fields.push("license_plate = ?");
     values.push(data.license_plate || null);
   }
+  if (data.is_active !== undefined) {
+    fields.push("is_active = ?");
+    values.push(data.is_active === "1" ? 1 : 0);
+  }
 
   if (fields.length === 0) return;
 

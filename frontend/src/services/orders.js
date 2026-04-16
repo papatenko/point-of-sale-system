@@ -9,10 +9,12 @@ export async function getOrder(orderId) {
   return apiFetch(`/api/orders/${orderId}`);
 }
 
-export async function updateOrderStatus(orderId, status) {
+export async function updateOrderStatus(orderId, status, cancelReason = null) {
+  const body = { status };
+  if (cancelReason !== null) body.cancel_reason = cancelReason;
   return apiFetch(`/api/orders/${orderId}/status`, {
     method: "PATCH",
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(body),
   });
 }
 

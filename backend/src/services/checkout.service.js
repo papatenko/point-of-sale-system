@@ -9,6 +9,14 @@ function getLicensePlateFromReq(req) {
   return payload?.license_plate ?? null;
 }
 
+function getEmailFromReq(req) {
+  const authHeader = req?.headers?.authorization ?? "";
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : authHeader;
+  return verifyToken(token)?.email ?? null;
+}
+
 export async function createCheckout(db, body, req = null) {
   const {
     orderType = "online-pickup",
@@ -24,13 +32,15 @@ export async function createCheckout(db, body, req = null) {
     throw new Error("Cart is empty.");
   }
 
-  // For POS/walk-in orders, get license plate from JWT
+  // For POS/walk-in orders, get license plate and cashier email from JWT
   let licensePlate = bodyLicensePlate;
+  let cashierEmail = null;
   if (orderType === "walk-in") {
     licensePlate = getLicensePlateFromReq(req);
     if (!licensePlate) {
       throw new Error("Could not determine truck from employee token.");
     }
+    cashierEmail = getEmailFromReq(req);
   }
 
   if (!licensePlate) {
@@ -83,13 +93,14 @@ export async function createCheckout(db, body, req = null) {
   // fire with order_items already present (for inventory deduction).
   const [result] = await db.query(
     `INSERT INTO checkout
-       (order_number, license_plate, customer_email, order_type, order_status,
+       (order_number, license_plate, customer_email, cashier_email, order_type, order_status,
         scheduled_time, total_price, payment_method, payment_status)
-     VALUES (?, ?, ?, ?, 'pending', ?, 0, ?, 'pending')`,
+     VALUES (?, ?, ?, ?, ?, 'pending', ?, 0, ?, 'pending')`,
     [
       orderNumber,
       licensePlate,
       customerEmail || null,
+      cashierEmail,
       orderType,
       scheduledMysql,
       paymentMethod,

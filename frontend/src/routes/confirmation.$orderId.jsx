@@ -86,9 +86,9 @@ function ConfirmationPage() {
   }
 
   const paymentLabels = {
-    cash: "Cash at Pickup",
-    credit: "Credit Card at Pickup",
-    debit: "Debit Card at Pickup",
+    cash: "Cash",
+    credit: "Credit Card",
+    debit: "Debit Card",
   };
 
   return (
@@ -197,12 +197,12 @@ function ConfirmationPage() {
             </div>
           )}
         </div>
-        <Button
+        {/* <Button
           onClick={handleDownloadQR}
           className="w-full bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center gap-2 mb-4"
         >
           Download Ticket
-        </Button>
+        </Button> */}
         <Link to="/order">
           <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center gap-2">
             Order Again
