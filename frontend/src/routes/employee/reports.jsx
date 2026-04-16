@@ -118,6 +118,12 @@ function moneyCell(n) {
   });
 }
 
+function includesSearch(value, searchTerm) {
+  if (!searchTerm) return true;
+  if (value == null) return false;
+  return String(value).toLowerCase().includes(searchTerm);
+}
+
 function ReportDetailTableWrap({ title, rowLimit, children }) {
   return (
     <div className="mt-6 space-y-2">
@@ -224,6 +230,7 @@ function RouteComponent() {
   const [truckFilterPlate, setTruckFilterPlate] = useState("");
   const [ethnicityFilter, setEthnicityFilter] = useState("__all__");
   const [orderTypeFilter, setOrderTypeFilter] = useState("__all__");
+  const [tableSearch, setTableSearch] = useState("");
   const [trucks, setTrucks] = useState([]);
 
   useEffect(() => {
@@ -244,6 +251,10 @@ function RouteComponent() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    setTableSearch("");
+  }, [activeReport]);
 
   useEffect(() => {
     let cancelled = false;
@@ -437,9 +448,18 @@ function RouteComponent() {
   );
 
   const detailLimit = stats?.reportDetails?.rowLimit ?? 500;
+  const normalizedTableSearch = tableSearch.trim().toLowerCase();
 
   const ethnicityUsersTable = useMemo(() => {
-    const rows = stats?.reportDetails?.ethnicityUsers ?? [];
+    const rows = (stats?.reportDetails?.ethnicityUsers ?? []).filter((r) =>
+      [
+        r.ethnicity,
+        r.firstName,
+        r.lastName,
+        r.email,
+        r.phoneNumber,
+      ].some((value) => includesSearch(value, normalizedTableSearch)),
+    );
     if (rows.length === 0) {
       return (
         <ReportDetailTableWrap title="Underlying records" rowLimit={detailLimit}>
@@ -474,10 +494,14 @@ function RouteComponent() {
         </Table>
       </ReportDetailTableWrap>
     );
-  }, [stats, detailLimit]);
+  }, [stats, detailLimit, normalizedTableSearch]);
 
   const menuItemsDetailTable = useMemo(() => {
-    const rows = stats?.reportDetails?.menuItems ?? [];
+    const rows = (stats?.reportDetails?.menuItems ?? []).filter((r) =>
+      [r.categoryName, r.itemName, r.price, r.isAvailable ? "yes" : "no"].some((value) =>
+        includesSearch(value, normalizedTableSearch),
+      ),
+    );
     if (rows.length === 0) {
       return (
         <ReportDetailTableWrap title="Menu items (detail)" rowLimit={detailLimit}>
@@ -509,10 +533,14 @@ function RouteComponent() {
         </Table>
       </ReportDetailTableWrap>
     );
-  }, [stats, detailLimit]);
+  }, [stats, detailLimit, normalizedTableSearch]);
 
   const ingredientsDetailTable = useMemo(() => {
-    const rows = stats?.reportDetails?.ingredients ?? [];
+    const rows = (stats?.reportDetails?.ingredients ?? []).filter((r) =>
+      [r.categoryName, r.ingredientName].some((value) =>
+        includesSearch(value, normalizedTableSearch),
+      ),
+    );
     if (rows.length === 0) {
       return (
         <ReportDetailTableWrap title="Ingredients (detail)" rowLimit={detailLimit}>
@@ -540,10 +568,25 @@ function RouteComponent() {
         </Table>
       </ReportDetailTableWrap>
     );
-  }, [stats, detailLimit]);
+  }, [stats, detailLimit, normalizedTableSearch]);
 
   const ordersDetailTable = useMemo(() => {
-    const rows = stats?.reportDetails?.orders ?? [];
+    const rows = (stats?.reportDetails?.orders ?? []).filter((r) =>
+      [
+        r.orderPlacedAt,
+        r.orderNumber,
+        r.orderTypeLabel,
+        r.orderType,
+        r.truckName,
+        r.licensePlate,
+        r.customerName,
+        r.customerEmail,
+        r.orderStatus,
+        r.paymentStatus,
+        r.paymentMethod,
+        r.totalPrice,
+      ].some((value) => includesSearch(value, normalizedTableSearch)),
+    );
     if (rows.length === 0) {
       return (
         <ReportDetailTableWrap title="Orders (detail)" rowLimit={detailLimit}>
@@ -592,10 +635,23 @@ function RouteComponent() {
         </Table>
       </ReportDetailTableWrap>
     );
-  }, [stats, detailLimit]);
+  }, [stats, detailLimit, normalizedTableSearch]);
 
   const orderLineItemsDetailTable = useMemo(() => {
-    const rows = stats?.reportDetails?.orderLineItems ?? [];
+    const rows = (stats?.reportDetails?.orderLineItems ?? []).filter((r) =>
+      [
+        r.orderPlacedAt,
+        r.orderNumber,
+        r.orderTypeLabel,
+        r.orderType,
+        r.truckName,
+        r.licensePlate,
+        r.menuCategoryName,
+        r.itemName,
+        r.quantity,
+        r.lineTotalPrice,
+      ].some((value) => includesSearch(value, normalizedTableSearch)),
+    );
     if (rows.length === 0) {
       return (
         <ReportDetailTableWrap title="Line items sold (detail)" rowLimit={detailLimit}>
@@ -637,7 +693,7 @@ function RouteComponent() {
         </Table>
       </ReportDetailTableWrap>
     );
-  }, [stats, detailLimit]);
+  }, [stats, detailLimit, normalizedTableSearch]);
 
   const grossIncomeByMonthChartData = useMemo(() => {
     const rows = stats?.reportDetails?.grossIncomeByMonth ?? [];
@@ -651,7 +707,22 @@ function RouteComponent() {
   }, [stats]);
 
   const grossIncomeOrdersDetailTable = useMemo(() => {
-    const rows = stats?.reportDetails?.grossIncomeOrders ?? [];
+    const rows = (stats?.reportDetails?.grossIncomeOrders ?? []).filter((r) =>
+      [
+        r.orderPlacedAt,
+        r.orderNumber,
+        r.orderTypeLabel,
+        r.orderType,
+        r.truckName,
+        r.licensePlate,
+        r.customerName,
+        r.customerEmail,
+        r.orderStatus,
+        r.paymentStatus,
+        r.paymentMethod,
+        r.totalPrice,
+      ].some((value) => includesSearch(value, normalizedTableSearch)),
+    );
     if (rows.length === 0) {
       return (
         <ReportDetailTableWrap title="Orders included in report">
@@ -702,7 +773,7 @@ function RouteComponent() {
         </Table>
       </ReportDetailTableWrap>
     );
-  }, [stats]);
+  }, [stats, normalizedTableSearch]);
 
   return (
     <div className="p-5 max-w-5xl">
@@ -938,6 +1009,15 @@ function RouteComponent() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="max-w-md">
+                <Label htmlFor="report-table-search">Search table rows</Label>
+                <Input
+                  id="report-table-search"
+                  value={tableSearch}
+                  onChange={(e) => setTableSearch(e.target.value)}
+                  placeholder="Search users in table below..."
+                />
+              </div>
               <div className="w-full h-[min(420px,70vh)] min-h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
@@ -977,7 +1057,20 @@ function RouteComponent() {
             chartData={menuChartData}
             valueLabel="Menu items"
             emptyMessage="No menu items yet, or categories have no items."
-            detail={menuItemsDetailTable}
+            detail={
+              <>
+                <div className="max-w-md">
+                  <Label htmlFor="report-table-search">Search table rows</Label>
+                  <Input
+                    id="report-table-search"
+                    value={tableSearch}
+                    onChange={(e) => setTableSearch(e.target.value)}
+                    placeholder="Search menu items in table below..."
+                  />
+                </div>
+                {menuItemsDetailTable}
+              </>
+            }
           />
         )}
 
@@ -989,7 +1082,20 @@ function RouteComponent() {
             chartData={ingredientsChartData}
             valueLabel="Ingredients"
             emptyMessage="No ingredients in the database yet."
-            detail={ingredientsDetailTable}
+            detail={
+              <>
+                <div className="max-w-md">
+                  <Label htmlFor="report-table-search">Search table rows</Label>
+                  <Input
+                    id="report-table-search"
+                    value={tableSearch}
+                    onChange={(e) => setTableSearch(e.target.value)}
+                    placeholder="Search ingredients in table below..."
+                  />
+                </div>
+                {ingredientsDetailTable}
+              </>
+            }
           />
         )}
 
@@ -1001,7 +1107,20 @@ function RouteComponent() {
             chartData={ordersChartData}
             valueLabel="Orders"
             emptyMessage="No orders placed yet."
-            detail={ordersDetailTable}
+            detail={
+              <>
+                <div className="max-w-md">
+                  <Label htmlFor="report-table-search">Search table rows</Label>
+                  <Input
+                    id="report-table-search"
+                    value={tableSearch}
+                    onChange={(e) => setTableSearch(e.target.value)}
+                    placeholder="Search orders in table below..."
+                  />
+                </div>
+                {ordersDetailTable}
+              </>
+            }
           />
         )}
 
@@ -1013,7 +1132,20 @@ function RouteComponent() {
             chartData={soldChartData}
             valueLabel="Units sold"
             emptyMessage="No order line items yet."
-            detail={orderLineItemsDetailTable}
+            detail={
+              <>
+                <div className="max-w-md">
+                  <Label htmlFor="report-table-search">Search table rows</Label>
+                  <Input
+                    id="report-table-search"
+                    value={tableSearch}
+                    onChange={(e) => setTableSearch(e.target.value)}
+                    placeholder="Search sold items in table below..."
+                  />
+                </div>
+                {orderLineItemsDetailTable}
+              </>
+            }
           />
         )}
 
@@ -1026,7 +1158,20 @@ function RouteComponent() {
             valueLabel="Gross income ($)"
             emptyMessage="No revenue data for the current filters."
             yAxisWidth={110}
-            detail={grossIncomeOrdersDetailTable}
+            detail={
+              <>
+                <div className="max-w-md">
+                  <Label htmlFor="report-table-search">Search table rows</Label>
+                  <Input
+                    id="report-table-search"
+                    value={tableSearch}
+                    onChange={(e) => setTableSearch(e.target.value)}
+                    placeholder="Search orders in table below..."
+                  />
+                </div>
+                {grossIncomeOrdersDetailTable}
+              </>
+            }
           />
         )}
 
@@ -1038,7 +1183,20 @@ function RouteComponent() {
             chartData={orderFinalStatusChartData}
             valueLabel="Orders"
             emptyMessage="No orders available for the current filters."
-            detail={ordersDetailTable}
+            detail={
+              <>
+                <div className="max-w-md">
+                  <Label htmlFor="report-table-search">Search table rows</Label>
+                  <Input
+                    id="report-table-search"
+                    value={tableSearch}
+                    onChange={(e) => setTableSearch(e.target.value)}
+                    placeholder="Search orders in table below..."
+                  />
+                </div>
+                {ordersDetailTable}
+              </>
+            }
           />
         )}
 
@@ -1052,7 +1210,20 @@ function RouteComponent() {
             emptyMessage="No food trucks registered yet."
             yAxisWidth={220}
             chartHeightClass="h-[min(420px,65vh)] min-h-[220px]"
-            detail={ordersDetailTable}
+            detail={
+              <>
+                <div className="max-w-md">
+                  <Label htmlFor="report-table-search">Search table rows</Label>
+                  <Input
+                    id="report-table-search"
+                    value={tableSearch}
+                    onChange={(e) => setTableSearch(e.target.value)}
+                    placeholder="Search truck orders in table below..."
+                  />
+                </div>
+                {ordersDetailTable}
+              </>
+            }
           />
         )}
 

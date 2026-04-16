@@ -46,6 +46,28 @@ export async function login(email, password) {
 }
 
 // --- Register function ---
+// export async function register(
+//   email,
+//   password,
+//   first_name,
+//   last_name,
+//   phone_number,
+// ) {
+//   const db = await getDatabase();
+
+//   const [users] = await db.query("SELECT email FROM users WHERE email = ?", [
+//     email,
+//   ]);
+//   if (users.length > 0) throw new Error("User already exists");
+
+//   await db.query(
+//     "INSERT INTO users (email, password, first_name, last_name, phone_number, user_type) VALUES (?, ?, ?, ?, ?, 'customer')",
+//     [email, password, first_name, last_name, phone_number],
+//   );
+
+//   return { message: "User created successfully" };
+// }
+
 export async function register(
   email,
   password,
@@ -55,14 +77,25 @@ export async function register(
 ) {
   const db = await getDatabase();
 
-  const [users] = await db.query("SELECT email FROM users WHERE email = ?", [
-    email,
-  ]);
+  // 1. Verificar si existe
+  const [users] = await db.query(
+    "SELECT email FROM users WHERE email = ?",
+    [email]
+  );
   if (users.length > 0) throw new Error("User already exists");
 
+  // 2. Insertar en users
+  const [result] = await db.query(
+    `INSERT INTO users 
+    (email, password, first_name, last_name, phone_number, user_type) 
+    VALUES (?, ?, ?, ?, ?, 'customer')`,
+    [email, password, first_name, last_name, phone_number]
+  );
+
+  // 🔥 3. Insertar en customers
   await db.query(
-    "INSERT INTO users (email, password, first_name, last_name, phone_number, user_type) VALUES (?, ?, ?, ?, ?, 'customer')",
-    [email, password, first_name, last_name, phone_number],
+    "INSERT INTO customers (email) VALUES (?)",
+    [email]
   );
 
   return { message: "User created successfully" };

@@ -1,17 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCart, addItem, updateQuantity } from "@/redux/cartSlice";
-import { X, CheckCircle, Search, MapPin, Clock } from "lucide-react";
+import { X, CheckCircle, MapPin, Clock } from "lucide-react";
 import { MenuCard } from "@/components/order/menu-card";
 import { CartPanel } from "@/components/order/cart-panel";
+import { MenuSearch } from "@/components/order/menu-search";
 
 function formatHour(timeStr) {
   if (!timeStr) return "";
   const [h, m] = timeStr.split(":").map(Number);
   const ampm = h >= 12 ? "PM" : "AM";
   const hour = h % 12 || 12;
-  return m === 0 ? `${hour} ${ampm}` : `${hour}:${String(m).padStart(2, "0")} ${ampm}`;
+  return m === 0
+    ? `${hour} ${ampm}`
+    : `${hour}:${String(m).padStart(2, "0")} ${ampm}`;
 }
 
 export const Route = createFileRoute("/employee/pos")({
@@ -32,7 +35,12 @@ function PosScreen() {
 
   const dispatch = useDispatch();
   const cartItems = useSelector((s) => s.cart.items);
-  const cartTotal = cartItems.reduce((sum, i) => sum + (i.quantity >= 2 ? i.price * (i.quantity - 1) : i.price * i.quantity), 0);
+  const cartTotal = cartItems.reduce(
+    (sum, i) =>
+      sum +
+      (i.quantity >= 2 ? i.price * (i.quantity - 1) : i.price * i.quantity),
+    0,
+  );
   const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
 
   // Get truck info from logged-in employee
@@ -51,7 +59,9 @@ function PosScreen() {
   // Initial load: menu + truck info + stock
   useEffect(() => {
     const stockFetch = licensePlate
-      ? fetch(`/api/pos/stock?truck=${encodeURIComponent(licensePlate)}`).then((r) => r.json())
+      ? fetch(`/api/pos/stock?truck=${encodeURIComponent(licensePlate)}`).then(
+          (r) => r.json(),
+        )
       : Promise.resolve({ insufficient: [] });
 
     Promise.all([
@@ -62,7 +72,9 @@ function PosScreen() {
       .then(([menuData, truckData, stockData]) => {
         setMenu(Array.isArray(menuData) ? menuData : []);
         if (Array.isArray(truckData) && licensePlate) {
-          setTruckInfo(truckData.find((t) => t.license_plate === licensePlate) ?? null);
+          setTruckInfo(
+            truckData.find((t) => t.license_plate === licensePlate) ?? null,
+          );
         }
         setInsufficientIds(new Set(stockData?.insufficient ?? []));
         setLoading(false);
@@ -86,14 +98,29 @@ function PosScreen() {
     });
   }, [insufficientIds]);
 
-  const grouped = menu.reduce((acc, item) => {
-    const cat = item.category_name;
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(item);
-    return acc;
-  }, {});
+  const grouped = useMemo(() => {
+    let items = menu;
 
-  const categoryOrder = ["Entrees", "Sides", "Drinks", "Appetizers", "Desserts"];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter((item) => item.item_name.toLowerCase().includes(q));
+    }
+
+    return items.reduce((acc, item) => {
+      const cat = item.category_name;
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(item);
+      return acc;
+    }, {});
+  }, [menu, searchQuery]);
+
+  const categoryOrder = [
+    "Entrees",
+    "Sides",
+    "Drinks",
+    "Appetizers",
+    "Desserts",
+  ];
   const sortedCategories = Object.keys(grouped).sort(
     (a, b) => categoryOrder.indexOf(a) - categoryOrder.indexOf(b),
   );
@@ -140,7 +167,10 @@ function PosScreen() {
       if (data.orderId) {
         dispatch(clearCart());
         setCartOpen(false);
-        setSuccessOrder({ orderId: data.orderId, orderNumber: data.orderNumber });
+        setSuccessOrder({
+          orderId: data.orderId,
+          orderNumber: data.orderNumber,
+        });
       } else {
         setError(data.error || "Something went wrong. Please try again.");
       }
@@ -157,20 +187,15 @@ function PosScreen() {
         <div className="flex gap-8">
           {/* Menu */}
           <div className="flex-1 min-w-0">
-            {/* Search */}
-            <div className="relative mb-6">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search menu items..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 text-sm border border-border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-amber-400"
-              />
-            </div>
+            <MenuSearch
+              onSearchChange={setSearchQuery}
+              placeholder="Search menu items..."
+            />
 
             {loading ? (
-              <div className="text-muted-foreground py-12 text-center">Loading menu...</div>
+              <div className="text-muted-foreground py-12 text-center">
+                Loading menu...
+              </div>
             ) : searchQuery.trim() ? (
               // Flat search results
               (() => {
@@ -179,7 +204,9 @@ function PosScreen() {
                   item.item_name.toLowerCase().includes(q),
                 );
                 return results.length === 0 ? (
-                  <p className="text-muted-foreground text-sm text-center py-12">No items match "{searchQuery}"</p>
+                  <p className="text-muted-foreground text-sm text-center py-12">
+                    No items match "{searchQuery}"
+                  </p>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {results.map((item) => (
@@ -203,7 +230,7 @@ function PosScreen() {
                     {category}
                   </h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {grouped[category].map((item) => (
+                    {grouped[category]?.map((item) => (
                       <MenuCard
                         key={item.menu_item_id}
                         item={item}
@@ -225,19 +252,23 @@ function PosScreen() {
             {/* Truck details */}
             {licensePlate && (
               <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl px-4 py-3 text-sm text-amber-800 dark:text-amber-300 space-y-1">
-                <p className="font-bold text-base tracking-wide">{licensePlate.toUpperCase()}</p>
+                <p className="font-bold text-base tracking-wide">
+                  {licensePlate.toUpperCase()}
+                </p>
                 {truckInfo?.current_location && (
                   <p className="flex items-center gap-1.5">
                     <MapPin size={13} className="shrink-0" />
                     {truckInfo.current_location}
                   </p>
                 )}
-                {truckInfo?.operating_hours_start && truckInfo?.operating_hours_end && (
-                  <p className="flex items-center gap-1.5">
-                    <Clock size={13} className="shrink-0" />
-                    {formatHour(truckInfo.operating_hours_start)} – {formatHour(truckInfo.operating_hours_end)}
-                  </p>
-                )}
+                {truckInfo?.operating_hours_start &&
+                  truckInfo?.operating_hours_end && (
+                    <p className="flex items-center gap-1.5">
+                      <Clock size={13} className="shrink-0" />
+                      {formatHour(truckInfo.operating_hours_start)} –{" "}
+                      {formatHour(truckInfo.operating_hours_end)}
+                    </p>
+                  )}
               </div>
             )}
 
@@ -252,7 +283,9 @@ function PosScreen() {
 
             {/* Payment Method */}
             <div className="bg-background rounded-xl shadow-sm border p-5">
-              <h2 className="text-sm font-semibold mb-3 text-foreground">Payment Method</h2>
+              <h2 className="text-sm font-semibold mb-3 text-foreground">
+                Payment Method
+              </h2>
               <div className="space-y-2">
                 {[
                   { value: "cash", label: "Cash" },
@@ -275,7 +308,9 @@ function PosScreen() {
                       onChange={() => setPaymentMethod(opt.value)}
                       className="accent-amber-600"
                     />
-                    <span className="text-sm font-medium text-foreground">{opt.label}</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {opt.label}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -326,7 +361,9 @@ function PosScreen() {
 
             {/* Payment method in mobile drawer */}
             <div className="mb-4">
-              <p className="text-sm font-semibold mb-2 text-foreground">Payment</p>
+              <p className="text-sm font-semibold mb-2 text-foreground">
+                Payment
+              </p>
               <div className="flex gap-2">
                 {["cash", "credit", "debit"].map((opt) => (
                   <button
@@ -367,8 +404,13 @@ function PosScreen() {
       {successOrder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-background rounded-2xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center border border-border">
-            <CheckCircle size={52} className="text-green-500 dark:text-green-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-1 text-foreground">Order Placed!</h2>
+            <CheckCircle
+              size={52}
+              className="text-green-500 dark:text-green-400 mx-auto mb-4"
+            />
+            <h2 className="text-2xl font-bold mb-1 text-foreground">
+              Order Placed!
+            </h2>
             <p className="text-5xl font-black text-amber-600 my-4">
               #{successOrder.orderNumber}
             </p>
