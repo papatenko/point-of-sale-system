@@ -1,6 +1,7 @@
-/** SQL expression for when an order was placed (scheduled_time, or parsed from ORD-<ms> order_number). */
+/** SQL expression for when an order was placed. */
 export function checkoutPlacedAtSql(alias = "c") {
   return `COALESCE(
+    ${alias}.date_created,
     ${alias}.scheduled_time,
     CASE
       WHEN ${alias}.order_number LIKE 'ORD-%' AND CHAR_LENGTH(SUBSTRING(${alias}.order_number, 5)) >= 10

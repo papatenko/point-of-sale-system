@@ -94,8 +94,8 @@ export async function createCheckout(db, body, req = null) {
   const [result] = await db.query(
     `INSERT INTO checkout
        (order_number, license_plate, customer_email, cashier_email, order_type, order_status,
-        scheduled_time, total_price, payment_method, payment_status)
-     VALUES (?, ?, ?, ?, ?, 'pending', ?, 0, ?, 'pending')`,
+        scheduled_time, date_created, total_price, payment_method, payment_status)
+     VALUES (?, ?, ?, ?, ?, 'pending', ?, NOW(), 0, ?, 'pending')`,
     [
       orderNumber,
       licensePlate,
