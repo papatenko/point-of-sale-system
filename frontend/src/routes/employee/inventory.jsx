@@ -614,6 +614,7 @@ function AddIngredientDialog({ open, onOpenChange, onConfirm, loading, available
   const [qty, setQty] = useState("0");
   const [threshold, setThreshold] = useState("");
   const [expirationDate, setExpirationDate] = useState("");
+  const [expirationTime, setExpirationTime] = useState("00:00");
 
   useEffect(() => {
     if (open) {
@@ -621,11 +622,28 @@ function AddIngredientDialog({ open, onOpenChange, onConfirm, loading, available
       setQty("0");
       setThreshold("");
       setExpirationDate("");
+      setExpirationTime("00:00");
     }
   }, [open]);
 
   const selected = availableIngredients.find((i) => String(i.ingredient_id) === ingredientId);
-  const invalid = !ingredientId || threshold === "" || parseFloat(threshold) < 0 || parseFloat(qty) < 0;
+
+  const now = new Date();
+  const todayStr = now.toISOString().split("T")[0];
+  const currentTimeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  const isToday = expirationDate === todayStr;
+
+  const expirationInPast =
+    expirationDate
+      ? new Date(`${expirationDate}T${expirationTime || "00:00"}:00`) <= now
+      : false;
+
+  const invalid =
+    !ingredientId ||
+    threshold === "" ||
+    parseFloat(threshold) < 0 ||
+    parseFloat(qty) < 0 ||
+    expirationInPast;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -692,12 +710,38 @@ function AddIngredientDialog({ open, onOpenChange, onConfirm, loading, available
           </div>
 
           <div className="grid gap-1.5">
-            <label className="text-sm font-medium">Expiration date <span className="text-muted-foreground font-normal">(optional)</span></label>
-            <Input
-              type="date"
-              value={expirationDate}
-              onChange={(e) => setExpirationDate(e.target.value)}
-            />
+            <label className="text-sm font-medium">Expiration <span className="text-muted-foreground font-normal">(optional)</span></label>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-1">
+                <span className="text-xs text-muted-foreground">Date</span>
+                <Input
+                  type="date"
+                  min={todayStr}
+                  value={expirationDate}
+                  onChange={(e) => {
+                    setExpirationDate(e.target.value);
+                    // If switching to today, clamp the time to now if it's in the past
+                    if (e.target.value === todayStr && expirationTime < currentTimeStr) {
+                      setExpirationTime(currentTimeStr);
+                    }
+                  }}
+                />
+              </div>
+              <div className="grid gap-1">
+                <span className="text-xs text-muted-foreground">Time</span>
+                <Input
+                  type="time"
+                  step="60"
+                  min={isToday ? currentTimeStr : undefined}
+                  value={expirationTime}
+                  onChange={(e) => setExpirationTime(e.target.value)}
+                  disabled={!expirationDate}
+                />
+              </div>
+            </div>
+            {expirationInPast && (
+              <p className="text-xs text-destructive mt-1">Expiration must be a future date and time.</p>
+            )}
           </div>
         </div>
 
@@ -712,7 +756,9 @@ function AddIngredientDialog({ open, onOpenChange, onConfirm, loading, available
                 ingredientId: parseInt(ingredientId, 10),
                 quantityOnHand: parseFloat(qty),
                 reorderThreshold: parseFloat(threshold),
-                expirationDate: expirationDate || null,
+                expirationDate: expirationDate
+                  ? `${expirationDate}T${expirationTime || "00:00"}:00`
+                  : null,
               })
             }
           >
