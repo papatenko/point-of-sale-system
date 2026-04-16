@@ -70,3 +70,22 @@ export function sanitizeName(name) {
   if (!name) return "";
   return name.replace(/[^a-zA-Z\s\-']/g, "");
 }
+
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MAX_LENGTH = 128;
+
+export function validatePassword(password) {
+  if (!password) return false;
+  return password.length >= PASSWORD_MIN_LENGTH && password.length <= PASSWORD_MAX_LENGTH;
+}
+
+export function getPasswordError(password) {
+  if (!password) return null;
+  if (password.length < PASSWORD_MIN_LENGTH) {
+    return `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
+  }
+  if (password.length > PASSWORD_MAX_LENGTH) {
+    return `Password must be no more than ${PASSWORD_MAX_LENGTH} characters`;
+  }
+  return null;
+}

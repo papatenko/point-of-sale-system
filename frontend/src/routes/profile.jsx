@@ -1,11 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setLogin } from "@/redux/authSlice";
 import { GENDER_OPTIONS } from "@/constants/gender";
 import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
 import { getCurrentUser, updateProfile } from "@/services/auth";
-import { PHONE_MAX_LENGTH, getPhoneError, formatPhoneNumber, normalizePhoneNumber, NAME_REGEX, sanitizeName } from "@/utils/constraints";
+import { PHONE_MAX_LENGTH, getPhoneError, formatPhoneNumber, normalizePhoneNumber, NAME_REGEX, sanitizeName, getPasswordError } from "@/utils/constraints";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -20,6 +20,7 @@ function ProfilePage() {
     gender: "",
     ethnicity: "",
     password: "",
+    default_address: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,6 +28,8 @@ function ProfilePage() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const user = useSelector((s) => s.auth.user);
+  const isCustomer = user?.user_type === "customer";
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -41,10 +44,11 @@ function ProfilePage() {
           email: data.email || "",
           first_name: data.first_name || "",
           last_name: data.last_name || "",
-          phone_number: data.phone_number || "",
+          phone_number: formatPhoneNumber(data.phone_number) || "",
           gender: data.gender || "",
           ethnicity: data.ethnicity || "",
           password: "",
+          default_address: data.default_address || "",
         });
       })
       .catch((err) => setError(err.message))
@@ -57,16 +61,14 @@ function ProfilePage() {
     setMessage(null);
     setError(null);
 
-   if (
-  formData.password &&
-  formData.password.length < 8
-) {
-  setError("Password must be at least 8 characters");
-  setSaving(false);
-  return;
-}
+   const passwordError = getPasswordError(formData.password);
+   if (passwordError) {
+     setError(passwordError);
+     setSaving(false);
+     return;
+   }
 
-const phoneError = getPhoneError(formData.phone_number);
+  const phoneError = getPhoneError(formData.phone_number);
 if (phoneError) {
   setError(phoneError);
   setSaving(false);
@@ -81,6 +83,7 @@ if (phoneError) {
         gender: formData.gender ? parseInt(formData.gender) : null,
         ethnicity: formData.ethnicity ? parseInt(formData.ethnicity) : null,
         password: formData.password || undefined,
+        default_address: isCustomer ? formData.default_address : undefined,
       });
 
       setMessage(data.message || "Profile updated successfully");
@@ -171,20 +174,6 @@ if (phoneError) {
               <label className="block text-sm font-medium text-foreground mb-1">
                 Phone Number
               </label>
-              {/* <input
-                type="tel"
-                value={formData.phone_number}
-                 onBeforeInput={(e) => {
-                  if (e.data && !/^[0-9]$/.test(e.data)) {
-                    e.preventDefault();
-                  }
-                }}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, phone_number: e.target.value }))
-                }
-                className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
-                placeholder="Optional"
-              /> */}
               <input
                 type="tel"
                 value={formData.phone_number}
@@ -200,6 +189,23 @@ if (phoneError) {
                 placeholder="Optional"
               />
             </div>
+
+            {isCustomer && (
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Default Address
+                </label>
+                <input
+                  type="text"
+                  value={formData.default_address}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, default_address: e.target.value }))
+                  }
+                  className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
+                  placeholder="Enter your default address for orders"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">

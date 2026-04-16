@@ -48,27 +48,29 @@ function IngredientsModal({ item, onClose }) {
   );
 }
 
-export function MenuCard({ item, qty, onAdd, onQty, compact = false }) {
+export function MenuCard({ item, qty, onAdd, onQty, compact = false, lowStock = false }) {
   const [showIngredients, setShowIngredients] = useState(false);
 
   return (
-    <div className="bg-background rounded-xl shadow-sm border border-border p-4 flex flex-col hover:shadow-md transition-shadow relative">
-      {qty > 0 && (
+    <div className={`bg-background rounded-xl shadow-sm border border-border p-4 flex flex-col transition-shadow relative ${lowStock ? "opacity-60" : "hover:shadow-md"}`}>
+      {!lowStock && qty > 0 ? (
         <div className="absolute top-4 right-4 bg-amber-600 dark:bg-amber-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
           {qty}
         </div>
-      )}
+      ) : null}
 
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-1 pr-8">
           <h3 className="font-semibold text-foreground">{item.item_name}</h3>
-          <button
-            onClick={() => setShowIngredients(true)}
-            title="View ingredients"
-            className="shrink-0 text-muted-foreground hover:text-amber-600 transition-colors mt-0.5"
-          >
-            <Info size={14} />
-          </button>
+          {!lowStock && (
+            <button
+              onClick={() => setShowIngredients(true)}
+              title="View ingredients"
+              className="shrink-0 text-muted-foreground hover:text-amber-600 transition-colors mt-0.5"
+            >
+              <Info size={14} />
+            </button>
+          )}
         </div>
         {!compact && item.image_url && (
           <img
@@ -98,21 +100,27 @@ export function MenuCard({ item, qty, onAdd, onQty, compact = false }) {
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-3 mt-2">
-        <button
-          onClick={() => onQty(qty - 1)}
-          className="w-full h-14 rounded-xl border border-input hover:bg-muted flex items-center justify-center transition-colors"
-        >
-          <Minus size={18} />
-        </button>
+      {lowStock ? (
+        <div className="mt-2 h-14 flex items-center justify-center rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-sm font-semibold">
+          Low Ingredients
+        </div>
+      ) : (
+        <div className="flex items-center justify-center gap-3 mt-2">
+          <button
+            onClick={() => onQty(qty - 1)}
+            className="w-full h-14 rounded-xl border border-input hover:bg-muted flex items-center justify-center transition-colors"
+          >
+            <Minus size={18} />
+          </button>
 
-        <button
-          onClick={() => (qty > 0 ? onQty(qty + 1) : onAdd())}
-          className="w-full h-14 rounded-xl bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white flex items-center justify-center transition-colors shadow-sm"
-        >
-          <Plus size={18} />
-        </button>
-      </div>
+          <button
+            onClick={() => (qty > 0 ? onQty(qty + 1) : onAdd())}
+            className="w-full h-14 rounded-xl bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white flex items-center justify-center transition-colors shadow-sm"
+          >
+            <Plus size={18} />
+          </button>
+        </div>
+      )}
 
       {showIngredients && (
         <IngredientsModal item={item} onClose={() => setShowIngredients(false)} />

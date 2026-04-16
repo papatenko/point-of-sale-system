@@ -1769,6 +1769,10 @@ function InventoryPage() {
                                 label: "Restock",
                                 cls: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300",
                               },
+                              "order-cancel": {
+                                label: "Restock",
+                                cls: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300",
+                              },
                               correction: {
                                 label: "Correction",
                                 cls: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300",

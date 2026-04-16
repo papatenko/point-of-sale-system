@@ -1,6 +1,7 @@
 export async function findAll(db) {
   const [rows] = await db.query(`
     SELECT c.*, u.first_name, u.last_name, u.email as user_email,
+           u.phone_number,
            g.gender AS gender_name, r.race AS ethnicity_name
     FROM customers c
     JOIN users u ON c.email = u.email

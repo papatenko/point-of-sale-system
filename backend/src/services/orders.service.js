@@ -118,7 +118,19 @@ export async function listOrders(db, req, url) {
                                WHERE oi2.order_id = c.checkout_id
                                  AND (ti.quantity_on_hand IS NULL
                                       OR ti.quantity_on_hand < ri.quantity_needed * oi2.quantity)
-                              ) AS inventory_warning
+                              ) AS inventory_warning,
+                              (SELECT GROUP_CONCAT(DISTINCT mi3.item_name ORDER BY mi3.item_name SEPARATOR ' | ')
+                               FROM order_items oi3
+                               JOIN recipe_ingredient ri3 ON ri3.menu_item_id = oi3.menu_item_id
+                               LEFT JOIN truck_inventory ti3
+                                      ON ti3.ingredient_id = ri3.ingredient_id
+                                     AND ti3.license_plate = c.license_plate
+                               JOIN menu_items mi3 ON mi3.menu_item_id = oi3.menu_item_id
+                               WHERE oi3.order_id = c.checkout_id
+                                 AND ti3.expiration_date IS NOT NULL
+                                 AND ti3.expiration_date <= NOW()
+                                 AND ti3.quantity_on_hand > 0
+                              ) AS expired_warning
                        FROM checkout c
                        LEFT JOIN order_items oi ON oi.order_id = c.checkout_id
                        LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
@@ -153,7 +165,19 @@ export async function listOrders(db, req, url) {
                              WHERE oi2.order_id = c.checkout_id
                                AND (ti.quantity_on_hand IS NULL
                                     OR ti.quantity_on_hand < ri.quantity_needed * oi2.quantity)
-                            ) AS inventory_warning
+                            ) AS inventory_warning,
+                            (SELECT GROUP_CONCAT(DISTINCT mi3.item_name ORDER BY mi3.item_name SEPARATOR ' | ')
+                             FROM order_items oi3
+                             JOIN recipe_ingredient ri3 ON ri3.menu_item_id = oi3.menu_item_id
+                             LEFT JOIN truck_inventory ti3
+                                    ON ti3.ingredient_id = ri3.ingredient_id
+                                   AND ti3.license_plate = c.license_plate
+                             JOIN menu_items mi3 ON mi3.menu_item_id = oi3.menu_item_id
+                             WHERE oi3.order_id = c.checkout_id
+                               AND ti3.expiration_date IS NOT NULL
+                               AND ti3.expiration_date <= NOW()
+                               AND ti3.quantity_on_hand > 0
+                            ) AS expired_warning
                      FROM checkout c
                      LEFT JOIN order_items oi ON oi.order_id = c.checkout_id
                      LEFT JOIN menu_items mi ON mi.menu_item_id = oi.menu_item_id
@@ -246,13 +270,16 @@ export async function updateOrderStatus(db, orderId, newStatus, req = null, canc
     }
   }
 
-  // Restore inventory and log adjustments if cancelling a preparing or ready order
+  // Restore inventory and log adjustments if cancelling a preparing order
   if (newStatus === "cancelled") {
     const [[current]] = await db.query(
       `SELECT order_status, license_plate FROM checkout WHERE checkout_id = ?`,
       [orderId],
     );
-    if (current && ["preparing", "ready"].includes(current.order_status)) {
+    if (current && current.order_status === "ready") {
+      throw new Error("Ready orders cannot be cancelled.");
+    }
+    if (current && current.order_status === "preparing") {
       // Fetch per-ingredient restore amounts
       const [ingredients] = await db.query(
         `SELECT ri.ingredient_id,

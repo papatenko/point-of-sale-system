@@ -16,10 +16,12 @@ export async function getMyProfile(req, db) {
   const [[row]] = await db.query(
     `
     SELECT u.email, u.first_name, u.last_name, u.phone_number, u.gender, u.ethnicity,
-           g.gender AS gender_name, r.race AS race_name
+           g.gender AS gender_name, r.race AS race_name,
+           c.default_address
     FROM users u
     LEFT JOIN gender_lookup g ON u.gender = g.gender_id
     LEFT JOIN race_lookup r ON u.ethnicity = r.race_id
+    LEFT JOIN customers c ON u.email = c.email
     WHERE u.email = ?`,
     [email],
   );
@@ -32,7 +34,7 @@ export async function updateMyProfile(req, body, db) {
   const email = getAuthEmail(req);
   if (!email) return { error: "Unauthorized" };
 
-  const { first_name, last_name, phone_number, gender, ethnicity, password } =
+  const { first_name, last_name, phone_number, gender, ethnicity, password, default_address } =
     body || {};
   if (!first_name || !last_name)
     return { error: "first_name and last_name are required" };
@@ -74,6 +76,13 @@ export async function updateMyProfile(req, body, db) {
         Number.isNaN(e) ? null : e,
         email,
       ],
+    );
+  }
+
+  if (default_address !== undefined) {
+    await db.query(
+      "UPDATE customers SET default_address = ? WHERE email = ?",
+      [default_address || null, email],
     );
   }
 
