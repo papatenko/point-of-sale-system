@@ -80,6 +80,7 @@ function OrderPage() {
             {/* <SearchPage tabla="menu_items" /> */}
             <SearchPage
               tabla="menu_items"
+              placeholder="Search menu..."
               onSelect={(items) => {
               if (!items || items.length === 0) {
                 setFilteredItems(null);
@@ -100,7 +101,7 @@ function OrderPage() {
             }}
                   />
             <p className="text-muted-foreground mb-8">
-              Order online for pickup — fresh and made to order.
+              Order online for pickup, fresh and made to order.
             </p>
 
             {loading ? (

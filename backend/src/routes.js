@@ -114,6 +114,17 @@ router.delete("/api/suppliers", async (body, db) => {
 router.get("/api/menu", async (_, db) =>
   MenuItemService.getAvailableMenuItems(db),
 );
+router.get("/api/menu/:id/ingredients", async (_, db, _req, _url, params) => {
+  const [rows] = await db.query(
+    `SELECT i.ingredient_name
+     FROM recipe_ingredient ri
+     JOIN ingredients i ON i.ingredient_id = ri.ingredient_id
+     WHERE ri.menu_item_id = ?
+     ORDER BY i.ingredient_name`,
+    [params.id],
+  );
+  return rows;
+});
 router.get("/api/menu-items", async (_, db) =>
   MenuItemService.getAllMenuItemsWithRecipes(db),
 );
