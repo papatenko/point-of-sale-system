@@ -1,6 +1,7 @@
-/** SQL expression for when an order was placed (scheduled_time, or parsed from ORD-<ms> order_number). */
+/** SQL expression for when an order was placed. */
 export function checkoutPlacedAtSql(alias = "c") {
   return `COALESCE(
+    ${alias}.date_created,
     ${alias}.scheduled_time,
     CASE
       WHEN ${alias}.order_number LIKE 'ORD-%' AND CHAR_LENGTH(SUBSTRING(${alias}.order_number, 5)) >= 10
@@ -572,6 +573,8 @@ export async function getReportStats(db, url) {
     detailIngredients,
     detailOrders,
     detailOrderLineItems,
+    detailGrossIncomeOrders,
+    grossIncomeByMonthRows,
   ] = await Promise.all([
     hasCheckoutBackedUserFilter
       ? db.query(
@@ -719,6 +722,47 @@ export async function getReportStats(db, url) {
     `,
       checkoutWhereC.params,
     ),
+    db.query(
+      `
+      SELECT
+        c.checkout_id AS checkoutId,
+        c.order_number AS orderNumber,
+        ${placedSelect} AS orderPlacedAt,
+        c.order_type AS orderType,
+        c.license_plate AS licensePlate,
+        ft.truck_name AS truckName,
+        c.customer_email AS customerEmail,
+        CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) AS customerName,
+        c.order_status AS orderStatus,
+        c.payment_status AS paymentStatus,
+        c.payment_method AS paymentMethod,
+        c.total_price AS totalPrice
+      FROM checkout c
+      LEFT JOIN food_trucks ft ON ft.license_plate = c.license_plate
+      LEFT JOIN users u ON u.email = c.customer_email
+      ${checkoutWhereC.sql}
+      ORDER BY c.checkout_id DESC
+    `,
+      checkoutWhereC.params,
+    ),
+    db.query(
+      `
+      SELECT
+        DATE_FORMAT(${placedSelect}, '%Y-%m') AS monthKey,
+        DATE_FORMAT(${placedSelect}, '%b %Y') AS monthLabel,
+        COUNT(*) AS orderCount,
+        COALESCE(SUM(c.total_price), 0) AS grossIncome
+      FROM checkout c
+      ${checkoutWhereC.sql}
+      ${checkoutWhereC.sql ? "AND" : "WHERE"} c.order_status <> 'cancelled'
+      AND c.payment_status <> 'refunded'
+      AND ${placedSelect} IS NOT NULL
+      GROUP BY DATE_FORMAT(${placedSelect}, '%Y-%m'), DATE_FORMAT(${placedSelect}, '%b %Y')
+      ORDER BY monthKey ASC
+      LIMIT ${REPORT_DETAIL_ROW_LIMIT}
+    `,
+      checkoutWhereC.params,
+    ),
   ]).then((results) => results.map((r) => r[0]));
 
   const reportDetails = {
@@ -770,6 +814,27 @@ export async function getReportStats(db, url) {
       menuCategoryName: r.menuCategoryName,
       quantity: Number(r.quantity) || 0,
       lineTotalPrice: Number(r.lineTotalPrice),
+    })),
+    grossIncomeOrders: detailGrossIncomeOrders.map((r) => ({
+      checkoutId: Number(r.checkoutId),
+      orderNumber: r.orderNumber,
+      orderPlacedAt: r.orderPlacedAt,
+      orderType: r.orderType,
+      orderTypeLabel: orderTypeLabel(r.orderType),
+      licensePlate: r.licensePlate,
+      truckName: r.truckName ?? null,
+      customerEmail: r.customerEmail ?? null,
+      customerName: String(r.customerName || "").trim() || null,
+      orderStatus: r.orderStatus,
+      paymentStatus: r.paymentStatus,
+      paymentMethod: r.paymentMethod,
+      totalPrice: Number(r.totalPrice),
+    })),
+    grossIncomeByMonth: grossIncomeByMonthRows.map((r) => ({
+      monthKey: r.monthKey,
+      monthLabel: r.monthLabel,
+      orderCount: Number(r.orderCount) || 0,
+      grossIncome: Number(r.grossIncome) || 0,
     })),
   };
 

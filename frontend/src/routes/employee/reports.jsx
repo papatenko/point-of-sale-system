@@ -638,6 +638,71 @@ function RouteComponent() {
     );
   }, [stats, detailLimit]);
 
+  const grossIncomeByMonthChartData = useMemo(() => {
+    const rows = stats?.reportDetails?.grossIncomeByMonth ?? [];
+    return rows
+      .map((r) => ({
+        name: r.monthLabel || r.monthKey,
+        value: Number(r.grossIncome) || 0,
+        orderCount: Number(r.orderCount) || 0,
+      }))
+      .filter((r) => r.value > 0);
+  }, [stats]);
+
+  const grossIncomeOrdersDetailTable = useMemo(() => {
+    const rows = stats?.reportDetails?.grossIncomeOrders ?? [];
+    if (rows.length === 0) {
+      return (
+        <ReportDetailTableWrap title="Orders included in report">
+          <p className="p-4 text-sm text-muted-foreground">
+            No orders for the current filters.
+          </p>
+        </ReportDetailTableWrap>
+      );
+    }
+    return (
+      <ReportDetailTableWrap title="Orders included in report">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Placed</TableHead>
+              <TableHead>Order #</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Truck</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Payment</TableHead>
+              <TableHead>Total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.checkoutId}>
+                <TableCell className="whitespace-nowrap">{formatDateTime(r.orderPlacedAt)}</TableCell>
+                <TableCell>{r.orderNumber}</TableCell>
+                <TableCell>{r.orderTypeLabel || r.orderType}</TableCell>
+                <TableCell className="whitespace-normal">
+                  {(r.truckName || "").trim() || r.licensePlate}
+                  {r.licensePlate ? (
+                    <span className="text-muted-foreground"> ({r.licensePlate})</span>
+                  ) : null}
+                </TableCell>
+                <TableCell className="whitespace-normal max-w-[200px]">
+                  {r.customerName || r.customerEmail || "—"}
+                </TableCell>
+                <TableCell>{r.orderStatus}</TableCell>
+                <TableCell>
+                  {r.paymentStatus} / {r.paymentMethod}
+                </TableCell>
+                <TableCell>${moneyCell(r.totalPrice)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </ReportDetailTableWrap>
+    );
+  }, [stats]);
+
   return (
     <div className="p-5 max-w-5xl">
       <h1 className="text-lg font-semibold">Reports Dashboard</h1>
@@ -731,10 +796,7 @@ function RouteComponent() {
 
         <Card className="border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Filters</CardTitle>
-            <CardDescription>
-              Combine filters to narrow the report view quickly.
-            </CardDescription>
+            <CardTitle className="text-sm">Filters</CardTitle>    
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
             <div className="grid min-w-[260px] gap-1.5">
@@ -796,13 +858,6 @@ function RouteComponent() {
           <Card className="border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Order date range</CardTitle>
-              <CardDescription>
-                Filters order-based charts (orders, revenue, items sold, order
-                type, truck order counts). When you filter{" "}
-                <strong>Users by ethnicity</strong> by truck, this range also
-                limits which checkouts count for that breakdown. Catalog totals
-                stay all-time.
-              </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap items-end gap-3">
               <div className="grid gap-1.5">
@@ -959,22 +1014,16 @@ function RouteComponent() {
         )}
 
         {activeReport === "totalMoneyMade" && (
-          <Card className="mt-4">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Total money made</CardTitle>
-              <CardDescription>
-                Gross income from non-cancelled and non-refunded orders.
-                {orderFilterActive
-                  ? " Amount only includes orders in the selected date range."
-                  : ""}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-semibold">
-                ${stats != null ? money(stats.grossIncome) : "—"}
-              </p>
-            </CardContent>
-          </Card>
+          <ReportBarChartCard
+            title="Total money made (by month)"
+            total={stats != null ? `$${money(stats.grossIncome)}` : "—"}
+            summary={`Gross income from non-cancelled and non-refunded orders, grouped by month.${orderFilterActive ? " Includes only the selected date range." : ""}`}
+            chartData={grossIncomeByMonthChartData}
+            valueLabel="Gross income ($)"
+            emptyMessage="No revenue data for the current filters."
+            yAxisWidth={110}
+            detail={grossIncomeOrdersDetailTable}
+          />
         )}
 
         {activeReport === "orderFinalStatus" && (

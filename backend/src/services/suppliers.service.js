@@ -5,7 +5,7 @@ export async function getAllSuppliers(db) {
 }
 
 export async function createSupplier(db, data) {
-  const { supplier_name, contact_person, email, phone_number, address } = data;
+  const { supplier_name, contact_person, email, phone_number, address, is_reliable_supplier } = data;
 
   if (!supplier_name) {
     return {
@@ -13,7 +13,14 @@ export async function createSupplier(db, data) {
     };
   }
 
-  const result = await SupplierModel.create(db, { supplier_name, contact_person, email, phone_number, address });
+  const result = await SupplierModel.create(db, { 
+    supplier_name, 
+    contact_person, 
+    email, 
+    phone_number, 
+    address,
+    is_reliable_supplier,
+  });
 
   return {
     success: true,
@@ -40,7 +47,7 @@ export async function deleteSupplier(db, supplier_id) {
 }
 
 export async function updateSupplier(db, data) {
-  const { supplier_id, supplier_name, contact_person, email, phone_number, address } = data;
+  const { supplier_id, supplier_name, contact_person, email, phone_number, address, is_reliable_supplier } = data;
 
   if (!supplier_id) {
     return { error: "supplier_id is required" };
@@ -52,6 +59,7 @@ export async function updateSupplier(db, data) {
     email,
     phone_number,
     address,
+    is_reliable_supplier,
   });
 
   if (result.affectedRows === 0) {
