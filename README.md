@@ -65,8 +65,7 @@ Shako Kabob is a full-stack Point of Sale (POS) system built for a food truck op
 │
 ├── db/                   # Database scripts
 │   ├── db.sql            # Full schema (tables, triggers, constraints)
-│   ├── PoS_System_dump.sql # Full data dump with sample data
-│   └── seed_menu.sql     # Minimal seed (truck + menu items)
+│   └── PoS_System_dump.sql # Full data dump with sample data
 │
 ├── .github/workflows/     # CI/CD
 │   └── deploy.yml        # Triggers Coolify redeploy on push to main
