@@ -53,6 +53,7 @@ const CHART_COLORS = [
   "#c2410c",
   "#7c3aed",
 ];
+const ORDER_DATE_RANGE_ERROR = "Start date must be on or before end date.";
 
 /** Build { name, value }[] for horizontal bar charts; optional extra rows (e.g. uncategorized). */
 function buildChartRows(
@@ -296,7 +297,7 @@ function RouteComponent() {
       return;
     }
     if (pendingStart > pendingEnd) {
-      setError("Start date must be on or before end date.");
+      setError("Start date must be on or before end date bum");
       return;
     }
     setError(null);
@@ -707,7 +708,7 @@ function RouteComponent() {
     <div className="p-5 max-w-5xl">
       <h1 className="text-lg font-semibold">Reports Dashboard</h1>
 
-      {error && (
+      {error && error !== ORDER_DATE_RANGE_ERROR && (
         <p className="mt-3 text-sm text-destructive">{error}</p>
       )}
       {loading && <p className="mt-3 text-sm text-muted-foreground">Loading…</p>}
@@ -858,6 +859,9 @@ function RouteComponent() {
           <Card className="border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Order date range</CardTitle>
+              {error === ORDER_DATE_RANGE_ERROR && (
+                <p className="mt-2 text-sm text-destructive">{error}</p>
+              )}
             </CardHeader>
             <CardContent className="flex flex-wrap items-end gap-3">
               <div className="grid gap-1.5">
