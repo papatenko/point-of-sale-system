@@ -180,11 +180,11 @@ export async function getAlerts(db, url) {
 }
 
 export async function getHistory(db, url) {
-  const { licensePlate, limit = "50" } = InventoryModel.parseParams(url);
+  const { licensePlate } = InventoryModel.parseParams(url);
   if (!licensePlate) {
     throw new Error("licensePlate query param required");
   }
-  return await InventoryModel.findHistoryByLicensePlate(db, licensePlate, limit);
+  return await InventoryModel.findHistoryByLicensePlate(db, licensePlate);
 }
 
 export async function getTodaysSales(db, url) {

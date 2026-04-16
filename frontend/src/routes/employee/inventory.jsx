@@ -427,6 +427,7 @@ function ExpireDialog({
   expiredItems,
   onConfirm,
   loading,
+  truckName,
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -437,8 +438,14 @@ function ExpireDialog({
             Expire Outdated Inventory
           </DialogTitle>
           <DialogDescription>
-            The following items have passed their expiration date. Their
-            quantities will be set to 0 and logged as waste.
+            {truckName ? (
+              <>
+                <span className="font-medium text-foreground">{truckName}</span>
+                {" — the following items have passed their expiration date. Their quantities will be set to 0 and logged as waste."}
+              </>
+            ) : (
+              "The following items have passed their expiration date. Their quantities will be set to 0 and logged as waste."
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -789,6 +796,27 @@ function ReorderDialog({ item, open, onOpenChange, onConfirm, loading, suppliers
               </SelectContent>
             </Select>
           </div>
+          {(() => {
+            const sel = suppliers.find((s) => String(s.supplier_id) === supplierId);
+            if (!sel) return null;
+            const rows = [
+              { label: "Contact", val: sel.contact_person },
+              { label: "Email", val: sel.email },
+              { label: "Phone", val: sel.phone_number },
+              { label: "Address", val: sel.address },
+            ].filter((r) => r.val);
+            if (rows.length === 0) return null;
+            return (
+              <div className="rounded-lg border bg-muted/40 divide-y text-sm">
+                {rows.map(({ label, val }) => (
+                  <div key={label} className="flex items-start justify-between px-3 py-2">
+                    <span className="text-muted-foreground shrink-0 mr-4">{label}</span>
+                    <span className="text-right break-all">{val}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
           <div className="grid gap-1.5">
             <label className="text-sm font-medium">
               Quantity to order ({item?.unitOfMeasure})
@@ -827,9 +855,11 @@ function InventoryPage() {
   const [trucks, setTrucks] = useState([]);
   const [selectedTruck, setSelectedTruck] = useState("");
   const [inventory, setInventory] = useState([]);
+  const [inventoryTruck, setInventoryTruck] = useState("");
   const [alerts, setAlerts] = useState([]);
   const [history, setHistory] = useState([]);
   const [histSort, setHistSort] = useState({ col: "date", dir: "desc" });
+  const [histPage, setHistPage] = useState(1);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -904,6 +934,7 @@ function InventoryPage() {
           ).then((r) => r.json()),
         ]);
         setInventory(Array.isArray(inv) ? inv : []);
+        setInventoryTruck(lp);
         setAlerts(Array.isArray(alt) ? alt : []);
         setHistory(Array.isArray(hist) ? hist : []);
 
@@ -925,7 +956,11 @@ function InventoryPage() {
   );
 
   useEffect(() => {
+    setInventory([]);
+    setAlerts([]);
+    setHistory([]);
     loadData(selectedTruck);
+    setHistPage(1);
   }, [selectedTruck, loadData]);
 
   useEffect(() => {
@@ -938,23 +973,6 @@ function InventoryPage() {
       .then((data) => setAllIngredients(Array.isArray(data) ? data : []))
       .catch(() => {});
   }, []);
-
-  // Auto-detect expired items
-  useEffect(() => {
-    if (inventory.length === 0 || loading) return;
-    const expiredItems = inventory.filter((item) => {
-      if (!item.expirationDate || item.quantityOnHand <= 0) return false;
-      return new Date(item.expirationDate) < new Date();
-    });
-    if (
-      expiredItems.length > 0 &&
-      expireItems === null &&
-      hasShownWarningForTruck !== selectedTruck
-    ) {
-      setExpireItems(expiredItems);
-      setHasShownWarningForTruck(selectedTruck);
-    }
-  }, [inventory, loading, selectedTruck, expireItems, hasShownWarningForTruck]);
 
   // Fetch pending supply orders for manager/admin
   // (now also runs inside loadData; this effect keeps the count live on truck-switch)
@@ -1058,13 +1076,30 @@ function InventoryPage() {
     setModalLoading(false);
   };
 
-  const handleOpenExpire = () => {
+  const handleOpenExpire = useCallback(() => {
     const expired = inventory.filter((item) => {
       if (!item.expirationDate || item.quantityOnHand <= 0) return false;
       return new Date(item.expirationDate) < new Date();
     });
     setExpireItems(expired);
-  };
+  }, [inventory]);
+
+  // Auto-detect expired items — uses the same logic as the "Expire Outdated" button
+  useEffect(() => {
+    if (inventory.length === 0 || loading) return;
+    if (inventoryTruck !== selectedTruck) return; // guard against stale data from previous truck
+    if (hasShownWarningForTruck === selectedTruck) return;
+    const hasExpired = inventory.some(
+      (item) =>
+        item.expirationDate &&
+        item.quantityOnHand > 0 &&
+        new Date(item.expirationDate) < new Date(),
+    );
+    if (hasExpired) {
+      handleOpenExpire();
+      setHasShownWarningForTruck(selectedTruck);
+    }
+  }, [inventory, inventoryTruck, loading, selectedTruck, hasShownWarningForTruck, handleOpenExpire]);
 
   const handleConfirmExpire = async () => {
     setExpireLoading(true);
@@ -1086,7 +1121,7 @@ function InventoryPage() {
           : "No expired items found.",
       );
       setExpireItems(null);
-      setHasShownWarningForTruck(null);
+      setHasShownWarningForTruck(selectedTruck);
       loadData(selectedTruck);
     } catch (err) {
       showToast(err.message, "error");
@@ -1565,8 +1600,8 @@ function InventoryPage() {
               <CardHeader className="border-b">
                 <CardTitle className="text-base">Adjustment History</CardTitle>
                 <CardDescription>
-                  Last 50 inventory changes for this truck · click a column
-                  header to sort
+                  All inventory changes for this truck · click a column header
+                  to sort
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -1584,7 +1619,8 @@ function InventoryPage() {
                   </div>
                 ) : (
                   (() => {
-                    const toggleSort = (col) =>
+                    const toggleSort = (col) => {
+                      setHistPage(1);
                       setHistSort((prev) => ({
                         col,
                         dir:
@@ -1592,6 +1628,7 @@ function InventoryPage() {
                             ? "desc"
                             : "asc",
                       }));
+                    };
 
                     const SortHead = ({ col, children }) => {
                       const active = histSort.col === col;
@@ -1650,7 +1687,16 @@ function InventoryPage() {
                       }
                     });
 
+                    const HIST_PAGE_SIZE = 50;
+                    const totalPages = Math.max(1, Math.ceil(sortedHistory.length / HIST_PAGE_SIZE));
+                    const safePage = Math.min(histPage, totalPages);
+                    const pageSlice = sortedHistory.slice(
+                      (safePage - 1) * HIST_PAGE_SIZE,
+                      safePage * HIST_PAGE_SIZE,
+                    );
+
                     return (
+                      <>
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -1663,7 +1709,7 @@ function InventoryPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {sortedHistory.map((h) => {
+                          {pageSlice.map((h) => {
                             const typeMeta = {
                               waste: {
                                 label: "Waste",
@@ -1718,6 +1764,37 @@ function InventoryPage() {
                           })}
                         </TableBody>
                       </Table>
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between px-4 py-3 border-t text-sm text-muted-foreground">
+                          <span>
+                            Showing {(safePage - 1) * HIST_PAGE_SIZE + 1}–{Math.min(safePage * HIST_PAGE_SIZE, sortedHistory.length)} of {sortedHistory.length} records
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={safePage === 1}
+                              onClick={() => setHistPage((p) => p - 1)}
+                            >
+                              <ChevronUpIcon className="size-3.5 -rotate-90" />
+                              Prev
+                            </Button>
+                            <span className="px-2 tabular-nums">
+                              {safePage} / {totalPages}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={safePage === totalPages}
+                              onClick={() => setHistPage((p) => p + 1)}
+                            >
+                              Next
+                              <ChevronDownIcon className="size-3.5 -rotate-90" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      </>
                     );
                   })()
                 )}
@@ -1748,6 +1825,7 @@ function InventoryPage() {
         expiredItems={expireItems ?? []}
         onConfirm={handleConfirmExpire}
         loading={expireLoading}
+        truckName={selectedTruckName}
       />
 
       {/* ── Receive Shipments: list dialog → detail dialog ───── */}
