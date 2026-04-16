@@ -441,7 +441,7 @@ function RouteComponent() {
   const reportOptions = useMemo(
     () => [
       { key: "itemsSoldByCategory", label: "Items sold by menu category" },
-      { key: "totalMoneyMade", label: "Total money made" },
+      { key: "totalMoneyMade", label: "Revenue" },
       { key: "orderFinalStatus", label: "Final status of orders" },
     ],
     [],
