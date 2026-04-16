@@ -10,6 +10,7 @@ import {
   formatPhoneNumber,
   normalizePhoneNumber,
   sanitizeName,
+  getPasswordError,
 } from "@/utils/constraints";
 
 export const Route = createFileRoute("/auth/signup")({
@@ -45,8 +46,9 @@ function SignupComponent() {
     setError("");
     setLoading(true);
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+    const pwError = getPasswordError(password);
+    if (pwError) {
+      setError(pwError);
       setLoading(false);
       return;
     }

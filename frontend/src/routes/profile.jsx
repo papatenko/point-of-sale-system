@@ -5,7 +5,7 @@ import { setLogin } from "@/redux/authSlice";
 import { GENDER_OPTIONS } from "@/constants/gender";
 import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
 import { getCurrentUser, updateProfile } from "@/services/auth";
-import { PHONE_MAX_LENGTH, getPhoneError, formatPhoneNumber, normalizePhoneNumber, NAME_REGEX, sanitizeName } from "@/utils/constraints";
+import { PHONE_MAX_LENGTH, getPhoneError, formatPhoneNumber, normalizePhoneNumber, NAME_REGEX, sanitizeName, getPasswordError } from "@/utils/constraints";
 
 export const Route = createFileRoute("/profile")({
   component: ProfilePage,
@@ -57,16 +57,14 @@ function ProfilePage() {
     setMessage(null);
     setError(null);
 
-   if (
-  formData.password &&
-  formData.password.length < 8
-) {
-  setError("Password must be at least 8 characters");
-  setSaving(false);
-  return;
-}
+   const passwordError = getPasswordError(formData.password);
+   if (passwordError) {
+     setError(passwordError);
+     setSaving(false);
+     return;
+   }
 
-const phoneError = getPhoneError(formData.phone_number);
+  const phoneError = getPhoneError(formData.phone_number);
 if (phoneError) {
   setError(phoneError);
   setSaving(false);

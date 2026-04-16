@@ -13,7 +13,7 @@ import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 import { StatusFilter } from "@/components/database/status-filter";
 import { createStatusColumn } from "@/components/database/status-column.jsx";
 import { createStatusField } from "@/components/database/status-field";
-import { PHONE_MIN_LENGTH, PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
+import { PHONE_MIN_LENGTH, PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber, PASSWORD_MIN_LENGTH, getPasswordError } from "@/utils/constraints";
 
 export const Route = createFileRoute("/employee/database/users")({
   component: UsersDatabaseComponent,
@@ -138,6 +138,14 @@ function UsersDatabaseComponent() {
   const handleCreateSubmit = async (formData) => {
     setIsSubmitting(true);
     setError(null);
+
+    const pwError = getPasswordError(formData.password);
+    if (pwError) {
+      setError(pwError);
+      setIsSubmitting(false);
+      return false;
+    }
+
     const token = localStorage.getItem("token");
 
     try {
@@ -306,7 +314,7 @@ function UsersDatabaseComponent() {
     { name: "email", label: "Email", type: "email", required: true },
     { name: "first_name", label: "First Name", type: "text", required: true, sanitizeOnChange: true },
     { name: "last_name", label: "Last Name", type: "text", required: true, sanitizeOnChange: true },
-    { name: "password", label: "Password", type: "password", required: true },
+    { name: "password", label: "Password", type: "password", required: true, minLength: PASSWORD_MIN_LENGTH },
     { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
     {
       name: "role",
