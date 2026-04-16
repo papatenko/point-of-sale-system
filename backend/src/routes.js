@@ -240,6 +240,24 @@ router.post("/api/pos/checkout", async (body, db, req) =>
   CheckoutService.createCheckout(db, { ...body, orderType: "walk-in" }, req),
 );
 
+// POS stock check — returns menu_item_ids that can't be fulfilled with current truck inventory
+router.get("/api/pos/stock", async (_, db, _req, url) => {
+  const params = new URLSearchParams(url.split("?")[1]);
+  const truck = params.get("truck");
+  if (!truck) return { insufficient: [] };
+  const [rows] = await db.query(
+    `SELECT DISTINCT ri.menu_item_id
+     FROM recipe_ingredient ri
+     LEFT JOIN truck_inventory ti
+            ON ti.ingredient_id = ri.ingredient_id
+           AND ti.license_plate = ?
+     WHERE ti.quantity_on_hand IS NULL
+        OR ti.quantity_on_hand < ri.quantity_needed`,
+    [truck],
+  );
+  return { insufficient: rows.map((r) => r.menu_item_id) };
+});
+
 // Reports
 router.get("/api/reports/stats", async (_, db, _req, url) =>
   ReportModel.getReportStats(db, url),

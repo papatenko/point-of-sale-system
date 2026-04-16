@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCart, addItem, updateQuantity } from "@/redux/cartSlice";
 import { X, CheckCircle, Search, MapPin, Clock } from "lucide-react";
@@ -20,6 +20,7 @@ export const Route = createFileRoute("/employee/pos")({
 
 function PosScreen() {
   const [menu, setMenu] = useState([]);
+  const [insufficientIds, setInsufficientIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [truckInfo, setTruckInfo] = useState(null);
@@ -38,20 +39,52 @@ function PosScreen() {
   const user = useSelector((s) => s.auth.user);
   const licensePlate = user?.license_plate ?? null;
 
+  // Stock fetch — extracted so it can be called on interval too
+  const fetchStock = useCallback(() => {
+    if (!licensePlate) return;
+    fetch(`/api/pos/stock?truck=${encodeURIComponent(licensePlate)}`)
+      .then((r) => r.json())
+      .then((data) => setInsufficientIds(new Set(data?.insufficient ?? [])))
+      .catch(() => {});
+  }, [licensePlate]);
+
+  // Initial load: menu + truck info + stock
   useEffect(() => {
+    const stockFetch = licensePlate
+      ? fetch(`/api/pos/stock?truck=${encodeURIComponent(licensePlate)}`).then((r) => r.json())
+      : Promise.resolve({ insufficient: [] });
+
     Promise.all([
       fetch("/api/menu").then((r) => r.json()),
       fetch("/api/trucks").then((r) => r.json()),
+      stockFetch,
     ])
-      .then(([menuData, truckData]) => {
+      .then(([menuData, truckData, stockData]) => {
         setMenu(Array.isArray(menuData) ? menuData : []);
         if (Array.isArray(truckData) && licensePlate) {
           setTruckInfo(truckData.find((t) => t.license_plate === licensePlate) ?? null);
         }
+        setInsufficientIds(new Set(stockData?.insufficient ?? []));
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [licensePlate]);
+
+  // Re-check stock every 15s to catch real-time inventory changes
+  useEffect(() => {
+    const id = setInterval(fetchStock, 15_000);
+    return () => clearInterval(id);
+  }, [fetchStock]);
+
+  // Evict cart items that have become unavailable
+  useEffect(() => {
+    if (insufficientIds.size === 0) return;
+    cartItems.forEach((item) => {
+      if (insufficientIds.has(item.menuItemId)) {
+        dispatch(updateQuantity({ menuItemId: item.menuItemId, quantity: 0 }));
+      }
+    });
+  }, [insufficientIds]);
 
   const grouped = menu.reduce((acc, item) => {
     const cat = item.category_name;
@@ -157,6 +190,7 @@ function PosScreen() {
                         onAdd={() => handleAdd(item)}
                         onQty={(q) => handleQty(item.menu_item_id, q)}
                         compact
+                        lowStock={insufficientIds.has(item.menu_item_id)}
                       />
                     ))}
                   </div>
@@ -177,6 +211,7 @@ function PosScreen() {
                         onAdd={() => handleAdd(item)}
                         onQty={(q) => handleQty(item.menu_item_id, q)}
                         compact
+                        lowStock={insufficientIds.has(item.menu_item_id)}
                       />
                     ))}
                   </div>
