@@ -441,7 +441,7 @@ function RouteComponent() {
   const reportOptions = useMemo(
     () => [
       { key: "itemsSoldByCategory", label: "Items sold by menu category" },
-      { key: "totalMoneyMade", label: "Total money made" },
+      { key: "totalMoneyMade", label: "Revenue" },
       { key: "orderFinalStatus", label: "Final status of orders" },
     ],
     [],
@@ -1151,11 +1151,11 @@ function RouteComponent() {
 
         {activeReport === "totalMoneyMade" && (
           <ReportBarChartCard
-            title="Total money made (by month)"
+            title="Revenue by month"
             total={stats != null ? `$${money(stats.grossIncome)}` : "—"}
-            summary={`Gross income from non-cancelled and non-refunded orders, grouped by month.${orderFilterActive ? " Includes only the selected date range." : ""}`}
+            summary={`Gross income${orderFilterActive ? " Includes only the selected date range." : ""}`}
             chartData={grossIncomeByMonthChartData}
-            valueLabel="Gross income ($)"
+            valueLabel="Gross income (USD)"
             emptyMessage="No revenue data for the current filters."
             yAxisWidth={110}
             detail={
