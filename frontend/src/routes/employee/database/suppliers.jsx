@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { DataTable } from "@/components/database/data-table";
 import { AddDialog } from "@/components/database/add-dialog";
 import { EditDialog } from "@/components/common/edit-dialog";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
+import { StatusFilter } from "@/components/database/status-filter";
+import { useActiveFilter } from "@/components/database/use-active-filter";
+import { createStatusColumn } from "@/components/database/status-column.jsx";
+import { createStatusField } from "@/components/database/status-field";
 import { PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
 
 export const Route = createFileRoute("/employee/database/suppliers")({
@@ -17,6 +21,12 @@ const COLUMNS = [
   { key: "email", label: "Email" },
   { key: "phone_number", label: "Phone" },
   { key: "address", label: "Address" },
+  createStatusColumn({
+    activeKey: "is_reliable_supplier",
+    label: "Reliability",
+    activeLabel: "Reliable",
+    inactiveLabel: "Unreliable",
+  }),
 ];
 
 const CREATE_FIELDS = [
@@ -32,6 +42,25 @@ const CREATE_FIELDS = [
   { name: "address", label: "Address", type: "text" },
 ];
 
+const EDIT_FIELDS = [
+  {
+    name: "supplier_name",
+    label: "Supplier Name",
+    type: "text",
+    required: true,
+  },
+  { name: "contact_person", label: "Contact Person", type: "text" },
+  { name: "email", label: "Email", type: "email" },
+  { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
+  { name: "address", label: "Address", type: "text" },
+  createStatusField({
+    name: "is_reliable_supplier",
+    label: "Reliability",
+    activeLabel: "Reliable",
+    inactiveLabel: "Unreliable",
+  }),
+];
+
 function SuppliersDatabaseComponent() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +70,10 @@ function SuppliersDatabaseComponent() {
   const [selectedSupplier, setSelectedSupplier] = useState(null);
   const { alertConfig, showAlert, hideAlert, AlertPopupComponent } =
     useAlertPopup();
+
+  const { statusFilter, setStatusFilter, filteredData } = useActiveFilter(suppliers, {
+    activeKey: "is_reliable_supplier",
+  });
 
   const fetchSuppliers = async () => {
     try {
@@ -121,6 +154,7 @@ function SuppliersDatabaseComponent() {
           email: formData.email || null,
           phone_number: normalizePhoneNumber(formData.phone_number),
           address: formData.address || null,
+          is_reliable_supplier: formData.is_reliable_supplier === "1",
         }),
       });
       const data = await res.json();
@@ -167,9 +201,21 @@ function SuppliersDatabaseComponent() {
         />
       </div>
 
+      <div className="flex items-center gap-4 flex-wrap">
+        <StatusFilter
+          statusFilter={statusFilter}
+          onSelect={setStatusFilter}
+          label="Suppliers"
+          options={{ activeLabel: "Reliable", inactiveLabel: "Unreliable" }}
+        />
+        <span className="text-sm text-muted-foreground">
+          {filteredData.length} of {suppliers.length} suppliers
+        </span>
+      </div>
+
       <DataTable
         columns={COLUMNS}
-        data={suppliers}
+        data={filteredData}
         pageSize={10}
         searchKeys={["supplier_name", "contact_person", "email", "address"]}
         onEdit={openEditDialog}
@@ -182,7 +228,7 @@ function SuppliersDatabaseComponent() {
         onOpenChange={setEditOpen}
         mode="edit"
         title="Edit Supplier"
-        fields={CREATE_FIELDS}
+        fields={EDIT_FIELDS}
         initialData={selectedSupplier || {}}
         onSubmit={handleEditSubmit}
         onSuccess={() => {}}

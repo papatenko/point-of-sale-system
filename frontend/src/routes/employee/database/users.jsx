@@ -10,7 +10,9 @@ import { GENDER_OPTIONS } from "@/constants/gender";
 import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
 import { Users, UserCircle } from "lucide-react";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
-import { EmployeeFilter } from "@/components/common/employee-filter";
+import { StatusFilter } from "@/components/database/status-filter";
+import { createStatusColumn } from "@/components/database/status-column.jsx";
+import { createStatusField } from "@/components/database/status-field";
 import { PHONE_MIN_LENGTH, PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
 
 export const Route = createFileRoute("/employee/database/users")({
@@ -33,15 +35,7 @@ const EMPLOYEE_COLUMNS = [
   { key: "license_plate", label: "Truck" },
   { key: "gender_name", label: "Gender" },
   { key: "ethnicity_name", label: "Ethnicity" },
-  {
-    key: "is_active",
-    label: "Status",
-    render: (value) => (
-      <span className={value ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
-        {value ? "Active" : "Inactive"}
-      </span>
-    ),
-  },
+  createStatusColumn(),
 ];
 
 const CUSTOMER_COLUMNS = [
@@ -75,6 +69,8 @@ function UsersDatabaseComponent() {
   const [editOpen, setEditOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [toggleDialogOpen, setToggleDialogOpen] = useState(false);
+  const [toggleTarget, setToggleTarget] = useState(null);
   const { alertConfig, showAlert, hideAlert, AlertPopupComponent } =
     useAlertPopup();
 
@@ -291,15 +287,7 @@ function UsersDatabaseComponent() {
       type: "select",
       options: truckOptions,
     },
-    {
-      name: "is_active",
-      label: "Employment",
-      type: "select",
-      options: [
-        { value: "1", label: "Active" },
-        { value: "0", label: "Inactive" },
-      ],
-    },
+    createStatusField({ name: "is_active", label: "Employment" }),
     {
       name: "gender",
       label: "Gender",
@@ -416,9 +404,10 @@ function UsersDatabaseComponent() {
               selectedTruck={selectedTruck}
               onSelect={setSelectedTruck}
             />
-            <EmployeeFilter
+            <StatusFilter
               statusFilter={statusFilter}
               onSelect={setStatusFilter}
+              label="Employees"
             />
             <span className="text-sm text-muted-foreground">
               {filteredEmployees.length} of {employees.length} employees
