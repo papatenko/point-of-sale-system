@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCart, addItem, updateQuantity } from "@/redux/cartSlice";
-import { X, CheckCircle, Search, MapPin, Clock } from "lucide-react";
+import { X, CheckCircle, MapPin, Clock } from "lucide-react";
 import { MenuCard } from "@/components/order/menu-card";
 import { CartPanel } from "@/components/order/cart-panel";
+import { MenuSearch } from "@/components/order/menu-search";
 
 function formatHour(timeStr) {
   if (!timeStr) return "";
@@ -53,12 +54,23 @@ function PosScreen() {
       .catch(() => setLoading(false));
   }, [licensePlate]);
 
-  const grouped = menu.reduce((acc, item) => {
-    const cat = item.category_name;
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(item);
-    return acc;
-  }, {});
+  const grouped = useMemo(() => {
+    let items = menu;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter((item) =>
+        item.item_name.toLowerCase().includes(q)
+      );
+    }
+
+    return items.reduce((acc, item) => {
+      const cat = item.category_name;
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(item);
+      return acc;
+    }, {});
+  }, [menu, searchQuery]);
 
   const categoryOrder = ["Entrees", "Sides", "Drinks", "Appetizers", "Desserts"];
   const sortedCategories = Object.keys(grouped).sort(
@@ -124,44 +136,13 @@ function PosScreen() {
         <div className="flex gap-8">
           {/* Menu */}
           <div className="flex-1 min-w-0">
-            {/* Search */}
-            <div className="relative mb-6">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search menu items..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 text-sm border border-border rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-amber-400"
-              />
-            </div>
+            <MenuSearch
+              onSearchChange={setSearchQuery}
+              placeholder="Search menu items..."
+            />
 
             {loading ? (
               <div className="text-muted-foreground py-12 text-center">Loading menu...</div>
-            ) : searchQuery.trim() ? (
-              // Flat search results
-              (() => {
-                const q = searchQuery.toLowerCase();
-                const results = menu.filter((item) =>
-                  item.item_name.toLowerCase().includes(q),
-                );
-                return results.length === 0 ? (
-                  <p className="text-muted-foreground text-sm text-center py-12">No items match "{searchQuery}"</p>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {results.map((item) => (
-                      <MenuCard
-                        key={item.menu_item_id}
-                        item={item}
-                        qty={getQty(item.menu_item_id)}
-                        onAdd={() => handleAdd(item)}
-                        onQty={(q) => handleQty(item.menu_item_id, q)}
-                        compact
-                      />
-                    ))}
-                  </div>
-                );
-              })()
             ) : (
               sortedCategories.map((category) => (
                 <section key={category} className="mb-10">
@@ -169,7 +150,7 @@ function PosScreen() {
                     {category}
                   </h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {grouped[category].map((item) => (
+                    {grouped[category]?.map((item) => (
                       <MenuCard
                         key={item.menu_item_id}
                         item={item}
