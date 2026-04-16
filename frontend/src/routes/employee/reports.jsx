@@ -731,10 +731,7 @@ function RouteComponent() {
 
         <Card className="border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Filters</CardTitle>
-            <CardDescription>
-              Combine filters to narrow the report view quickly.
-            </CardDescription>
+            <CardTitle className="text-sm">Filters</CardTitle>    
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
             <div className="grid min-w-[260px] gap-1.5">
@@ -796,13 +793,6 @@ function RouteComponent() {
           <Card className="border-amber-200/70 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/25">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Order date range</CardTitle>
-              <CardDescription>
-                Filters order-based charts (orders, revenue, items sold, order
-                type, truck order counts). When you filter{" "}
-                <strong>Users by ethnicity</strong> by truck, this range also
-                limits which checkouts count for that breakdown. Catalog totals
-                stay all-time.
-              </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap items-end gap-3">
               <div className="grid gap-1.5">
