@@ -1,11 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addItem, updateQuantity } from "@/redux/cartSlice";
 import { MenuCard } from "@/components/order/menu-card";
 import { CartPanel } from "@/components/order/cart-panel";
+import { MenuSearch } from "@/components/order/menu-search";
 import { X } from "lucide-react";
-import SearchPage from "@/components/common/search";
 
 export const Route = createFileRoute("/order")({
   component: OrderPage,
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/order")({
 function OrderPage() {
   const [menu, setMenu] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -31,16 +32,23 @@ function OrderPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  const grouped = menu.reduce((acc, item) => {
-    const cat = item.category_name;
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(item);
-    return acc;
-  }, {});
+  const grouped = useMemo(() => {
+    let items = menu.filter((item) => item.is_available);
 
-  const [filteredItems, setFilteredItems] = useState(null);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter((item) =>
+        item.item_name.toLowerCase().includes(q)
+      );
+    }
 
-  const itemsToShow = filteredItems ?? menu;
+    return items.reduce((acc, item) => {
+      const cat = item.category_name;
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(item);
+      return acc;
+    }, {});
+  }, [menu, searchQuery]);
 
   const categoryOrder = [
     "Entrees",
@@ -77,29 +85,10 @@ function OrderPage() {
           {/* Menu */}
           <div className="flex-1 min-w-0">
             <h1 className="text-3xl font-bold mb-2 text-foreground">Our Menu</h1>
-            {/* <SearchPage tabla="menu_items" /> */}
-            <SearchPage
-              tabla="menu_items"
+            <MenuSearch
+              onSearchChange={setSearchQuery}
               placeholder="Search menu..."
-              onSelect={(items) => {
-              if (!items || items.length === 0) {
-                setFilteredItems(null);
-                return;
-              }
-
-              const ids = items.map((i) => i.menu_item_id);
-
-             const match = menu.filter((m) =>
-              items.some(
-                (i) =>
-                  i.item_name &&
-                  m.item_name.toLowerCase() === i.item_name.toLowerCase()
-              )
-            );
-
-              setFilteredItems(match);
-            }}
-                  />
+            />
             <p className="text-muted-foreground mb-8">
               Order online for pickup, fresh and made to order.
             </p>
@@ -108,27 +97,14 @@ function OrderPage() {
               <div className="text-muted-foreground py-12 text-center">
                 Loading menu...
               </div>
-            ) : filteredItems ? (
-            //  CUANDO HAY SEARCH → SOLO mostrar resultados
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {filteredItems.map((item) => (
-                    <MenuCard
-                      key={item.menu_item_id}
-                      item={item}
-                      qty={getQty(item.menu_item_id)}
-                      onAdd={() => handleAdd(item)}
-                      onQty={(q) => handleQty(item.menu_item_id, q)}
-                    />
-                  ))}
-                </div>
-              ) : (
+            ) : (
               sortedCategories.map((category) => (
                 <section key={category} className="mb-10">
                   <h2 className="text-lg font-semibold mb-4 pb-2 border-b border-border text-foreground">
                     {category}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {grouped[category].map((item) => (
+                    {grouped[category]?.map((item) => (
                       <MenuCard
                         key={item.menu_item_id}
                         item={item}
