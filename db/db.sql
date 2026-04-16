@@ -74,16 +74,6 @@ CREATE TABLE employees (
             ON UPDATE CASCADE
 );
 
-CREATE TABLE managers (
-    email  VARCHAR(100) NOT NULL,
-    budget DECIMAL(10,2),
-    CONSTRAINT pk_managers
-        PRIMARY KEY (email),
-    CONSTRAINT fk_managers_email
-        FOREIGN KEY (email) REFERENCES employees(email)
-            ON UPDATE CASCADE ON DELETE CASCADE
-);
-
 -- SUPPLIERS & INGREDIENTS
 
 CREATE TABLE suppliers (
