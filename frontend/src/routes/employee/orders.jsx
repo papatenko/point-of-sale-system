@@ -603,6 +603,12 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
               Low Stock: {order.inventory_warning.split(" | ").join(", ")}
             </div>
           )}
+          {!!order.expired_warning && !["completed", "cancelled"].includes(order.order_status) && (
+            <div className="flex items-center gap-1 text-red-600 text-xs font-medium bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-full px-2 py-0.5">
+              <AlertTriangle size={12} />
+              Expired Ingredients: {order.expired_warning.split(" | ").join(", ")}
+            </div>
+          )}
           <Badge
             className={`text-xs font-medium border ${STATUS_COLORS[order.order_status] ?? "bg-muted text-muted-foreground"}`}
           >
@@ -671,7 +677,7 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
           <div className="flex gap-2 mt-3 flex-wrap">
             {isPending && (
               <>
-                {!order.inventory_warning && (
+                {!order.inventory_warning && !order.expired_warning && (
                   <button
                     onClick={() => handleUpdate("preparing")}
                     disabled={updating}

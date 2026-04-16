@@ -252,7 +252,8 @@ router.get("/api/pos/stock", async (_, db, _req, url) => {
             ON ti.ingredient_id = ri.ingredient_id
            AND ti.license_plate = ?
      WHERE ti.quantity_on_hand IS NULL
-        OR ti.quantity_on_hand < ri.quantity_needed`,
+        OR ti.quantity_on_hand < ri.quantity_needed
+        OR (ti.expiration_date IS NOT NULL AND ti.expiration_date <= NOW() AND ti.quantity_on_hand > 0)`,
     [truck],
   );
   return { insufficient: rows.map((r) => r.menu_item_id) };
