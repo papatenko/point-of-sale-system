@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setLogin } from "@/redux/authSlice";
 import { GENDER_OPTIONS } from "@/constants/gender";
 import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
@@ -20,6 +20,7 @@ function ProfilePage() {
     gender: "",
     ethnicity: "",
     password: "",
+    default_address: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -27,6 +28,8 @@ function ProfilePage() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const user = useSelector((s) => s.auth.user);
+  const isCustomer = user?.user_type === "customer";
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -45,6 +48,7 @@ function ProfilePage() {
           gender: data.gender || "",
           ethnicity: data.ethnicity || "",
           password: "",
+          default_address: data.default_address || "",
         });
       })
       .catch((err) => setError(err.message))
@@ -79,6 +83,7 @@ if (phoneError) {
         gender: formData.gender ? parseInt(formData.gender) : null,
         ethnicity: formData.ethnicity ? parseInt(formData.ethnicity) : null,
         password: formData.password || undefined,
+        default_address: isCustomer ? formData.default_address : undefined,
       });
 
       setMessage(data.message || "Profile updated successfully");
@@ -184,6 +189,23 @@ if (phoneError) {
                 placeholder="Optional"
               />
             </div>
+
+            {isCustomer && (
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Default Address
+                </label>
+                <input
+                  type="text"
+                  value={formData.default_address}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, default_address: e.target.value }))
+                  }
+                  className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background text-foreground"
+                  placeholder="Enter your default address for orders"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
