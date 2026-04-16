@@ -52,7 +52,8 @@ export async function createCheckout(db, body, req = null) {
   if (scheduledTime && scheduledDate) {
     const dt = new Date(`${scheduledDate}T${scheduledTime}:00`);
     const h = dt.getHours();
-    if (h < 10 || h >= 22) {
+    const m = dt.getMinutes();
+    if (h < 10 || h > 22 || (h === 22 && m > 0)) {
       throw new Error("Scheduled time must be between 10:00 AM and 10:00 PM.");
     }
     scheduledMysql = `${scheduledDate} ${scheduledTime}:00`;
