@@ -29,10 +29,8 @@ import {
   ChevronUp,
   Plus,
   Pencil,
-  Trash2,
   X,
   Utensils,
-  AlertTriangle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/employee/database/menu_items")({
@@ -98,7 +96,6 @@ function MenuItemsDatabaseComponent() {
   const [expandedRecipes, setExpandedRecipes] = useState({});
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [pendingRecipeIngredients, setPendingRecipeIngredients] = useState([]);
   const [editForm, setEditForm] = useState({});
@@ -151,11 +148,6 @@ function MenuItemsDatabaseComponent() {
       is_available: item.is_available ? "true" : "false",
     });
     setEditOpen(true);
-  };
-
-  const openDeleteDialog = (item) => {
-    setSelectedItem(item);
-    setDeleteOpen(true);
   };
 
   const handleCreateSubmit = async (e) => {
@@ -233,26 +225,6 @@ function MenuItemsDatabaseComponent() {
         variant: "error",
       });
       return false;
-    }
-  };
-
-  const handleDelete = async () => {
-    const res = await fetch("/api/menu-items", {
-      method: "DELETE",
-      headers: authHeaders(),
-      body: JSON.stringify({ menu_item_id: selectedItem.menu_item_id }),
-    });
-
-    if (res.ok) {
-      setDeleteOpen(false);
-      fetchMenuItems();
-    } else {
-      const data = await res.json();
-      showAlert({
-        title: "Error Deleting Menu Item",
-        description: data.error || "Failed to delete menu item",
-        variant: "error",
-      });
     }
   };
 
@@ -458,7 +430,7 @@ function MenuItemsDatabaseComponent() {
           No menu items found. Add one to get started.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filteredMenuItems.map((item) => (
             <Card key={item.menu_item_id} className="flex flex-col">
               <CardContent className="p-0 flex flex-col flex-1">
@@ -506,22 +478,31 @@ function MenuItemsDatabaseComponent() {
                   )}
 
                   <div className="mt-auto space-y-2">
-                    <button
-                      type="button"
-                      onClick={() => toggleRecipes(item.menu_item_id)}
-                      className="flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium transition-colors"
-                    >
-                      <Utensils className="size-3.5" />
-                      Recipes
-                      <span className="text-xs bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded-full">
-                        {item.recipes?.length || 0}
-                      </span>
-                      {expandedRecipes[item.menu_item_id] ? (
-                        <ChevronUp className="size-3.5 ml-auto" />
-                      ) : (
-                        <ChevronDown className="size-3.5 ml-auto" />
-                      )}
-                    </button>
+                    <div className="flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => toggleRecipes(item.menu_item_id)}
+                        className="flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium transition-colors"
+                      >
+                        <Utensils className="size-3.5" />
+                        Recipes
+                        <span className="text-xs bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded-full">
+                          {item.recipes?.length || 0}
+                        </span>
+                        {expandedRecipes[item.menu_item_id] ? (
+                          <ChevronUp className="size-3.5 ml-1" />
+                        ) : (
+                          <ChevronDown className="size-3.5 ml-1" />
+                        )}
+                      </button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditDialog(item)}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                    </div>
 
                     {expandedRecipes[item.menu_item_id] && (
                       <div className="space-y-2 border rounded-lg p-3 bg-muted/30 text-sm">
@@ -546,25 +527,25 @@ function MenuItemsDatabaseComponent() {
                                     )}
                                   </div>
                                 </div>
-                                <button
-                                  type="button"
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
                                   onClick={() => {
                                     setDeleteRecipeId(r.recipe_id);
                                     setDeleteRecipeOpen(true);
                                   }}
-                                  className="shrink-0 text-muted-foreground hover:text-destructive transition-colors p-0.5"
                                   title="Remove ingredient"
                                 >
                                   <X className="size-3" />
-                                </button>
-                                <button
-                                  type="button"
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon-xs"
                                   onClick={() => openEditRecipeDialog(r)}
-                                  className="shrink-0 text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400 transition-colors p-0.5"
                                   title="Edit ingredient"
                                 >
                                   <Pencil className="size-3" />
-                                </button>
+                                </Button>
                               </div>
                             ))}
                           </div>
@@ -582,27 +563,6 @@ function MenuItemsDatabaseComponent() {
                         />
                       </div>
                     )}
-
-                    <div className="flex gap-2 pt-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => openEditDialog(item)}
-                      >
-                        <Pencil className="size-3.5 mr-1" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => openDeleteDialog(item)}
-                      >
-                        <Trash2 className="size-3.5 mr-1" />
-                        Delete
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -703,15 +663,16 @@ function MenuItemsDatabaseComponent() {
                         {r.instructions}
                       </span>
                     )}
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
                       onClick={() =>
                         handleRemovePendingRecipeIngredient(r.ingredient_id)
                       }
-                      className="text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                      title="Remove ingredient"
                     >
                       <X className="size-3.5" />
-                    </button>
+                    </Button>
                   </div>
                 ))}
                 {pendingRecipeIngredients.length === 0 && (
@@ -760,43 +721,6 @@ function MenuItemsDatabaseComponent() {
         isSubmitting={false}
         submitLabel="Save Changes"
       />
-
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="size-5 text-amber-500" />
-              Confirm Deletion
-            </DialogTitle>
-            <DialogDescription />
-          </DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm">
-              Are you sure you want to delete{" "}
-              <strong>"{selectedItem?.item_name}"</strong>?
-            </p>
-            {selectedItem?.recipes && selectedItem.recipes.length > 0 && (
-              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-sm">
-                <AlertTriangle className="size-4 text-amber-500 mt-0.5 shrink-0" />
-                <p className="text-amber-800 dark:text-amber-300">
-                  This will also permanently remove{" "}
-                  <strong>{selectedItem.recipes.length}</strong> associated
-                  recipe
-                  {selectedItem.recipes.length !== 1 ? "s" : ""}.
-                </p>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={editRecipeOpen} onOpenChange={setEditRecipeOpen}>
         <DialogContent className="max-w-md">
