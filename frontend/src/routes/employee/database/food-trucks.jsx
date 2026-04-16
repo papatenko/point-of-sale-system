@@ -157,38 +157,6 @@ function FoodTrucksDatabaseComponent() {
     }
   };
 
-  const handleDelete = async (licensePlate) => {
-    const token = localStorage.getItem("token");
-
-    try {
-      const res = await fetch("/api/trucks", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ license_plate: licensePlate }),
-      });
-
-      if (res.ok) {
-        fetchTrucks();
-      } else {
-        const data = await res.json();
-        showAlert({
-          title: "Error Deleting Truck",
-          description: data.error || "Failed to delete truck",
-          variant: "error",
-        });
-      }
-    } catch {
-      showAlert({
-        title: "Error",
-        description: "Failed to delete truck",
-        variant: "error",
-      });
-    }
-  };
-
   return (
     <div className="p-6 space-y-6 w-full">
       <AlertPopupComponent />
@@ -213,8 +181,6 @@ function FoodTrucksDatabaseComponent() {
         data={trucks}
         pageSize={10}
         searchKeys={["truck_name", "license_plate", "current_location"]}
-        deleteIdKey="license_plate"
-        onDelete={handleDelete}
         onEdit={openEditDialog}
         loading={loading}
         emptyMessage="No trucks found"

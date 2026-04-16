@@ -6,18 +6,9 @@ import { AddDialog } from "@/components/database/add-dialog";
 import { EditDialog } from "@/components/common/edit-dialog";
 import { TruckFilter } from "@/components/common/truck-filter";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { GENDER_OPTIONS } from "@/constants/gender";
 import { ETHNICITY_OPTIONS } from "@/constants/ethnicity";
-import { Users, UserCircle, AlertTriangle } from "lucide-react";
+import { Users, UserCircle } from "lucide-react";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 import { EmployeeFilter } from "@/components/common/employee-filter";
 import { PHONE_MIN_LENGTH, PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
@@ -81,10 +72,6 @@ function UsersDatabaseComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("employees");
-  const [deleteCustomerOpen, setDeleteCustomerOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [deleteEmployeeOpen, setDeleteEmployeeOpen] = useState(false);
-  const [deleteEmployeeEmail, setDeleteEmployeeEmail] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -214,50 +201,6 @@ function UsersDatabaseComponent() {
   const confirmDeleteEmployee = (email) => {
     setDeleteEmployeeEmail(email);
     setDeleteEmployeeOpen(true);
-  };
-
-  const handleDeleteEmployee = async () => {
-    const res = await fetch("/api/employees", {
-      method: "DELETE",
-      headers: authHeaders(),
-      body: JSON.stringify({ email: deleteEmployeeEmail }),
-    });
-
-    if (res.ok) {
-      setDeleteEmployeeOpen(false);
-      setDeleteEmployeeEmail(null);
-      fetchEmployees();
-    } else {
-      const data = await res.json();
-      showAlert({
-        title: "Error Deleting Employee",
-        description: data.error || "Failed to delete employee",
-        variant: "error",
-      });
-    }
-  };
-
-  const handleDeleteCustomer = async () => {
-    if (!selectedCustomer) return;
-
-    const res = await fetch("/api/customers", {
-      method: "DELETE",
-      headers: authHeaders(),
-      body: JSON.stringify({ email: selectedCustomer.email }),
-    });
-
-    if (res.ok) {
-      setDeleteCustomerOpen(false);
-      setSelectedCustomer(null);
-      fetchCustomers();
-    } else {
-      const data = await res.json();
-      showAlert({
-        title: "Error Deleting Customer",
-        description: data.error || "Failed to delete customer",
-        variant: "error",
-      });
-    }
   };
 
   const openEditDialog = (employee) => {
@@ -495,8 +438,6 @@ function UsersDatabaseComponent() {
               "gender_name",
               "ethnicity_name",
             ]}
-            deleteIdKey="email"
-            onDelete={confirmDeleteEmployee}
             onEdit={openEditDialog}
             loading={loading}
             emptyMessage="No employees found"
@@ -517,47 +458,11 @@ function UsersDatabaseComponent() {
               "gender_name",
               "ethnicity_name",
             ]}
-            deleteIdKey="email"
-            onDelete={(email) => {
-              const c = customers.find((x) => x.email === email);
-              setSelectedCustomer(c || null);
-              setDeleteCustomerOpen(true);
-            }}
             loading={loading}
             emptyMessage="No customers found"
           />
         </TabsContent>
       </Tabs>
-
-      <Dialog open={deleteCustomerOpen} onOpenChange={setDeleteCustomerOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="size-5 text-amber-500" />
-              Delete Customer
-            </DialogTitle>
-            <DialogDescription />
-          </DialogHeader>
-          <div className="space-y-3">
-            <p className="text-sm">
-              Are you sure you want to delete customer{" "}
-              <strong>"{selectedCustomer?.email}"</strong>? This will also
-              remove their user account.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteCustomerOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteCustomer}>
-              Delete 
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

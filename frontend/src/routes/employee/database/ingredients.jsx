@@ -183,38 +183,6 @@ function IngredientsDatabaseComponent() {
     }
   };
 
-  const handleDelete = async (id) => {
-    const token = localStorage.getItem("token");
-
-    try {
-      const res = await fetch("/api/ingredients", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ ingredient_id: id }),
-      });
-
-      if (res.ok) {
-        fetchIngredients();
-      } else {
-        const data = await res.json();
-        showAlert({
-          title: "Error Deleting Ingredient",
-          description: data.error || "Failed to delete ingredient",
-          variant: "error",
-        });
-      }
-    } catch {
-      showAlert({
-        title: "Error",
-        description: "Failed to delete ingredient",
-        variant: "error",
-      });
-    }
-  };
-
   return (
     <div className="p-6 space-y-6 w-full">
       <AlertPopupComponent />
@@ -241,8 +209,6 @@ function IngredientsDatabaseComponent() {
         data={ingredients}
         pageSize={10}
         searchKeys={["ingredient_name"]}
-        deleteIdKey="ingredient_id"
-        onDelete={handleDelete}
         onEdit={openEditDialog}
         loading={loading}
         emptyMessage="No ingredients found"

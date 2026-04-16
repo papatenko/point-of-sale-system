@@ -148,38 +148,6 @@ function SuppliersDatabaseComponent() {
     }
   };
 
-  const handleDelete = async (id) => {
-    const token = localStorage.getItem("token");
-
-    try {
-      const res = await fetch("/api/suppliers", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ supplier_id: id }),
-      });
-
-      if (res.ok) {
-        fetchSuppliers();
-      } else {
-        const data = await res.json();
-        showAlert({
-          title: "Error Deleting Supplier",
-          description: data.error || "Failed to delete supplier",
-          variant: "error",
-        });
-      }
-    } catch {
-      showAlert({
-        title: "Error",
-        description: "Failed to delete supplier",
-        variant: "error",
-      });
-    }
-  };
-
   return (
     <div className="p-6 space-y-6 w-full">
       <AlertPopupComponent />
@@ -204,8 +172,6 @@ function SuppliersDatabaseComponent() {
         data={suppliers}
         pageSize={10}
         searchKeys={["supplier_name", "contact_person", "email", "address"]}
-        deleteIdKey="supplier_id"
-        onDelete={handleDelete}
         onEdit={openEditDialog}
         loading={loading}
         emptyMessage="No suppliers found"
