@@ -154,7 +154,7 @@ export async function findAlertsByLicensePlate(db, licensePlate) {
   }));
 }
 
-export async function findHistoryByLicensePlate(db, licensePlate, limit = 50) {
+export async function findHistoryByLicensePlate(db, licensePlate) {
   const [rows] = await db.query(
     `SELECT
        ia.adjustment_id, ia.ingredient_id, i.ingredient_name, i.unit_of_measure,
@@ -162,9 +162,8 @@ export async function findHistoryByLicensePlate(db, licensePlate, limit = 50) {
       FROM inventory_adjustments ia
       JOIN ingredients i ON ia.ingredient_id = i.ingredient_id
       WHERE ia.license_plate = ?
-      ORDER BY ia.adjustment_date DESC
-      LIMIT ?`,
-    [licensePlate, parseInt(limit)],
+      ORDER BY ia.adjustment_date DESC`,
+    [licensePlate],
   );
 
   return rows.map((r) => ({
