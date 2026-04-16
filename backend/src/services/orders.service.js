@@ -246,13 +246,16 @@ export async function updateOrderStatus(db, orderId, newStatus, req = null, canc
     }
   }
 
-  // Restore inventory and log adjustments if cancelling a preparing or ready order
+  // Restore inventory and log adjustments if cancelling a preparing order
   if (newStatus === "cancelled") {
     const [[current]] = await db.query(
       `SELECT order_status, license_plate FROM checkout WHERE checkout_id = ?`,
       [orderId],
     );
-    if (current && ["preparing", "ready"].includes(current.order_status)) {
+    if (current && current.order_status === "ready") {
+      throw new Error("Ready orders cannot be cancelled.");
+    }
+    if (current && current.order_status === "preparing") {
       // Fetch per-ingredient restore amounts
       const [ingredients] = await db.query(
         `SELECT ri.ingredient_id,

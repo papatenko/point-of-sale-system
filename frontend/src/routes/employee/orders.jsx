@@ -707,13 +707,15 @@ function OrderCard({ order, showActions, token, refreshCurrent, refreshPast }) {
                 Mark Completed
               </button>
             )}
-            <button
-              onClick={() => setShowCancelModal(true)}
-              disabled={updating}
-              className="text-xs px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 font-medium transition-colors disabled:opacity-50"
-            >
-              Cancel
-            </button>
+            {(isPending || isPreparing) && (
+              <button
+                onClick={() => setShowCancelModal(true)}
+                disabled={updating}
+                className="text-xs px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 font-medium transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            )}
           </div>
         )}
 
