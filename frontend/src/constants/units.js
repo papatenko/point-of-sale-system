@@ -12,12 +12,12 @@ export const UNIT_OPTIONS = [
 ];
 
 export const CATEGORY_OPTIONS = [
-  { value: "protein", label: "Protein" },
-  { value: "vegetable", label: "Vegetable" },
-  { value: "fruit", label: "Fruit" },
-  { value: "dairy", label: "Dairy" },
-  { value: "grain", label: "Grain" },
-  { value: "spice", label: "Spice" },
-  { value: "sauce", label: "Sauce" },
-  { value: "other", label: "Other" },
+  { value: "Protein", label: "Protein" },
+  { value: "Vegetable", label: "Vegetable" },
+  { value: "Fruit", label: "Fruit" },
+  { value: "Dairy", label: "Dairy" },
+  { value: "Grain", label: "Grain" },
+  { value: "Spice", label: "Spice" },
+  { value: "Sauce", label: "Sauce" },
+  { value: "Other", label: "Other" },
 ];
