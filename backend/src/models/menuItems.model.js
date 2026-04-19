@@ -1,18 +1,34 @@
-export async function findAll(db) {
+export async function findAll(db, status = "all") {
+  let whereClause = "";
+  if (status === "active") {
+    whereClause = "WHERE m.is_available = 1";
+  } else if (status === "inactive") {
+    whereClause = "WHERE m.is_available = 0";
+  }
+
   const [rows] = await db.query(`
     SELECT m.*, c.category_name
     FROM menu_items m
     LEFT JOIN menu_category_lookup c ON m.category = c.category_id
+    ${whereClause}
     ORDER BY m.item_name
   `);
   return rows;
 }
 
-export async function findAllWithRecipes(db) {
+export async function findAllWithRecipes(db, status = "all") {
+  let whereClause = "";
+  if (status === "active") {
+    whereClause = "WHERE m.is_available = 1";
+  } else if (status === "inactive") {
+    whereClause = "WHERE m.is_available = 0";
+  }
+
   const [items] = await db.query(`
     SELECT m.*, c.category_name
     FROM menu_items m
     LEFT JOIN menu_category_lookup c ON m.category = c.category_id
+    ${whereClause}
     ORDER BY m.item_name
   `);
 

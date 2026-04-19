@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { EditDialog } from "@/components/common/edit-dialog";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
+import { StatusFilter } from "@/components/database/status-filter";
 import {
   Select,
   SelectContent,
@@ -102,12 +103,13 @@ function MenuItemsDatabaseComponent() {
   const [editRecipeOpen, setEditRecipeOpen] = useState(false);
   const [editRecipeForm, setEditRecipeForm] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [menuItemStatusFilter, setMenuItemStatusFilter] = useState("all");
   const { alertConfig, showAlert, hideAlert, AlertPopupComponent } =
     useAlertPopup();
 
-  const fetchMenuItems = useCallback(async () => {
+  const fetchMenuItems = useCallback(async (status = "all") => {
     try {
-      const res = await fetch("/api/menu-items", { headers: authHeaders() });
+      const res = await fetch(`/api/menu-items?status=${status}`, { headers: authHeaders() });
       const data = await res.json();
       setMenuItems(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -128,9 +130,14 @@ function MenuItemsDatabaseComponent() {
   }, []);
 
   useEffect(() => {
-    fetchMenuItems();
+    fetchMenuItems(menuItemStatusFilter);
     fetchIngredients();
-  }, [fetchMenuItems, fetchIngredients]);
+  }, [fetchMenuItems, fetchIngredients, menuItemStatusFilter]);
+
+  const handleMenuItemStatusChange = (status) => {
+    setMenuItemStatusFilter(status);
+    fetchMenuItems(status);
+  };
 
   const toggleRecipes = (id) => {
     setExpandedRecipes((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -411,6 +418,14 @@ function MenuItemsDatabaseComponent() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-64"
           />
+          <StatusFilter
+            statusFilter={menuItemStatusFilter}
+            onSelect={handleMenuItemStatusChange}
+            label="Menu Items"
+          />
+          <span className="text-sm text-muted-foreground">
+            {filteredMenuItems.length} items
+          </span>
           <Button
             onClick={openCreateDialog}
             className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"

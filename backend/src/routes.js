@@ -90,7 +90,11 @@ router.put("/api/ingredients", async (body, db) =>
 );
 
 // Trucks
-router.get("/api/trucks", async (_, db) => TruckService.getAllTrucks(db));
+router.get("/api/trucks", async (_, db, _req, url) => {
+  const { searchParams } = new URL(url, "http://localhost");
+  const status = searchParams.get("status") || "all";
+  return TruckService.getAllTrucks(db, status);
+});
 router.post("/api/trucks", async (body, db) =>
   TruckService.createTruck(db, body),
 );
@@ -132,9 +136,11 @@ router.get("/api/menu/:id/ingredients", async (_, db, _req, _url, params) => {
   );
   return rows;
 });
-router.get("/api/menu-items", async (_, db) =>
-  MenuItemService.getAllMenuItemsWithRecipes(db),
-);
+router.get("/api/menu-items", async (_, db, _req, url) => {
+  const { searchParams } = new URL(url, "http://localhost");
+  const status = searchParams.get("status") || "all";
+  return MenuItemService.getAllMenuItemsWithRecipes(db, status);
+});
 router.post("/api/menu-items", async (body, db) =>
   MenuItemService.createMenuItem(db, body),
 );

@@ -2,8 +2,8 @@ import * as TruckModel from "../models/trucks.model.js";
 import * as EmployeeModel from "../models/employees.model.js";
 import { verifyToken } from "../auth/jwt.js";
 
-export async function getAllTrucks(db) {
-  return await TruckModel.findAll(db);
+export async function getAllTrucks(db, status = "all") {
+  return await TruckModel.findAll(db, status);
 }
 
 export async function createTruck(db, data) {

@@ -4,6 +4,7 @@ import { DataTable } from "@/components/database/data-table";
 import { AddDialog } from "@/components/database/add-dialog";
 import { EditDialog } from "@/components/common/edit-dialog";
 import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
+import { StatusFilter } from "@/components/database/status-filter";
 import { PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber } from "@/utils/constraints";
 
 export const Route = createFileRoute("/employee/database/food-trucks")({
@@ -62,14 +63,15 @@ function FoodTrucksDatabaseComponent() {
   const [error, setError] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedTruck, setSelectedTruck] = useState(null);
+  const [truckStatusFilter, setTruckStatusFilter] = useState("all");
   const { alertConfig, showAlert, hideAlert, AlertPopupComponent } =
     useAlertPopup();
 
-  const fetchTrucks = async () => {
+  const fetchTrucks = async (status = "all") => {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/trucks", {
+      const res = await fetch(`/api/trucks?status=${status}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -85,8 +87,13 @@ function FoodTrucksDatabaseComponent() {
   };
 
   useEffect(() => {
-    fetchTrucks();
-  }, []);
+    fetchTrucks(truckStatusFilter);
+  }, [truckStatusFilter]);
+
+  const handleTruckStatusChange = (status) => {
+    setTruckStatusFilter(status);
+    fetchTrucks(status);
+  };
 
   const handleCreateSubmit = async (formData) => {
     setIsSubmitting(true);
@@ -199,6 +206,17 @@ function FoodTrucksDatabaseComponent() {
           error={error}
           submitLabel="Create"
         />
+      </div>
+
+      <div className="flex items-center gap-4 flex-wrap mb-4">
+        <StatusFilter
+          statusFilter={truckStatusFilter}
+          onSelect={handleTruckStatusChange}
+          label="Trucks"
+        />
+        <span className="text-sm text-muted-foreground">
+          {trucks.length} trucks
+        </span>
       </div>
 
       <DataTable

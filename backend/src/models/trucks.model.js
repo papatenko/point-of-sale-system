@@ -1,6 +1,15 @@
-export async function findAll(db) {
+export async function findAll(db, status = "all") {
+  let whereClause = "";
+  if (status === "active") {
+    whereClause = "WHERE is_active = 1";
+  } else if (status === "inactive") {
+    whereClause = "WHERE is_active = 0";
+  }
+
   const [rows] = await db.query(`
-    SELECT * FROM food_trucks ORDER BY truck_name
+    SELECT * FROM food_trucks
+    ${whereClause}
+    ORDER BY truck_name
   `);
   return rows;
 }
