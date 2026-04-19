@@ -45,7 +45,6 @@ export async function deleteCustomer(db, email) {
   }
 
   await CustomerModel.remove(db, email);
-  await CustomerModel.removeUser(db, email);
 
   return {
     success: true,

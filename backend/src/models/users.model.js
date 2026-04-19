@@ -12,19 +12,18 @@ export async function findAll(db) {
     FROM users u
     LEFT JOIN gender_lookup g ON u.gender = g.gender_id
     LEFT JOIN race_lookup r ON u.ethnicity = r.race_id
+    WHERE u.user_type IS NOT NULL
     ORDER BY u.last_name, u.first_name
   `);
   return rows;
 }
-
 export async function findByEmail(db, email) {
   const [[row]] = await db.query(
-    "SELECT email FROM users WHERE email = ?",
+    "SELECT email FROM users WHERE email = ? AND user_type IS NOT NULL",
     [email],
   );
   return row;
 }
-
 export async function update(db, email, data) {
   await db.query(
     `UPDATE users SET
@@ -47,9 +46,9 @@ export async function update(db, email, data) {
   );
 }
 
-export async function remove(db, email) {
-  await db.query("DELETE FROM users WHERE email = ?", [email]);
-}
+// export async function remove(db, email) {
+//   await db.query("DELETE FROM users WHERE email = ?", [email]);
+// }
 
 export async function create(db, data) {
   const [result] = await db.query(
@@ -82,4 +81,13 @@ export async function findAllEthnicities(db) {
     SELECT race_id, race FROM race_lookup ORDER BY race
   `);
   return rows;
+}
+
+export async function remove(db, email) {
+  await db.query(
+    `UPDATE users 
+     SET user_type = NULL 
+     WHERE email = ?`,
+    [email]
+  );
 }

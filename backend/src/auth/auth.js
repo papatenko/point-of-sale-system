@@ -9,7 +9,8 @@ export async function login(email, password) {
     `SELECT u.email, u.password, u.first_name, u.user_type, e.role, e.license_plate, e.is_active
      FROM users u
      LEFT JOIN employees e ON u.email = e.email
-     WHERE u.email = ?`,
+     WHERE u.email = ?  
+    AND u.user_type IS NOT NULL `,
     [email],
   );
 

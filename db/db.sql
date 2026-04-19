@@ -38,7 +38,7 @@ CREATE TABLE users (
     last_name    VARCHAR(50)  NOT NULL,
     password     VARCHAR(50)  NOT NULL,
     phone_number VARCHAR(15),
-    user_type    ENUM('customer', 'employee'),
+    user_type    ENUM('customer', 'employee', 'deleted'),
     gender       INT,
     ethnicity    INT,
     CONSTRAINT fk_users_gender
