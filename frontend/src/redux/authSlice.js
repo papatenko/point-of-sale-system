@@ -31,6 +31,20 @@ const authSlice = createSlice({
         try { return JSON.parse(localStorage.getItem("user")); } catch { return null; }
       })();
       if (token && user) {
+        // Decode JWT payload and check expiry without a library
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          if (payload.exp && payload.exp * 1000 < Date.now()) {
+            // Token expired — clear storage and stay logged out
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            return;
+          }
+        } catch {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          return;
+        }
         state.token = token;
         state.user = user;
       }
