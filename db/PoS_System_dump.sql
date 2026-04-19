@@ -1,7 +1,7 @@
 /*M!999999\- enable the sandbox mode */ 
 -- MariaDB dump 10.19  Distrib 10.11.16-MariaDB, for Linux (x86_64)
 --
--- Host: papatenko.org    Database: default
+-- Host: 192.168.0.146    Database: default
 -- ------------------------------------------------------
 -- Server version	8.4.8
 
@@ -45,7 +45,7 @@ CREATE TABLE `checkout` (
   CONSTRAINT `fk_checkout_customer` FOREIGN KEY (`customer_email`) REFERENCES `users` (`email`),
   CONSTRAINT `fk_checkout_truck` FOREIGN KEY (`license_plate`) REFERENCES `food_trucks` (`license_plate`),
   CONSTRAINT `chk_checkout_total` CHECK ((`total_price` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=181 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=190 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -217,14 +217,23 @@ INSERT INTO `checkout` VALUES
 (170,'2','dj3y149','ibra@gmail',NULL,NULL,'online-pickup','completed','2026-04-16 20:30:00',3.98,'credit','pending','2026-04-16 11:57:42'),
 (171,'3','dj3y149',NULL,'ibra@gmail','Payment Issue','walk-in','cancelled',NULL,9.99,'cash','pending','2026-04-16 12:42:57'),
 (172,'4','dj3y149','ibra_customer@gmail','ibra@gmail','Customer Request','online-pickup','cancelled',NULL,10.99,'credit','pending','2026-04-16 13:25:13'),
-(173,'5','dj3y149','rebeka0@gmail',NULL,NULL,'online-pickup','ready',NULL,22.97,'credit','pending','2026-04-16 13:56:39'),
+(173,'5','dj3y149','rebeka0@gmail',NULL,NULL,'online-pickup','completed',NULL,22.97,'credit','pending','2026-04-16 13:56:39'),
 (174,'1','dj3y149','rebeka0@gmail',NULL,NULL,'online-pickup','completed','2026-04-17 13:30:00',9.99,'debit','pending','2026-04-16 13:57:37'),
 (175,'6','dj3y149',NULL,'ibra@gmail',NULL,'walk-in','completed',NULL,28.96,'debit','pending','2026-04-16 14:00:18'),
 (176,'4','bnt8626','rebeka0@gmail',NULL,NULL,'online-pickup','pending',NULL,276.55,'credit','pending','2026-04-16 14:39:07'),
 (177,'5','bnt8626','ibra_customer@gmail',NULL,NULL,'online-pickup','preparing',NULL,4.99,'credit','pending','2026-04-16 14:53:50'),
 (178,'6','bnt8626','ibra_customer@gmail',NULL,NULL,'online-pickup','pending',NULL,10.00,'credit','pending','2026-04-16 15:04:27'),
-(179,'7','dj3y149','ibra@gmail','ibra@gmail',NULL,'online-pickup','preparing',NULL,3.99,'credit','pending','2026-04-16 15:30:20'),
-(180,'8','dj3y149','zaid@tester',NULL,NULL,'online-pickup','preparing',NULL,24.98,'debit','pending','2026-04-16 15:43:59');
+(179,'7','dj3y149','ibra@gmail','ibra@gmail','Duplicate Order','online-pickup','cancelled',NULL,3.99,'credit','pending','2026-04-16 15:30:20'),
+(180,'8','dj3y149','zaid@tester','ibra@gmail','Customer Request','online-pickup','cancelled',NULL,24.98,'debit','pending','2026-04-16 15:43:59'),
+(181,'1','bnt8626','justin@proton.me','ibra@gmail',NULL,'online-pickup','completed','2026-04-30 21:00:00',22.97,'debit','pending','2026-04-16 16:19:41'),
+(182,'9','dj3y149','justin@proton.me','ibra@gmail','Customer Request','online-pickup','cancelled',NULL,11.98,'debit','pending','2026-04-16 16:21:07'),
+(183,'10','dj3y149',NULL,'ibra@gmail',NULL,'walk-in','completed',NULL,29.96,'cash','pending','2026-04-16 16:24:09'),
+(184,'11','dj3y149','rebeka1@gmail.com','ibra@gmail','Customer Request','online-pickup','cancelled',NULL,21.98,'credit','pending','2026-04-16 18:11:42'),
+(185,'2','bnt8626','rebeka1@gmail.com','ibra@gmail',NULL,'online-pickup','completed','2026-04-17 21:30:00',6.47,'debit','pending','2026-04-16 18:12:45'),
+(186,'12','dj3y149',NULL,'ibra@gmail',NULL,'walk-in','completed',NULL,15.98,'cash','pending','2026-04-16 18:15:25'),
+(187,'1','dj3y149','justin@gmail','ibra@gmail','Customer Request','online-pickup','cancelled','2026-04-18 13:00:00',9.99,'debit','pending','2026-04-17 12:52:29'),
+(188,'1','dj3y149','ibra@gmail',NULL,NULL,'online-pickup','completed','2026-04-19 22:30:00',3.98,'credit','pending','2026-04-19 16:13:15'),
+(189,'1','hggh','ibra@gmail','ibra@gmail','Customer Request','online-pickup','cancelled','2026-04-19 20:00:00',21.98,'credit','pending','2026-04-19 16:23:00');
 /*!40000 ALTER TABLE `checkout` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -333,11 +342,14 @@ INSERT INTO `customers` VALUES
 ('ibra_customer@gmail',NULL),
 ('john.doe@email.com','456 Oak Ave, Houston TX 77001'),
 ('jonny@gmail',NULL),
+('justin@proton.me','12345678 rhuh'),
 ('justinbeeber@yahoo.com',NULL),
 ('kill@me',NULL),
 ('lelo@gmail',NULL),
 ('mustelierrebeca99@gmail.com','sxcdvghj'),
+('rebe@gmail.com',NULL),
 ('rebeka0@gmail',NULL),
+('rebeka1@gmail.com',NULL),
 ('test1@gmail.com',NULL),
 ('thali@gmail',NULL),
 ('vanne@gmail',NULL),
@@ -373,13 +385,14 @@ CREATE TABLE `employees` (
 LOCK TABLES `employees` WRITE;
 /*!40000 ALTER TABLE `employees` DISABLE KEYS */;
 INSERT INTO `employees` VALUES
-('cash@ier','dj3y149','cashier','2026-03-24',1),
+('cash@ier','dj3y149','cashier','2026-03-24',0),
 ('cooked@cook','dj3y149','cook','2026-03-24',0),
 ('ibra@gmail','dj3y149','admin','2026-03-23',1),
 ('joshua.j.lopsil@gmail.com','bnt8626','cook','2026-03-17',1),
+('juan@gmail.com','hggh','cashier','2026-04-19',0),
 ('justin@gmail','dj3y149','manager','2026-03-19',1),
 ('rebecca@rebe','dj3y149','manager','2026-03-23',1),
-('zaid@tester','dj3y149','admin','2026-04-16',1);
+('zaid@tester','dj3y149','admin','2026-04-16',0);
 /*!40000 ALTER TABLE `employees` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -398,6 +411,7 @@ CREATE TABLE `food_trucks` (
   `accepts_online_orders` tinyint(1) DEFAULT '1',
   `operating_hours_start` varchar(100) DEFAULT NULL,
   `operating_hours_end` varchar(100) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`license_plate`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -409,8 +423,9 @@ CREATE TABLE `food_trucks` (
 LOCK TABLES `food_trucks` WRITE;
 /*!40000 ALTER TABLE `food_trucks` DISABLE KEYS */;
 INSERT INTO `food_trucks` VALUES
-('bnt8626','truck2','Scarsdale/Beamer','1234567890',1,'10:00','22:00'),
-('dj3y149','truck1','Fuqua/Monroe','12109389836',1,'10:00','22:00');
+('bnt8626','truck2','Scarsdale/Beamer','1234567890',1,'10:00','22:00',1),
+('dj3y149','truck1','Fuqua/Monroe','12109389836',1,'10:00','23:00',1),
+('hggh','hello','houston','11111111111',1,'6:00','20:00',0);
 /*!40000 ALTER TABLE `food_trucks` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -477,19 +492,19 @@ INSERT INTO `ingredients` VALUES
 (6,'Lettuce','Veggie','g',1.00,4,1),
 (7,'Tomato','Fruit','g',1.00,3,1),
 (8,'Cucumber','Fruit','g',1.00,3,1),
-(9,'Honey','vegetable','tbsp',1.00,99,1),
+(9,'Honey','Vegetable','tbsp',1.00,99,1),
 (10,'Pistachios','Veggie','g',1.00,4,1),
 (11,'Phyllo','Bread','g',3.00,20,1),
-(12,'Yogurt','dairy','cup',3.00,7,1),
+(12,'Yogurt','Dairy','cup',3.00,7,1),
 (13,'Mango','Fruit','g',1.00,3,1),
-(14,'Chicken','Meat','g',4.00,5,1),
+(14,'Chicken','Protein','g',4.00,5,2),
 (15,'Potato','Veggie','g',1.00,4,1),
 (16,'Water','Liquid','ml',0.00,99,1),
 (17,'Soda','Liquid','ml',2.00,99,1),
-(19,'Iphone',NULL,'pcs',99.99,99,1),
-(20,'Peanut Oil ',NULL,'oz',10.00,120,1),
-(22,'Coffee Beans','other','g',0.03,30,2),
-(23,'Milk','dairy','l',0.46,4,2);
+(19,'Iphone','Other','pcs',99.99,99,1),
+(20,'Peanut Oil ','Other','oz',10.00,120,1),
+(22,'Coffee Beans','Other','g',0.03,30,2),
+(23,'Milk','Dairy','l',0.46,4,2);
 /*!40000 ALTER TABLE `ingredients` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -516,7 +531,7 @@ CREATE TABLE `inventory_adjustments` (
   CONSTRAINT `fk_adjinv_employee` FOREIGN KEY (`adjusted_by`) REFERENCES `employees` (`email`),
   CONSTRAINT `fk_adjinv_ingredient` FOREIGN KEY (`ingredient_id`) REFERENCES `ingredients` (`ingredient_id`),
   CONSTRAINT `fk_adjinv_truck` FOREIGN KEY (`license_plate`) REFERENCES `food_trucks` (`license_plate`)
-) ENGINE=InnoDB AUTO_INCREMENT=2335 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2916 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -849,7 +864,82 @@ INSERT INTO `inventory_adjustments` VALUES
 (2331,'dj3y149',3,'order-deduction',-5.00,'Order #180: status → preparing','ibra@gmail','2026-04-16 20:43:59'),
 (2332,'dj3y149',1,'order-deduction',-150.00,'Order #180: status → preparing','ibra@gmail','2026-04-16 20:43:59'),
 (2333,'dj3y149',6,'order-deduction',-40.00,'Order #180: status → preparing','ibra@gmail','2026-04-16 20:43:59'),
-(2334,'dj3y149',7,'order-deduction',-50.00,'Order #180: status → preparing','ibra@gmail','2026-04-16 20:43:59');
+(2334,'dj3y149',7,'order-deduction',-50.00,'Order #180: status → preparing','ibra@gmail','2026-04-16 20:43:59'),
+(2335,'dj3y149',4,'order-deduction',-240.00,'Order #182: status → preparing','ibra@gmail','2026-04-16 21:21:29'),
+(2336,'dj3y149',4,'order-deduction',-80.00,'Order #182: status → preparing','ibra@gmail','2026-04-16 21:21:29'),
+(2337,'dj3y149',7,'order-deduction',-50.00,'Order #182: status → preparing','ibra@gmail','2026-04-16 21:21:29'),
+(2338,'dj3y149',8,'order-deduction',-50.00,'Order #182: status → preparing','ibra@gmail','2026-04-16 21:21:29'),
+(2339,'dj3y149',3,'order-deduction',-3.00,'Order #182: status → preparing','ibra@gmail','2026-04-16 21:21:29'),
+(2428,'bnt8626',5,'order-deduction',-50.00,'Order #181: status → preparing','ibra@gmail','2026-04-16 21:22:13'),
+(2429,'bnt8626',4,'order-deduction',-50.00,'Order #181: status → preparing','ibra@gmail','2026-04-16 21:22:13'),
+(2430,'bnt8626',3,'order-deduction',-10.00,'Order #181: status → preparing','ibra@gmail','2026-04-16 21:22:13'),
+(2431,'bnt8626',6,'order-deduction',-30.00,'Order #181: status → preparing','ibra@gmail','2026-04-16 21:22:13'),
+(2432,'bnt8626',4,'order-deduction',-120.00,'Order #181: status → preparing','ibra@gmail','2026-04-16 21:22:13'),
+(2433,'bnt8626',4,'order-deduction',-100.00,'Order #181: status → preparing','ibra@gmail','2026-04-16 21:22:13'),
+(2434,'bnt8626',15,'order-deduction',-40.00,'Order #181: status → preparing','ibra@gmail','2026-04-16 21:22:13'),
+(2435,'bnt8626',3,'order-deduction',-5.00,'Order #181: status → preparing','ibra@gmail','2026-04-16 21:22:13'),
+(2436,'bnt8626',14,'order-deduction',-60.00,'Order #181: status → preparing','ibra@gmail','2026-04-16 21:22:13'),
+(2437,'bnt8626',5,'order-deduction',-60.00,'Order #181: status → preparing','ibra@gmail','2026-04-16 21:22:13'),
+(2438,'bnt8626',6,'order-deduction',-50.00,'Order #181: status → preparing','ibra@gmail','2026-04-16 21:22:13'),
+(2593,'dj3y149',5,'order-deduction',-100.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2594,'dj3y149',4,'order-deduction',-100.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2595,'dj3y149',3,'order-deduction',-20.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2596,'dj3y149',6,'order-deduction',-60.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2597,'dj3y149',4,'order-deduction',-80.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2598,'dj3y149',7,'order-deduction',-50.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2599,'dj3y149',8,'order-deduction',-50.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2600,'dj3y149',3,'order-deduction',-3.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2601,'dj3y149',14,'order-deduction',-400.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2602,'dj3y149',3,'order-deduction',-8.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2603,'dj3y149',15,'order-deduction',-250.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2604,'dj3y149',3,'order-deduction',-2.00,'Order #183: status → preparing','ibra@gmail','2026-04-16 21:24:09'),
+(2605,'dj3y149',20,'waste',-1000.00,'Expired on 4/16/2026 — auto-expired','ibra@gmail','2026-04-16 21:24:41'),
+(2606,'dj3y149',22,'waste',-2000.00,'Expired on 4/16/2026 — auto-expired','ibra@gmail','2026-04-16 21:24:41'),
+(2607,'dj3y149',20,'restock',1500.00,'Supply order PO-61 received','ibra@gmail','2026-04-16 21:25:36'),
+(2608,'dj3y149',5,'order-deduction',-150.00,'Order #184: status → preparing','ibra@gmail','2026-04-16 23:11:42'),
+(2609,'dj3y149',4,'order-deduction',-150.00,'Order #184: status → preparing','ibra@gmail','2026-04-16 23:11:42'),
+(2610,'dj3y149',3,'order-deduction',-30.00,'Order #184: status → preparing','ibra@gmail','2026-04-16 23:11:42'),
+(2611,'dj3y149',6,'order-deduction',-90.00,'Order #184: status → preparing','ibra@gmail','2026-04-16 23:11:42'),
+(2700,'bnt8626',4,'order-deduction',-240.00,'Order #185: status → preparing','ibra@gmail','2026-04-16 23:13:55'),
+(2701,'bnt8626',12,'order-deduction',-150.00,'Order #185: status → preparing','ibra@gmail','2026-04-16 23:13:55'),
+(2702,'bnt8626',13,'order-deduction',-100.00,'Order #185: status → preparing','ibra@gmail','2026-04-16 23:13:55'),
+(2703,'bnt8626',17,'order-deduction',-710.00,'Order #185: status → preparing','ibra@gmail','2026-04-16 23:13:55'),
+(2858,'dj3y149',4,'order-deduction',-160.00,'Order #186: status → preparing','ibra@gmail','2026-04-16 23:15:25'),
+(2859,'dj3y149',7,'order-deduction',-100.00,'Order #186: status → preparing','ibra@gmail','2026-04-16 23:15:25'),
+(2860,'dj3y149',8,'order-deduction',-100.00,'Order #186: status → preparing','ibra@gmail','2026-04-16 23:15:25'),
+(2861,'dj3y149',3,'order-deduction',-6.00,'Order #186: status → preparing','ibra@gmail','2026-04-16 23:15:25'),
+(2862,'dj3y149',14,'order-deduction',-200.00,'Order #186: status → preparing','ibra@gmail','2026-04-16 23:15:25'),
+(2863,'dj3y149',3,'order-deduction',-4.00,'Order #186: status → preparing','ibra@gmail','2026-04-16 23:15:25'),
+(2886,'bnt8626',20,'waste',-1000.00,'Expired on 4/16/2026 — auto-expired','ibra@gmail','2026-04-16 23:17:25'),
+(2887,'bnt8626',23,'waste',-2000.00,'Expired on 3/16/2026 — auto-expired','ibra@gmail','2026-04-16 23:17:25'),
+(2888,'bnt8626',23,'restock',3000.00,'Supply order PO-63 received','ibra@gmail','2026-04-16 23:18:14'),
+(2889,'dj3y149',4,'order-deduction',-160.00,'Order #187: status → preparing','ibra@gmail','2026-04-18 21:20:03'),
+(2890,'dj3y149',7,'order-deduction',-100.00,'Order #187: status → preparing','ibra@gmail','2026-04-18 21:20:03'),
+(2891,'dj3y149',8,'order-deduction',-100.00,'Order #187: status → preparing','ibra@gmail','2026-04-18 21:20:03'),
+(2892,'dj3y149',3,'order-deduction',-6.00,'Order #187: status → preparing','ibra@gmail','2026-04-18 21:20:03'),
+(2893,'dj3y149',9,'order-cancel',30.00,'Order #179 cancelled','ibra@gmail','2026-04-19 21:14:06'),
+(2894,'dj3y149',11,'order-cancel',100.00,'Order #179 cancelled','ibra@gmail','2026-04-19 21:14:06'),
+(2895,'dj3y149',10,'order-cancel',40.00,'Order #179 cancelled','ibra@gmail','2026-04-19 21:14:06'),
+(2896,'dj3y149',4,'order-cancel',160.00,'Order #180 cancelled','ibra@gmail','2026-04-19 21:14:09'),
+(2897,'dj3y149',7,'order-cancel',150.00,'Order #180 cancelled','ibra@gmail','2026-04-19 21:14:09'),
+(2898,'dj3y149',8,'order-cancel',100.00,'Order #180 cancelled','ibra@gmail','2026-04-19 21:14:09'),
+(2899,'dj3y149',3,'order-cancel',11.00,'Order #180 cancelled','ibra@gmail','2026-04-19 21:14:09'),
+(2900,'dj3y149',5,'order-cancel',250.00,'Order #180 cancelled','ibra@gmail','2026-04-19 21:14:09'),
+(2901,'dj3y149',1,'order-cancel',150.00,'Order #180 cancelled','ibra@gmail','2026-04-19 21:14:09'),
+(2902,'dj3y149',6,'order-cancel',40.00,'Order #180 cancelled','ibra@gmail','2026-04-19 21:14:09'),
+(2903,'dj3y149',4,'order-cancel',320.00,'Order #182 cancelled','ibra@gmail','2026-04-19 21:14:11'),
+(2904,'dj3y149',7,'order-cancel',50.00,'Order #182 cancelled','ibra@gmail','2026-04-19 21:14:11'),
+(2905,'dj3y149',8,'order-cancel',50.00,'Order #182 cancelled','ibra@gmail','2026-04-19 21:14:11'),
+(2906,'dj3y149',3,'order-cancel',3.00,'Order #182 cancelled','ibra@gmail','2026-04-19 21:14:11'),
+(2907,'dj3y149',5,'order-cancel',150.00,'Order #184 cancelled','ibra@gmail','2026-04-19 21:14:13'),
+(2908,'dj3y149',4,'order-cancel',150.00,'Order #184 cancelled','ibra@gmail','2026-04-19 21:14:13'),
+(2909,'dj3y149',3,'order-cancel',30.00,'Order #184 cancelled','ibra@gmail','2026-04-19 21:14:13'),
+(2910,'dj3y149',6,'order-cancel',90.00,'Order #184 cancelled','ibra@gmail','2026-04-19 21:14:13'),
+(2911,'dj3y149',4,'order-cancel',160.00,'Order #187 cancelled','ibra@gmail','2026-04-19 21:14:17'),
+(2912,'dj3y149',7,'order-cancel',100.00,'Order #187 cancelled','ibra@gmail','2026-04-19 21:14:17'),
+(2913,'dj3y149',8,'order-cancel',100.00,'Order #187 cancelled','ibra@gmail','2026-04-19 21:14:17'),
+(2914,'dj3y149',3,'order-cancel',6.00,'Order #187 cancelled','ibra@gmail','2026-04-19 21:14:17'),
+(2915,'dj3y149',4,'order-deduction',-360.00,'Order #188: status → preparing','ibra@gmail','2026-04-19 21:14:23');
 /*!40000 ALTER TABLE `inventory_adjustments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -900,7 +990,7 @@ CREATE TABLE `menu_items` (
   PRIMARY KEY (`menu_item_id`),
   KEY `fk_menu_category` (`category`),
   CONSTRAINT `fk_menu_category` FOREIGN KEY (`category`) REFERENCES `menu_category_lookup` (`category_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -929,7 +1019,7 @@ INSERT INTO `menu_items` VALUES
 (20,'We Tried Our Best, Shawarma',2,'Juicy, flavorful shawarma made with effort, determination, and just a tiny bit of panic. Surprisingly delicious for something made under academic pressure.',8.99,1,'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTAKfWxgtj4ZsJIwcU5eMoXwZ8n6Gd2JngD6w&s'),
 (21,'No Sleep Just Kebabs Combo',2,'A powerful combo of grilled kebabs, rice, and sides designed to fuel all-nighters and last-minute submissions. Who needs sleep when you have this?',12.99,1,'https://www.pamperedchef.com/iceberg/com/recipe/1249033-lg.jpg'),
 (22,'Professor Upgrade Ice Cream',4,'One scoop = good mood. Two scoops = maybe a 100. Worth the risk.',6.50,0,'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQSQ3ZxxFDLEhbLBPCArsrV8F0VlRgT8j7d6A&s'),
-(24,'Deadline Destroyer Arabic Coffee',5,'If your project isn’t letting you sleep, this Arabic coffee will help you survive. Strong, bold, and approved by Team 14 after several questionable life choices. Tested under academic pressure.',4.99,1,'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWIsaUlpglay15OWQSMcXM4arj_oxsdwA4lA&s'),
+(24,'Deadline Destroyer Arabic Coffee',5,'If your project isn’t letting you sleep, this Arabic coffee will help you survive. Strong, bold, and approved by Team 14 after several questionable life choices. Tested under academic pressure.',5.99,1,'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWIsaUlpglay15OWQSMcXM4arj_oxsdwA4lA&s'),
 (25,'Mandi Plate',2,'Yellow rice with grilled chicken',13.99,1,'https://www.munatycooking.com/wp-content/uploads/2022/09/Chicken-Mandi-1200-x1200-2022-500x500.jpg');
 /*!40000 ALTER TABLE `menu_items` ENABLE KEYS */;
 UNLOCK TABLES;
@@ -952,7 +1042,7 @@ CREATE TABLE `order_items` (
   KEY `fk_orderitems_menu` (`menu_item_id`),
   CONSTRAINT `fk_orderitems_checkout` FOREIGN KEY (`order_id`) REFERENCES `checkout` (`checkout_id`),
   CONSTRAINT `fk_orderitems_menu` FOREIGN KEY (`menu_item_id`) REFERENCES `menu_items` (`menu_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=311 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=333 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1229,7 +1319,25 @@ INSERT INTO `order_items` VALUES
 (305,178,11,2,10.00),
 (308,179,5,1,3.99),
 (309,180,3,2,9.99),
-(310,180,2,1,14.99);
+(310,180,2,1,14.99),
+(313,182,18,2,1.99),
+(314,182,3,1,9.99),
+(315,181,19,1,10.99),
+(316,181,18,1,1.99),
+(317,181,17,1,9.99),
+(318,183,19,2,10.99),
+(319,183,3,1,9.99),
+(320,183,7,2,5.99),
+(321,183,8,1,2.99),
+(322,184,19,3,21.98),
+(325,185,18,2,1.99),
+(326,185,6,1,3.49),
+(327,185,10,2,0.99),
+(328,186,3,2,9.99),
+(329,186,7,1,5.99),
+(330,187,3,2,9.99),
+(331,188,18,3,3.98),
+(332,189,19,3,21.98);
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -1309,7 +1417,7 @@ CREATE TABLE `recipe_ingredient` (
   KEY `fk_recipe_ingredient` (`ingredient_id`),
   CONSTRAINT `fk_recipe_ingredient` FOREIGN KEY (`ingredient_id`) REFERENCES `ingredients` (`ingredient_id`),
   CONSTRAINT `fk_recipe_menu` FOREIGN KEY (`menu_item_id`) REFERENCES `menu_items` (`menu_item_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=88 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1369,7 +1477,8 @@ INSERT INTO `recipe_ingredient` VALUES
 (78,22,23,1.00,'Mmmm milk'),
 (79,21,5,20.00,'Cook it and skew it'),
 (80,21,14,20.00,'Cook it and skew it'),
-(81,21,19,1.00,'Cook it and skew it');
+(81,21,19,1.00,'Cook it and skew it'),
+(86,24,14,40.00,'good');
 /*!40000 ALTER TABLE `recipe_ingredient` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1399,7 +1508,7 @@ CREATE TABLE `reorder_alerts` (
   CONSTRAINT `fk_alert_truck` FOREIGN KEY (`license_plate`) REFERENCES `food_trucks` (`license_plate`),
   CONSTRAINT `chk_alert_current_qty` CHECK ((`current_quantity` >= 0)),
   CONSTRAINT `chk_alert_reorder_threshold` CHECK ((`reorder_threshold` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1464,7 +1573,11 @@ INSERT INTO `reorder_alerts` VALUES
 (53,'bnt8626',13,0.00,1500.00,'2026-04-16 19:01:13','resolved','2026-04-16 19:53:30','ibra@gmail'),
 (54,'bnt8626',14,0.00,2000.00,'2026-04-16 19:01:13','resolved','2026-04-16 19:53:17','ibra@gmail'),
 (55,'bnt8626',15,0.00,2400.00,'2026-04-16 19:01:13','resolved','2026-04-16 19:53:05','ibra@gmail'),
-(56,'bnt8626',22,0.00,1200.00,'2026-04-16 19:53:21','resolved','2026-04-16 19:53:43','ibra@gmail');
+(56,'bnt8626',22,0.00,1200.00,'2026-04-16 19:53:21','resolved','2026-04-16 19:53:43','ibra@gmail'),
+(57,'dj3y149',20,0.00,500.00,'2026-04-16 21:24:41','resolved','2026-04-16 21:25:36','ibra@gmail'),
+(58,'dj3y149',22,0.00,1000.00,'2026-04-16 21:24:41','active',NULL,NULL),
+(67,'bnt8626',20,0.00,500.00,'2026-04-16 23:17:25','ordered',NULL,NULL),
+(68,'bnt8626',23,0.00,1000.00,'2026-04-16 23:17:25','resolved','2026-04-16 23:18:14','ibra@gmail');
 /*!40000 ALTER TABLE `reorder_alerts` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1523,7 +1636,7 @@ CREATE TABLE `supply_order_items` (
   CONSTRAINT `chk_poitems_qty_ordered` CHECK ((`quantity_ordered` >= 0)),
   CONSTRAINT `chk_poitems_qty_received` CHECK ((`quantity_received` >= 0)),
   CONSTRAINT `chk_poitems_unit_cost` CHECK ((`unit_cost` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1592,7 +1705,10 @@ INSERT INTO `supply_order_items` VALUES
 (57,57,5,9000.00,9000.00,1.00,9000.00),
 (58,58,6,1800.00,1800.00,1.00,1800.00),
 (59,59,15,7200.00,7200.00,1.00,7200.00),
-(60,60,22,3600.00,3600.00,0.03,108.00);
+(60,60,22,3600.00,3600.00,0.03,108.00),
+(61,61,20,1500.00,1500.00,10.00,15000.00),
+(62,62,20,1500.00,0.00,10.00,15000.00),
+(63,63,23,3000.00,3000.00,0.46,1380.00);
 /*!40000 ALTER TABLE `supply_order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1620,7 +1736,7 @@ CREATE TABLE `supply_orders` (
   CONSTRAINT `fk_supplyorder_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`supplier_id`),
   CONSTRAINT `fk_supplyorder_truck` FOREIGN KEY (`license_plate`) REFERENCES `food_trucks` (`license_plate`),
   CONSTRAINT `chk_supplyorder_cost` CHECK ((`total_cost` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1689,7 +1805,10 @@ INSERT INTO `supply_orders` VALUES
 (57,1,'bnt8626','ibra@gmail',NULL,'2026-04-16','received',9000.00),
 (58,1,'bnt8626','ibra@gmail',NULL,'2026-04-16','received',1800.00),
 (59,1,'bnt8626','ibra@gmail',NULL,'2026-04-16','received',7200.00),
-(60,2,'bnt8626','ibra@gmail',NULL,'2026-04-16','received',108.00);
+(60,2,'bnt8626','ibra@gmail',NULL,'2026-04-16','received',108.00),
+(61,1,'dj3y149','ibra@gmail',NULL,'2026-04-16','received',15000.00),
+(62,1,'bnt8626','ibra@gmail',NULL,NULL,'ordered',15000.00),
+(63,2,'bnt8626','ibra@gmail',NULL,'2026-04-16','received',1380.00);
 /*!40000 ALTER TABLE `supply_orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1725,46 +1844,46 @@ CREATE TABLE `truck_inventory` (
 LOCK TABLES `truck_inventory` WRITE;
 /*!40000 ALTER TABLE `truck_inventory` DISABLE KEYS */;
 INSERT INTO `truck_inventory` VALUES
-(1,'dj3y149',1,14250.00,3000.00,'2026-06-01 00:00:00','2026-03-15 08:00:00'),
+(1,'dj3y149',1,14400.00,3000.00,'2026-06-01 00:00:00','2026-03-15 08:00:00'),
 (2,'dj3y149',2,1200.00,200.00,'2026-06-01 00:00:00','2026-03-15 08:00:00'),
-(3,'dj3y149',3,1332.00,300.00,'2026-12-31 00:00:00','2026-03-15 08:00:00'),
-(4,'dj3y149',4,5240.00,1800.00,'2026-04-26 14:41:06','2026-04-16 19:41:06'),
-(5,'dj3y149',5,8750.00,3000.00,'2026-04-21 14:40:46','2026-04-16 19:40:46'),
-(6,'dj3y149',6,2340.00,600.00,'2026-04-20 11:42:48','2026-04-16 16:42:48'),
+(3,'dj3y149',3,1300.00,300.00,'2026-12-31 00:00:00','2026-03-15 08:00:00'),
+(4,'dj3y149',4,4700.00,1800.00,'2026-04-26 14:41:06','2026-04-16 19:41:06'),
+(5,'dj3y149',5,8900.00,3000.00,'2026-04-21 14:40:46','2026-04-16 19:40:46'),
+(6,'dj3y149',6,2320.00,600.00,'2026-04-20 11:42:48','2026-04-16 16:42:48'),
 (7,'dj3y149',7,3750.00,1400.00,'2026-04-19 11:42:45','2026-04-16 16:42:45'),
-(8,'dj3y149',8,1700.00,700.00,'2026-04-19 11:42:42','2026-04-16 16:42:42'),
-(9,'dj3y149',9,1940.00,400.00,'2026-12-31 00:00:00','2026-03-15 08:00:00'),
-(10,'dj3y149',10,2420.00,500.00,'2026-12-31 00:00:00','2026-03-15 08:00:00'),
-(11,'dj3y149',11,2800.00,1000.00,'2026-04-30 04:39:41','2026-04-10 09:39:41'),
+(8,'dj3y149',8,1650.00,700.00,'2026-04-19 11:42:42','2026-04-16 16:42:42'),
+(9,'dj3y149',9,1970.00,400.00,'2026-12-31 00:00:00','2026-03-15 08:00:00'),
+(10,'dj3y149',10,2460.00,500.00,'2026-12-31 00:00:00','2026-03-15 08:00:00'),
+(11,'dj3y149',11,2900.00,1000.00,'2026-04-30 04:39:41','2026-04-10 09:39:41'),
 (12,'dj3y149',12,5250.00,1800.00,'2026-04-17 04:07:11','2026-04-10 09:07:11'),
 (13,'dj3y149',13,2000.00,1500.00,'2026-04-19 12:55:31','2026-04-16 17:55:31'),
-(14,'dj3y149',14,6000.00,2000.00,'2026-04-21 14:40:42','2026-04-16 19:40:42'),
-(15,'dj3y149',15,7200.00,2400.00,'2026-04-20 14:41:02','2026-04-16 19:41:02'),
+(14,'dj3y149',14,5400.00,2000.00,'2026-04-21 14:40:42','2026-04-16 19:40:42'),
+(15,'dj3y149',15,6950.00,2400.00,'2026-04-20 14:41:02','2026-04-16 19:41:02'),
 (16,'dj3y149',16,21000.00,4200.00,NULL,'2026-03-15 08:00:00'),
 (17,'dj3y149',17,12780.00,4260.00,'2026-07-24 14:40:35','2026-04-16 19:40:35'),
 (18,'bnt8626',1,13950.00,3000.00,'2026-06-01 00:00:00','2026-03-16 08:00:00'),
 (19,'bnt8626',2,1200.00,200.00,'2026-06-01 00:00:00','2026-03-16 08:00:00'),
-(20,'bnt8626',3,1323.00,300.00,'2026-12-31 00:00:00','2026-03-16 08:00:00'),
-(21,'bnt8626',4,5400.00,1800.00,'2026-04-26 14:01:58','2026-04-16 19:01:58'),
-(22,'bnt8626',5,9000.00,3000.00,'2026-04-21 14:53:12','2026-04-16 19:53:12'),
-(23,'bnt8626',6,1800.00,600.00,'2026-04-20 14:53:09','2026-04-16 19:53:09'),
+(20,'bnt8626',3,1308.00,300.00,'2026-12-31 00:00:00','2026-03-16 08:00:00'),
+(21,'bnt8626',4,4890.00,1800.00,'2026-04-26 14:01:58','2026-04-16 19:01:58'),
+(22,'bnt8626',5,8890.00,3000.00,'2026-04-21 14:53:12','2026-04-16 19:53:12'),
+(23,'bnt8626',6,1720.00,600.00,'2026-04-20 14:53:09','2026-04-16 19:53:09'),
 (24,'bnt8626',7,4200.00,1400.00,'2026-04-19 14:53:25','2026-04-16 19:53:25'),
 (25,'bnt8626',8,2100.00,700.00,'2026-04-19 14:53:34','2026-04-16 19:53:34'),
 (26,'bnt8626',9,2000.00,400.00,'2026-12-31 00:00:00','2026-03-16 08:00:00'),
 (27,'bnt8626',10,2500.00,500.00,'2026-12-31 00:00:00','2026-03-16 08:00:00'),
 (28,'bnt8626',11,3000.00,1000.00,'2026-05-06 14:52:30','2026-04-16 19:52:30'),
-(29,'bnt8626',12,10800.00,1800.00,'2026-04-23 14:52:26','2026-04-16 19:52:26'),
-(30,'bnt8626',13,4500.00,1500.00,'2026-04-19 14:53:30','2026-04-16 19:53:30'),
-(31,'bnt8626',14,6000.00,2000.00,'2026-04-21 14:53:17','2026-04-16 19:53:17'),
-(32,'bnt8626',15,7200.00,2400.00,'2026-04-20 14:53:04','2026-04-16 19:53:04'),
+(29,'bnt8626',12,10650.00,1800.00,'2026-04-23 14:52:26','2026-04-16 19:52:26'),
+(30,'bnt8626',13,4400.00,1500.00,'2026-04-19 14:53:30','2026-04-16 19:53:30'),
+(31,'bnt8626',14,5940.00,2000.00,'2026-04-21 14:53:17','2026-04-16 19:53:17'),
+(32,'bnt8626',15,7160.00,2400.00,'2026-04-20 14:53:04','2026-04-16 19:53:04'),
 (33,'bnt8626',16,5500.00,4200.00,NULL,'2026-03-16 08:00:00'),
-(34,'bnt8626',17,21655.00,4260.00,'2026-12-31 00:00:00','2026-03-16 08:00:00'),
+(34,'bnt8626',17,20945.00,4260.00,'2026-12-31 00:00:00','2026-03-16 08:00:00'),
 (35,'dj3y149',23,20.00,15.00,'2026-04-20 00:00:00',NULL),
 (36,'bnt8626',22,3580.00,1200.00,'2026-05-16 14:53:43','2026-04-16 19:53:43'),
-(37,'bnt8626',20,1000.00,500.00,'2026-04-16 15:03:00',NULL),
-(38,'bnt8626',23,2000.00,1000.00,'2026-03-16 00:00:00',NULL),
-(39,'dj3y149',20,1000.00,500.00,'2026-04-16 00:00:00',NULL),
-(40,'dj3y149',22,2000.00,1000.00,'2026-04-16 15:20:00',NULL);
+(37,'bnt8626',20,0.00,500.00,'2026-04-16 15:03:00',NULL),
+(38,'bnt8626',23,3000.00,1000.00,'2026-04-20 18:18:14','2026-04-16 23:18:14'),
+(39,'dj3y149',20,1500.00,500.00,'2026-08-14 16:25:36','2026-04-16 21:25:36'),
+(40,'dj3y149',22,0.00,1000.00,'2026-04-16 15:20:00',NULL);
 /*!40000 ALTER TABLE `truck_inventory` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -1831,7 +1950,7 @@ CREATE TABLE `users` (
   `last_name` varchar(50) NOT NULL,
   `password` varchar(50) NOT NULL,
   `phone_number` varchar(15) DEFAULT NULL,
-  `user_type` enum('customer','employee') DEFAULT NULL,
+  `user_type` enum('customer','employee','deleted') DEFAULT NULL,
   `gender` int DEFAULT NULL,
   `ethnicity` int DEFAULT NULL,
   `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1851,7 +1970,7 @@ LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
 ('c@g','Carl','Test','password','3271892321','customer',1,2,'2026-03-30 18:48:09'),
-('cash@ier','cash','ier','money','3271892321','employee',1,2,'2026-03-24 20:38:00'),
+('cash@ier','cash','ier','moneyyyy','3271892321','employee',1,2,'2026-03-24 20:38:00'),
 ('cleo@gmail','cleo','doe','12345678','12345600000','customer',NULL,NULL,'2026-04-10 14:11:06'),
 ('cooked@cook','cooked','goated','withthesauce','3271893321','employee',2,7,'2026-03-24 20:37:08'),
 ('erikanatajim@gmail.com','Erika','Botero','Arcoiris101','7132618756','customer',NULL,NULL,'2026-04-14 11:11:37'),
@@ -1862,16 +1981,20 @@ INSERT INTO `users` VALUES
 ('john.doe@email.com','John','Doe','hashedpassword123','713-555-0101','customer',NULL,NULL,'2026-03-22 22:58:18'),
 ('jonny@gmail','jonny','doe','123456789','1111111111','customer',NULL,NULL,'2026-04-16 13:28:25'),
 ('joshua.j.lopsil@gmail.com','Joshua','Lopez','pokemongo','7137435268','employee',1,4,'2026-03-22 22:58:18'),
+('juan@gmail.com','juan','mu','12345678','1111111111','employee',1,1,'2026-04-19 16:44:55'),
 ('justin@bruh','justin','kondrankote','bruhbruh','3271892321','customer',1,7,'2026-03-24 19:40:19'),
-('justin@gmail','justin','kondratenko','jjjjjjjjjjjjjj','3218902893','employee',1,1,'2026-03-22 22:58:18'),
+('justin@gmail','justin','kondratenko','justingmail','3218902893','employee',1,1,'2026-03-22 22:58:18'),
+('justin@proton.me','Justin','Kondratenko','123456789','2345678977','customer',3,4,'2026-04-16 16:18:46'),
 ('justinbeeber@yahoo.com','Tachiiii','Mosha','Justin666','3461231234','customer',NULL,NULL,'2026-04-16 11:03:06'),
 ('kill@me','kill','me','234567890','32178362136','customer',NULL,NULL,'2026-04-16 13:33:42'),
 ('lelo@gmail','lelo','lelo','123456789sd','22222222222','customer',NULL,NULL,'2026-04-16 15:12:15'),
 ('mustelierrebeca99@gmail.com','Rebeca','Mustelier Trinchet','lkjhg','765321321','employee',1,1,'2026-03-23 23:21:45'),
 ('new@customer','new','customer','bruhmoment','3728191828','customer',NULL,NULL,'2026-04-12 13:27:24'),
+('rebe@gmail.com','rebe','mu','12345678','1111111111',NULL,NULL,NULL,'2026-04-19 14:36:29'),
 ('rebecca@rebe','rebecca','lastname','1234','3427189321','employee',2,4,'2026-03-23 19:59:34'),
 ('rebeka0@gmail','rebeka','mu','12345678','1111111144','customer',NULL,NULL,'2026-04-16 13:56:15'),
-('test1@gmail.com','test','test','password','3271892321','customer',NULL,NULL,'2026-03-26 22:44:06'),
+('rebeka1@gmail.com','rebeca','mustelier','12345678','1111111111','customer',NULL,NULL,'2026-04-16 18:11:25'),
+('test1@gmail.com','test','test','password','3271892321',NULL,NULL,NULL,'2026-03-26 22:44:06'),
 ('thali@gmail','thalia','cl','12345678','1234567890','customer',NULL,NULL,'2026-04-16 13:24:00'),
 ('vanne@gmail','vannesa','lara','12345678','12345678900','customer',NULL,NULL,'2026-04-10 11:46:38'),
 ('yhh@y','cleo','doe','12345678','12345789988','customer',3,7,'2025-09-03 14:02:25'),
@@ -1893,4 +2016,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-16 16:14:09
+-- Dump completed on 2026-04-19 17:54:18
