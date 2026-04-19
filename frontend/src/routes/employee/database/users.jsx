@@ -190,7 +190,8 @@ function UsersDatabaseComponent() {
           description: "The customer account has been restored.",
           variant: "success",
         });
-        fetchCustomers(customerStatusFilter);
+        setCustomerStatusFilter("active");
+        fetchCustomers("active");
       } else {
         const data = await res.json();
         showAlert({

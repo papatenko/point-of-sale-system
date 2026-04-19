@@ -76,7 +76,7 @@ export function AlertPopup({
   const Icon = ICONS[variant];
   const iconStyle = STYLES[variant];
 
-  const showCancel = variant === "destructive" || variant === "warning";
+  const showCancel = variant === "destructive" || variant === "warning" || !!onConfirm;
 
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
