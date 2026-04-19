@@ -222,9 +222,11 @@ router.post("/api/inventory/add-ingredient", async (body, db) =>
 );
 
 // Customers
-router.get("/api/customers", async (_, db) =>
-  CustomerService.getAllCustomers(db),
-);
+router.get("/api/customers", async (body, db, _req, url) => {
+  const { searchParams } = new URL(url, "http://localhost");
+  const status = searchParams.get("status") || "active";
+  return CustomerService.getAllCustomers(db, status);
+});
 router.post("/api/customers", async (body, db) =>
   CustomerService.createCustomer(db, body),
 );
@@ -239,6 +241,14 @@ router.delete("/api/customers/:email", async (_, db, _req, url, params) => {
   if (!email) return { error: "email is required" };
 
   return CustomerService.deleteCustomer(db, email);
+});
+
+router.put("/api/customers/:email/reactivate", async (_, db, _req, url, params) => {
+  const email = params.email;
+
+  if (!email) return { error: "email is required" };
+
+  return CustomerService.reactivateCustomer(db, email);
 });
 
 // Checkout — customer online orders

@@ -1,13 +1,20 @@
-export async function findAll(db) {
+export async function findAll(db, status = "active") {
+  let whereClause = "";
+  if (status === "active") {
+    whereClause = "WHERE u.user_type IS NOT NULL";
+  } else if (status === "inactive") {
+    whereClause = "WHERE u.user_type IS NULL";
+  }
+
   const [rows] = await db.query(`
     SELECT c.*, u.first_name, u.last_name, u.email as user_email,
-           u.phone_number,
+           u.phone_number, u.user_type,
            g.gender AS gender_name, r.race AS ethnicity_name
     FROM customers c
-    JOIN users u ON c.email = u.email
+    LEFT JOIN users u ON c.email = u.email
     LEFT JOIN gender_lookup g ON u.gender = g.gender_id
     LEFT JOIN race_lookup r ON u.ethnicity = r.race_id
-    WHERE u.user_type IS NOT NULL
+    ${whereClause}
     ORDER BY u.last_name, u.first_name
   `);
   return rows;
@@ -15,11 +22,10 @@ export async function findAll(db) {
 
 export async function findByEmail(db, email) {
   const [[row]] = await db.query(
-    `SELECT c.email
+    `SELECT c.email, u.user_type
      FROM customers c
-     JOIN users u ON c.email = u.email
-     WHERE c.email = ?
-     AND u.user_type IS NOT NULL`,
+     LEFT JOIN users u ON c.email = u.email
+     WHERE c.email = ?`,
     [email]
   );
   return row;
@@ -56,6 +62,14 @@ export async function remove(db, email) {
      SET user_type = NULL 
      WHERE email = ?`,
       [email]);
+}
+
+export async function reactivate(db, email) {
+  const [result] = await db.query(
+    "UPDATE users SET user_type = 'customer' WHERE email = ?",
+    [email]
+  );
+  return result;
 }
 
 // export async function removeUser(db, email) {

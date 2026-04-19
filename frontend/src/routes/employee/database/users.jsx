@@ -13,17 +13,25 @@ import { AlertPopup, useAlertPopup } from "@/components/common/alert-popup";
 import { StatusFilter } from "@/components/database/status-filter";
 import { createStatusColumn } from "@/components/database/status-column.jsx";
 import { createStatusField } from "@/components/database/status-field";
-import { PHONE_MIN_LENGTH, PHONE_MAX_LENGTH, PHONE_PLACEHOLDER, formatPhoneNumber, normalizePhoneNumber, PASSWORD_MIN_LENGTH, getPasswordError } from "@/utils/constraints";
+import {
+  PHONE_MIN_LENGTH,
+  PHONE_MAX_LENGTH,
+  PHONE_PLACEHOLDER,
+  formatPhoneNumber,
+  normalizePhoneNumber,
+  PASSWORD_MIN_LENGTH,
+  getPasswordError,
+} from "@/utils/constraints";
 
 export const Route = createFileRoute("/employee/database/users")({
   component: UsersDatabaseComponent,
 });
 
 const ROLE_OPTIONS = [
-  { value: "cashier", label: "Cashier" },
-  { value: "cook", label: "Cook" },
-  { value: "manager", label: "Manager" },
-  { value: "admin", label: "Admin" },
+  { value: "Cashier", label: "Cashier" },
+  { value: "Cook", label: "Cook" },
+  { value: "Manager", label: "Manager" },
+  { value: "Admin", label: "Admin" },
 ];
 
 const EMPLOYEE_COLUMNS = [
@@ -62,6 +70,7 @@ function UsersDatabaseComponent() {
   const [trucks, setTrucks] = useState([]);
   const [selectedTruck, setSelectedTruck] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [customerStatusFilter, setCustomerStatusFilter] = useState("active");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -71,6 +80,9 @@ function UsersDatabaseComponent() {
   const [editForm, setEditForm] = useState({});
   const [toggleDialogOpen, setToggleDialogOpen] = useState(false);
   const [toggleTarget, setToggleTarget] = useState(null);
+  const [deleteCustomerEmail, setDeleteCustomerEmail] = useState(null);
+  const [deleteCustomerOpen, setDeleteCustomerOpen] = useState(false);
+  const [reactivateCustomerOpen, setReactivateCustomerOpen] = useState(false);
   const { alertConfig, showAlert, hideAlert, AlertPopupComponent } =
     useAlertPopup();
 
@@ -84,9 +96,11 @@ function UsersDatabaseComponent() {
     }
   }, []);
 
-  const fetchCustomers = useCallback(async () => {
+  const fetchCustomers = useCallback(async (status = "active") => {
     try {
-      const res = await fetch("/api/customers", { headers: authHeaders() });
+      const res = await fetch(`/api/customers?status=${status}`, {
+        headers: authHeaders(),
+      });
       const data = await res.json();
       setCustomers(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -108,9 +122,93 @@ function UsersDatabaseComponent() {
 
   useEffect(() => {
     fetchEmployees();
-    fetchCustomers();
+    fetchCustomers(customerStatusFilter);
     fetchTrucks();
-  }, [fetchEmployees, fetchCustomers, fetchTrucks]);
+  }, [fetchEmployees, fetchCustomers, fetchTrucks, customerStatusFilter]);
+
+  const handleCustomerStatusChange = (status) => {
+    setCustomerStatusFilter(status);
+    fetchCustomers(status);
+  };
+
+  const handleDeleteCustomer = async (customer) => {
+    setDeleteCustomerEmail(customer.email);
+    setDeleteCustomerOpen(true);
+  };
+
+  const confirmDeleteCustomer = async () => {
+    if (!deleteCustomerEmail) return;
+    try {
+      const res = await fetch(`/api/customers/${deleteCustomerEmail}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      if (res.ok) {
+        showAlert({
+          title: "Customer Deleted",
+          description: "The customer account has been removed.",
+          variant: "success",
+        });
+        fetchCustomers(customerStatusFilter);
+      } else {
+        const data = await res.json();
+        showAlert({
+          title: "Error",
+          description: data.error || "Failed to delete customer",
+          variant: "error",
+        });
+      }
+    } catch (err) {
+      showAlert({
+        title: "Error",
+        description: "Failed to delete customer",
+        variant: "error",
+      });
+    }
+    setDeleteCustomerOpen(false);
+    setDeleteCustomerEmail(null);
+  };
+
+  const handleReactivateCustomer = (customer) => {
+    setDeleteCustomerEmail(customer.email);
+    setReactivateCustomerOpen(true);
+  };
+
+  const confirmReactivateCustomer = async () => {
+    if (!deleteCustomerEmail) return;
+    try {
+      const res = await fetch(
+        `/api/customers/${deleteCustomerEmail}/reactivate`,
+        {
+          method: "PUT",
+          headers: authHeaders(),
+        },
+      );
+      if (res.ok) {
+        showAlert({
+          title: "Customer Reactivated",
+          description: "The customer account has been restored.",
+          variant: "success",
+        });
+        fetchCustomers(customerStatusFilter);
+      } else {
+        const data = await res.json();
+        showAlert({
+          title: "Error",
+          description: data.error || "Failed to reactivate customer",
+          variant: "error",
+        });
+      }
+    } catch (err) {
+      showAlert({
+        title: "Error",
+        description: "Failed to reactivate customer",
+        variant: "error",
+      });
+    }
+    setReactivateCustomerOpen(false);
+    setDeleteCustomerEmail(null);
+  };
 
   const truckOptions = useMemo(() => {
     return trucks.map((t) => ({
@@ -279,9 +377,29 @@ function UsersDatabaseComponent() {
 
   const EDIT_FIELDS = [
     { name: "email", label: "Email", type: "email" },
-    { name: "first_name", label: "First Name", type: "text", required: true, sanitizeOnChange: true },
-    { name: "last_name", label: "Last Name", type: "text", required: true, sanitizeOnChange: true },
-    { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
+    {
+      name: "first_name",
+      label: "First Name",
+      type: "text",
+      required: true,
+      sanitizeOnChange: true,
+    },
+    {
+      name: "last_name",
+      label: "Last Name",
+      type: "text",
+      required: true,
+      sanitizeOnChange: true,
+    },
+    {
+      name: "phone_number",
+      label: "Phone",
+      type: "tel",
+      placeholder: PHONE_PLACEHOLDER,
+      maxLength: PHONE_MAX_LENGTH,
+      formatOnChange: true,
+      formatValue: formatPhoneNumber,
+    },
     {
       name: "role",
       label: "Role",
@@ -312,10 +430,36 @@ function UsersDatabaseComponent() {
 
   const CREATE_FIELDS = [
     { name: "email", label: "Email", type: "email", required: true },
-    { name: "first_name", label: "First Name", type: "text", required: true, sanitizeOnChange: true },
-    { name: "last_name", label: "Last Name", type: "text", required: true, sanitizeOnChange: true },
-    { name: "password", label: "Password", type: "password", required: true, minLength: PASSWORD_MIN_LENGTH },
-    { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
+    {
+      name: "first_name",
+      label: "First Name",
+      type: "text",
+      required: true,
+      sanitizeOnChange: true,
+    },
+    {
+      name: "last_name",
+      label: "Last Name",
+      type: "text",
+      required: true,
+      sanitizeOnChange: true,
+    },
+    {
+      name: "password",
+      label: "Password",
+      type: "password",
+      required: true,
+      minLength: PASSWORD_MIN_LENGTH,
+    },
+    {
+      name: "phone_number",
+      label: "Phone",
+      type: "tel",
+      placeholder: PHONE_PLACEHOLDER,
+      maxLength: PHONE_MAX_LENGTH,
+      formatOnChange: true,
+      formatValue: formatPhoneNumber,
+    },
     {
       name: "role",
       label: "Role",
@@ -442,6 +586,17 @@ function UsersDatabaseComponent() {
         </TabsContent>
 
         <TabsContent value="customers" className="mt-4 space-y-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <StatusFilter
+              statusFilter={customerStatusFilter}
+              onSelect={handleCustomerStatusChange}
+              label="Customers"
+            />
+            <span className="text-sm text-muted-foreground">
+              {customers.length} customers
+            </span>
+          </div>
+
           <DataTable
             columns={CUSTOMER_COLUMNS}
             data={customers}
@@ -455,11 +610,33 @@ function UsersDatabaseComponent() {
               "gender_name",
               "ethnicity_name",
             ]}
+            onDelete={handleDeleteCustomer}
+            onReactivate={handleReactivateCustomer}
             loading={loading}
             emptyMessage="No customers found"
           />
         </TabsContent>
       </Tabs>
+
+      <AlertPopup
+        open={deleteCustomerOpen}
+        onOpenChange={setDeleteCustomerOpen}
+        title="Delete Customer"
+        description={`Are you sure you want to delete "${deleteCustomerEmail}"? This will remove their user account access.`}
+        variant="destructive"
+        onConfirm={confirmDeleteCustomer}
+        confirmLabel="Delete"
+      />
+
+      <AlertPopup
+        open={reactivateCustomerOpen}
+        onOpenChange={setReactivateCustomerOpen}
+        title="Reactivate Customer"
+        description={`Are you sure you want to restore "${deleteCustomerEmail}"? This will restore their user account access.`}
+        variant="info"
+        onConfirm={confirmReactivateCustomer}
+        confirmLabel="Reactivate"
+      />
     </div>
   );
 }

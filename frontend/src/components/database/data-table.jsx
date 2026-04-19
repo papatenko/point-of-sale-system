@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Pencil, ChevronLeft, ChevronRight, Trash2, RotateCcw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -18,6 +18,8 @@ export function DataTable({
   pageSize = 10,
   searchKeys,
   onEdit,
+  onDelete,
+  onReactivate,
   loading = false,
   emptyMessage = "No items found",
 }) {
@@ -91,14 +93,14 @@ export function DataTable({
               {columns.map((col) => (
                 <TableHead key={col.key}>{col.label}</TableHead>
               ))}
-              {onEdit && <TableHead className="w-[100px]">Actions</TableHead>}
+              {(onEdit || onDelete) && <TableHead className="w-[100px]">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length + (onEdit ? 1 : 0)}
+                  colSpan={columns.length + ((onEdit || onDelete) ? 1 : 0)}
                   className="text-center py-8"
                 >
                   Loading...
@@ -107,7 +109,7 @@ export function DataTable({
             ) : paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length + (onEdit ? 1 : 0)}
+                  colSpan={columns.length + ((onEdit || onDelete) ? 1 : 0)}
                   className="text-center py-8 text-muted-foreground"
                 >
                   {emptyMessage}
@@ -119,15 +121,39 @@ export function DataTable({
                   {columns.map((col) => (
                     <TableCell key={col.key}>{renderCell(col, item)}</TableCell>
                   ))}
-                  {onEdit && (
+                  {(onEdit || onDelete) && (
                     <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onEdit(item)}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {onEdit && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onEdit(item)}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                        )}
+                        {onDelete && item.user_type !== null && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onDelete(item)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        )}
+                        {onReactivate && item.user_type === null && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onReactivate(item)}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <RotateCcw className="size-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>
