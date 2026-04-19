@@ -27,7 +27,7 @@ CREATE TABLE food_trucks (
     phone_number          VARCHAR(15),
     accepts_online_orders BOOLEAN      DEFAULT TRUE,
     operating_hours_start VARCHAR(100),
-    operating_hours_end   VARCHAR(100)
+    operating_hours_end   VARCHAR(100),
 );
 
 -- USERS / AUTH
@@ -38,7 +38,7 @@ CREATE TABLE users (
     last_name    VARCHAR(50)  NOT NULL,
     password     VARCHAR(50)  NOT NULL,
     phone_number VARCHAR(15),
-    user_type    ENUM('customer', 'employee', 'deleted'),
+    user_type    ENUM('customer', 'employee'),
     gender       INT,
     ethnicity    INT,
     CONSTRAINT fk_users_gender
@@ -267,3 +267,4 @@ BEGIN
   END IF;
 END$$
 DELIMITER ;
+

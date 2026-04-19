@@ -317,7 +317,7 @@ const handleDeleteAccount = async () => {
           onClick={handleDeleteAccount}
           className="w-full py-2.5 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
         >
-          Delete Account
+          Close Account
         </button>
 
         <p className="text-xs text-muted-foreground mt-2 text-center">

@@ -10,11 +10,18 @@ export const Route = createFileRoute("/employee/database/food-trucks")({
   component: FoodTrucksDatabaseComponent,
 });
 
+
+
 const COLUMNS = [
   { key: "license_plate", label: "License Plate" },
   { key: "truck_name", label: "Truck Name" },
   { key: "current_location", label: "Location" },
   { key: "phone_number", label: "Phone" },
+  {
+    key: "is_active",
+    label: "Status",
+    format: (v) => Number(v) === 1 ? "Active" : "Inactive"
+  },
   {
     key: "accepts_online_orders",
     label: "Online Orders",
@@ -36,9 +43,19 @@ const CREATE_FIELDS = [
   { name: "phone_number", label: "Phone", type: "tel", placeholder: PHONE_PLACEHOLDER, maxLength: PHONE_MAX_LENGTH, formatOnChange: true, formatValue: formatPhoneNumber },
   { name: "operating_hours_start", label: "Opens (e.g., 09:00)", type: "text" },
   { name: "operating_hours_end", label: "Closes (e.g., 22:00)", type: "text" },
+  {
+  name: "is_active",
+  label: "Status",
+  type: "select",
+  options: [
+    { label: "Active", value: true },
+    { label: "Inactive", value: false },
+  ],
+},
 ];
 
 function FoodTrucksDatabaseComponent() {
+
   const [trucks, setTrucks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,12 +66,16 @@ function FoodTrucksDatabaseComponent() {
     useAlertPopup();
 
   const fetchTrucks = async () => {
+
     try {
       const token = localStorage.getItem("token");
       const res = await fetch("/api/trucks", {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       const data = await res.json();
+
+      console.log("📦 FULL DATA:", data);
       setTrucks(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch trucks:", err);
@@ -113,6 +134,7 @@ function FoodTrucksDatabaseComponent() {
   const handleEditSubmit = async (formData) => {
     setIsSubmitting(true);
     setError(null);
+    
     const token = localStorage.getItem("token");
 
     try {
@@ -130,6 +152,9 @@ function FoodTrucksDatabaseComponent() {
           accepts_online_orders: true,
           operating_hours_start: formData.operating_hours_start || null,
           operating_hours_end: formData.operating_hours_end || null,
+
+          is_active:
+          formData.is_active === "true" || formData.is_active === true,
         }),
       });
       const data = await res.json();

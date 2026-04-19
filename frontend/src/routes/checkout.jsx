@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCart } from "@/redux/cartSlice";
 import { Button } from "@/components/ui/button";
@@ -22,16 +22,38 @@ function getTomorrowStr() {
   return localDateStr(d);
 }
 
-function isOutsideHours() {
-  const h = new Date().getHours();
-  return h < 10 || h >= 22;
+/** Parse "HH:MM:SS" or "HH:MM" → { h, m } */
+function parseTimeStr(str) {
+  if (!str) return null;
+  const [h, m] = str.split(":").map(Number);
+  return { h, m: m ?? 0 };
 }
 
-function getAllTimeSlots() {
+/** True if current local time is before open or at/after close */
+function isTruckClosed(open, close) {
+  if (!open || !close) return false;
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  return nowMins < open.h * 60 + open.m || nowMins >= close.h * 60 + close.m;
+}
+
+/** Format { h, m } → "10 AM", "4:30 PM" */
+function formatHour({ h, m }) {
+  const ampm = h >= 12 ? "PM" : "AM";
+  const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+  return m === 0
+    ? `${displayH} ${ampm}`
+    : `${displayH}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
+/** Build 30-min slots between open and close (both inclusive) */
+function getAllTimeSlots(open, close) {
+  if (!open || !close) return [];
   const slots = [];
-  for (let h = 10; h <= 22; h++) {
+  for (let h = open.h; h <= close.h; h++) {
     for (const min of [0, 30]) {
-      if (h === 22 && min === 30) continue;
+      if (h === open.h && min < open.m) continue;
+      if (h === close.h && min > close.m) continue;
       const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
       const ampm = h >= 12 ? "PM" : "AM";
       const label = `${displayH}:${min.toString().padStart(2, "0")} ${ampm}`;
@@ -42,16 +64,16 @@ function getAllTimeSlots() {
   return slots;
 }
 
-function getTimeSlotsForDate(dateStr) {
-  const allSlots = getAllTimeSlots();
-  if (dateStr !== getTodayStr()) return allSlots; // future date — all slots
+/** For today: filter out slots that have already passed */
+function getTimeSlotsForDate(dateStr, open, close) {
+  const allSlots = getAllTimeSlots(open, close);
+  if (dateStr !== getTodayStr()) return allSlots;
 
-  // Today: filter out past / current slots
   const now = new Date();
   const rounded = new Date(now);
   const m = rounded.getMinutes();
   if (m === 0) {
-    // exactly on the hour — advance 30 min so current slot is excluded if right at hour
+    rounded.setMinutes(30, 0, 0);
   } else if (m <= 30) {
     rounded.setMinutes(30, 0, 0);
   } else {
@@ -74,10 +96,13 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cartItems = useSelector((s) => s.cart.items);
-  const cartTotal = cartItems.reduce((sum, i) => sum + (i.quantity >= 2 ? i.price * (i.quantity - 1) : i.price * i.quantity), 0);
+  const cartTotal = cartItems.reduce(
+    (sum, i) =>
+      sum + (i.quantity >= 2 ? i.price * (i.quantity - 1) : i.price * i.quantity),
+    0,
+  );
   const user = useSelector((s) => s.auth.user);
 
-  // Auth guard
   const token = localStorage.getItem("token");
   useEffect(() => {
     if (!token) {
@@ -85,19 +110,11 @@ function CheckoutPage() {
     }
   }, [token]);
 
-  const outsideHours = isOutsideHours();
-  // Outside hours: default to tomorrow since today has no slots
-  const defaultDate = outsideHours ? getTomorrowStr() : getTodayStr();
-  const initialSlots = getTimeSlotsForDate(defaultDate);
-
   const [paymentMethod, setPaymentMethod] = useState("credit");
   const [licensePlate, setLicensePlate] = useState("");
-  // Outside hours: scheduling is mandatory (toggle locked on)
-  const [scheduleEnabled, setScheduleEnabled] = useState(outsideHours);
-  const [scheduledDate, setScheduledDate] = useState(defaultDate);
-  const [scheduledTime, setScheduledTime] = useState(
-    initialSlots.length > 0 ? initialSlots[0].value : "",
-  );
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState(getTodayStr());
+  const [scheduledTime, setScheduledTime] = useState("");
   const [trucks, setTrucks] = useState([]);
   const [trucksLoading, setTrucksLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -114,6 +131,39 @@ function CheckoutPage() {
       .catch(() => {})
       .finally(() => setTrucksLoading(false));
   }, []);
+
+  // Derive hours from whichever truck is selected
+  const selectedTruck = useMemo(
+    () => trucks.find((t) => t.license_plate === licensePlate) ?? null,
+    [trucks, licensePlate],
+  );
+  const truckOpen = useMemo(
+    () => parseTimeStr(selectedTruck?.operating_hours_start) ?? { h: 10, m: 0 },
+    [selectedTruck],
+  );
+  const truckClose = useMemo(
+    () => parseTimeStr(selectedTruck?.operating_hours_end) ?? { h: 22, m: 0 },
+    [selectedTruck],
+  );
+  const outsideHours = useMemo(
+    () => isTruckClosed(truckOpen, truckClose),
+    [truckOpen, truckClose],
+  );
+
+  // Reset schedule state whenever the selected truck changes
+  useEffect(() => {
+    if (!licensePlate || trucks.length === 0) return;
+    const truck = trucks.find((t) => t.license_plate === licensePlate);
+    if (!truck) return;
+    const open = parseTimeStr(truck.operating_hours_start) ?? { h: 10, m: 0 };
+    const close = parseTimeStr(truck.operating_hours_end) ?? { h: 22, m: 0 };
+    const closed = isTruckClosed(open, close);
+    const newDate = closed ? getTomorrowStr() : getTodayStr();
+    const slots = getTimeSlotsForDate(newDate, open, close);
+    setScheduleEnabled(closed);
+    setScheduledDate(newDate);
+    setScheduledTime(slots.length > 0 ? slots[0].value : "");
+  }, [licensePlate, trucks]);
 
   if (cartItems.length === 0) {
     return (
@@ -189,43 +239,61 @@ function CheckoutPage() {
           <form onSubmit={handleSubmit} className="md:col-span-3 space-y-5">
             {/* Pickup Location */}
             <div className="bg-background rounded-xl shadow-sm border p-6">
-              <h2 className="text-base font-semibold mb-4 text-foreground">Pickup Location</h2>
+              <h2 className="text-base font-semibold mb-4 text-foreground">
+                Pickup Location
+              </h2>
               {trucksLoading ? (
-                <p className="text-sm text-muted-foreground">Loading locations...</p>
+                <p className="text-sm text-muted-foreground">
+                  Loading locations...
+                </p>
               ) : trucks.length === 0 ? (
                 <p className="text-sm text-destructive">
                   No pickup locations available.
                 </p>
               ) : (
                 <div className="space-y-2.5">
-                  {trucks.map((truck) => (
-                    <label
-                      key={truck.license_plate}
-                      className={`flex items-start gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
-                        licensePlate === truck.license_plate
-                          ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
-                          : "border-border hover:bg-muted"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="licensePlate"
-                        value={truck.license_plate}
-                        checked={licensePlate === truck.license_plate}
-                        onChange={() => setLicensePlate(truck.license_plate)}
-                        className="accent-amber-600 mt-0.5"
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{truck.truck_name}</p>
-                        {truck.current_location && (
-                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                            <MapPin size={11} />
-                            {truck.current_location}
+                  {trucks.map((truck) => {
+                    const open = parseTimeStr(truck.operating_hours_start);
+                    const close = parseTimeStr(truck.operating_hours_end);
+                    const closed = open && close ? isTruckClosed(open, close) : false;
+                    return (
+                      <label
+                        key={truck.license_plate}
+                        className={`flex items-start gap-3 p-3.5 rounded-lg border cursor-pointer transition-colors ${
+                          licensePlate === truck.license_plate
+                            ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                            : "border-border hover:bg-muted"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="licensePlate"
+                          value={truck.license_plate}
+                          checked={licensePlate === truck.license_plate}
+                          onChange={() => setLicensePlate(truck.license_plate)}
+                          className="accent-amber-600 mt-0.5"
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            {truck.truck_name}
                           </p>
-                        )}
-                      </div>
-                    </label>
-                  ))}
+                          {truck.current_location && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                              <MapPin size={11} />
+                              {truck.current_location}
+                            </p>
+                          )}
+                          {open && close && (
+                            <p className={`text-xs flex items-center gap-1 mt-0.5 ${closed ? "text-red-500 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
+                              <Clock size={11} />
+                              {closed ? "Closed now · " : "Open now · "}
+                              {formatHour(open)} – {formatHour(close)}
+                            </p>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -235,14 +303,18 @@ function CheckoutPage() {
               <div className="flex items-center justify-between mb-1">
                 <h2 className="text-base font-semibold flex items-center gap-2 text-foreground">
                   <Clock size={16} className="text-amber-600" />
-                  {outsideHours ? "Schedule Pickup (Required)" : "Schedule for Later"}
+                  {outsideHours
+                    ? "Schedule Pickup (Required)"
+                    : "Schedule for Later"}
                 </h2>
                 {!outsideHours && (
                   <button
                     type="button"
                     onClick={() => setScheduleEnabled((v) => !v)}
                     className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
-                      scheduleEnabled ? "bg-amber-600" : "bg-muted-foreground/30"
+                      scheduleEnabled
+                        ? "bg-amber-600"
+                        : "bg-muted-foreground/30"
                     }`}
                   >
                     <span
@@ -253,62 +325,86 @@ function CheckoutPage() {
                   </button>
                 )}
               </div>
+
               {outsideHours ? (
                 <p className="text-xs text-amber-600 mb-3">
-                  We're currently closed. Please schedule a pickup for a future date.
+                  This truck is currently closed ({formatHour(truckOpen)} –{" "}
+                  {formatHour(truckClose)}). Please schedule a pickup for when
+                  it's open.
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground mb-3">
                   Leave off to pick up as soon as your order is ready.
                 </p>
               )}
-              {scheduleEnabled && (() => {
-                const slots = getTimeSlotsForDate(scheduledDate);
-                return (
-                  <div className="space-y-3">
-                    {/* Date picker */}
-                    <div>
-                      <label className="block text-xs text-muted-foreground mb-1">Pickup Date</label>
-                      <input
-                        type="date"
-                        value={scheduledDate}
-                        min={getTodayStr()}
-                        onChange={(e) => {
-                          const newDate = e.target.value;
-                          setScheduledDate(newDate);
-                          const newSlots = getTimeSlotsForDate(newDate);
-                          setScheduledTime(newSlots.length > 0 ? newSlots[0].value : "");
-                        }}
-                        className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background"
-                      />
-                    </div>
-                    {/* Time picker */}
-                    <div>
-                      <label className="block text-xs text-muted-foreground mb-1">Pickup Time</label>
-                      {slots.length === 0 ? (
-                        <p className="text-xs text-destructive">No available time slots for today. Please select a future date.</p>
-                      ) : (
-                        <select
-                          value={scheduledTime}
-                          onChange={(e) => setScheduledTime(e.target.value)}
+
+              {scheduleEnabled &&
+                (() => {
+                  const slots = getTimeSlotsForDate(
+                    scheduledDate,
+                    truckOpen,
+                    truckClose,
+                  );
+                  return (
+                    <div className="space-y-3">
+                      {/* Date picker */}
+                      <div>
+                        <label className="block text-xs text-muted-foreground mb-1">
+                          Pickup Date
+                        </label>
+                        <input
+                          type="date"
+                          value={scheduledDate}
+                          min={getTodayStr()}
+                          onChange={(e) => {
+                            const newDate = e.target.value;
+                            setScheduledDate(newDate);
+                            const newSlots = getTimeSlotsForDate(
+                              newDate,
+                              truckOpen,
+                              truckClose,
+                            );
+                            setScheduledTime(
+                              newSlots.length > 0 ? newSlots[0].value : "",
+                            );
+                          }}
                           className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background"
-                        >
-                          {slots.map((slot) => (
-                            <option key={slot.value} value={slot.value}>
-                              {slot.label}
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                        />
+                      </div>
+                      {/* Time picker */}
+                      <div>
+                        <label className="block text-xs text-muted-foreground mb-1">
+                          Pickup Time
+                        </label>
+                        {slots.length === 0 ? (
+                          <p className="text-xs text-destructive">
+                            No available time slots for today. Please select a
+                            future date.
+                          </p>
+                        ) : (
+                          <select
+                            value={scheduledTime}
+                            onChange={(e) => setScheduledTime(e.target.value)}
+                            className="w-full p-2.5 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 bg-background"
+                          >
+                            {slots.map((slot) => (
+                              <option key={slot.value} value={slot.value}>
+                                {slot.label}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })()}
+                  );
+                })()}
             </div>
 
             {/* Payment Method */}
             <div className="bg-background rounded-xl shadow-sm border p-6">
-              <h2 className="text-base font-semibold mb-4 text-foreground">Payment Method</h2>
+              <h2 className="text-base font-semibold mb-4 text-foreground">
+                Payment Method
+              </h2>
               <div className="space-y-2.5">
                 {[
                   { value: "credit", label: "Credit Card" },
@@ -330,7 +426,9 @@ function CheckoutPage() {
                       onChange={() => setPaymentMethod(opt.value)}
                       className="accent-amber-600"
                     />
-                    <span className="text-sm font-medium text-foreground">{opt.label}</span>
+                    <span className="text-sm font-medium text-foreground">
+                      {opt.label}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -356,31 +454,42 @@ function CheckoutPage() {
           {/* Order Summary */}
           <div className="md:col-span-2">
             <div className="bg-background rounded-xl shadow-sm border p-6 sticky top-4">
-              <h2 className="text-base font-semibold mb-4 text-foreground">Order Summary</h2>
+              <h2 className="text-base font-semibold mb-4 text-foreground">
+                Order Summary
+              </h2>
               <div className="space-y-3">
                 {cartItems.map((item) => {
-                  const original   = item.price * item.quantity;
-                  const discounted = item.quantity >= 2 ? item.price * (item.quantity - 1) : null;
+                  const original = item.price * item.quantity;
+                  const discounted =
+                    item.quantity >= 2 ? item.price * (item.quantity - 1) : null;
                   return (
-                  <div
-                    key={item.menuItemId}
-                    className="flex justify-between text-sm"
-                  >
-                    <span className="text-foreground">
-                      {item.name}{" "}
-                      <span className="text-muted-foreground">×{item.quantity}</span>
-                    </span>
-                    <div className="text-right">
-                      {discounted !== null ? (
-                        <>
-                          <p className="text-xs line-through text-muted-foreground/70">${original.toFixed(2)}</p>
-                          <p className="font-semibold text-amber-600 dark:text-amber-400">${discounted.toFixed(2)}</p>
-                        </>
-                      ) : (
-                        <span className="font-medium text-foreground">${original.toFixed(2)}</span>
-                      )}
+                    <div
+                      key={item.menuItemId}
+                      className="flex justify-between text-sm"
+                    >
+                      <span className="text-foreground">
+                        {item.name}{" "}
+                        <span className="text-muted-foreground">
+                          ×{item.quantity}
+                        </span>
+                      </span>
+                      <div className="text-right">
+                        {discounted !== null ? (
+                          <>
+                            <p className="text-xs line-through text-muted-foreground/70">
+                              ${original.toFixed(2)}
+                            </p>
+                            <p className="font-semibold text-amber-600 dark:text-amber-400">
+                              ${discounted.toFixed(2)}
+                            </p>
+                          </>
+                        ) : (
+                          <span className="font-medium text-foreground">
+                            ${original.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
                   );
                 })}
               </div>
