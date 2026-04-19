@@ -2,7 +2,6 @@ import {
   ShoppingCart,
   BarChart3,
   Package,
-  Search,
   Beef,
   Users,
   Utensils,
@@ -35,12 +34,6 @@ export const EMPLOYEE_ROUTES = [
     url: "/employee/inventory",
     roles: ["manager", "admin"],
     icon: Package,
-  },
-  {
-    name: "Search",
-    url: "/employee/search",
-    roles: ["manager", "admin"],
-    icon: Search,
   },
 ];
 

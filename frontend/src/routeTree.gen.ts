@@ -17,7 +17,6 @@ import { Route as EmployeeRouteRouteImport } from './routes/employee/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmployeeIndexRouteImport } from './routes/employee/index'
 import { Route as AuthIndexRouteImport } from './routes/auth/index'
-import { Route as EmployeeSearchRouteImport } from './routes/employee/search'
 import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
 import { Route as EmployeePosRouteImport } from './routes/employee/pos'
 import { Route as EmployeeOrdersRouteImport } from './routes/employee/orders'
@@ -72,11 +71,6 @@ const AuthIndexRoute = AuthIndexRouteImport.update({
   id: '/auth/',
   path: '/auth/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const EmployeeSearchRoute = EmployeeSearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => EmployeeRouteRoute,
 } as any)
 const EmployeeReportsRoute = EmployeeReportsRouteImport.update({
   id: '/reports',
@@ -169,7 +163,6 @@ export interface FileRoutesByFullPath {
   '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
-  '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
   '/employee/': typeof EmployeeIndexRoute
   '/employee/database/food-trucks': typeof EmployeeDatabaseFoodTrucksRoute
@@ -193,7 +186,6 @@ export interface FileRoutesByTo {
   '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
-  '/employee/search': typeof EmployeeSearchRoute
   '/auth': typeof AuthIndexRoute
   '/employee': typeof EmployeeIndexRoute
   '/employee/database/food-trucks': typeof EmployeeDatabaseFoodTrucksRoute
@@ -219,7 +211,6 @@ export interface FileRoutesById {
   '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
   '/employee/reports': typeof EmployeeReportsRoute
-  '/employee/search': typeof EmployeeSearchRoute
   '/auth/': typeof AuthIndexRoute
   '/employee/': typeof EmployeeIndexRoute
   '/employee/database/food-trucks': typeof EmployeeDatabaseFoodTrucksRoute
@@ -246,7 +237,6 @@ export interface FileRouteTypes {
     | '/employee/orders'
     | '/employee/pos'
     | '/employee/reports'
-    | '/employee/search'
     | '/auth/'
     | '/employee/'
     | '/employee/database/food-trucks'
@@ -270,7 +260,6 @@ export interface FileRouteTypes {
     | '/employee/orders'
     | '/employee/pos'
     | '/employee/reports'
-    | '/employee/search'
     | '/auth'
     | '/employee'
     | '/employee/database/food-trucks'
@@ -295,7 +284,6 @@ export interface FileRouteTypes {
     | '/employee/orders'
     | '/employee/pos'
     | '/employee/reports'
-    | '/employee/search'
     | '/auth/'
     | '/employee/'
     | '/employee/database/food-trucks'
@@ -376,13 +364,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/auth/'
       preLoaderRoute: typeof AuthIndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/employee/search': {
-      id: '/employee/search'
-      path: '/search'
-      fullPath: '/employee/search'
-      preLoaderRoute: typeof EmployeeSearchRouteImport
-      parentRoute: typeof EmployeeRouteRoute
     }
     '/employee/reports': {
       id: '/employee/reports'
@@ -512,7 +493,6 @@ interface EmployeeRouteRouteChildren {
   EmployeeOrdersRoute: typeof EmployeeOrdersRoute
   EmployeePosRoute: typeof EmployeePosRoute
   EmployeeReportsRoute: typeof EmployeeReportsRoute
-  EmployeeSearchRoute: typeof EmployeeSearchRoute
   EmployeeIndexRoute: typeof EmployeeIndexRoute
 }
 
@@ -522,7 +502,6 @@ const EmployeeRouteRouteChildren: EmployeeRouteRouteChildren = {
   EmployeeOrdersRoute: EmployeeOrdersRoute,
   EmployeePosRoute: EmployeePosRoute,
   EmployeeReportsRoute: EmployeeReportsRoute,
-  EmployeeSearchRoute: EmployeeSearchRoute,
   EmployeeIndexRoute: EmployeeIndexRoute,
 }
 
