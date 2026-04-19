@@ -53,9 +53,36 @@ export async function createCheckout(db, body, req = null) {
     const dt = new Date(`${scheduledDate}T${scheduledTime}:00`);
     const h = dt.getHours();
     const m = dt.getMinutes();
-    if (h < 10 || h > 22 || (h === 22 && m > 0)) {
-      throw new Error("Scheduled time must be between 10:00 AM and 10:00 PM.");
+
+    // Fetch truck operating hours and validate against them
+    const [[truck]] = await db.query(
+      `SELECT operating_hours_start, operating_hours_end FROM food_trucks WHERE license_plate = ?`,
+      [licensePlate],
+    );
+    const parseT = (str) => {
+      if (!str) return null;
+      const parts = String(str).split(":").map(Number);
+      return { h: parts[0], m: parts[1] ?? 0 };
+    };
+    const open  = parseT(truck?.operating_hours_start) ?? { h: 10, m: 0 };
+    const close = parseT(truck?.operating_hours_end)   ?? { h: 22, m: 0 };
+
+    const orderMins  = h * 60 + m;
+    const openMins   = open.h  * 60 + open.m;
+    const closeMins  = close.h * 60 + close.m;
+
+    const fmt = ({ h, m }) => {
+      const ampm = h >= 12 ? "PM" : "AM";
+      const dh = h > 12 ? h - 12 : h === 0 ? 12 : h;
+      return m === 0 ? `${dh} ${ampm}` : `${dh}:${String(m).padStart(2, "0")} ${ampm}`;
+    };
+
+    if (orderMins < openMins || orderMins > closeMins) {
+      throw new Error(
+        `Scheduled time must be between ${fmt(open)} and ${fmt(close)}.`,
+      );
     }
+
     scheduledMysql = `${scheduledDate} ${scheduledTime}:00`;
   }
 
