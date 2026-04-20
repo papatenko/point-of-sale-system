@@ -79,6 +79,9 @@ Shako Kabob is a full-stack Point of Sale (POS) system built for a food truck op
 
 ## Environment Variables
 
+> [!IMPORTANT]  
+> The backend expects the following environment variables to be set.
+
 Create `backend/.env` with the following:
 
 ```env
@@ -132,7 +135,6 @@ mysql -u root -p <database-name> < db/seed_menu.sql
 
 ```bash
 cd backend
-cp .env.example .env   # if an example exists
 # Edit .env with your MySQL credentials
 ```
 
