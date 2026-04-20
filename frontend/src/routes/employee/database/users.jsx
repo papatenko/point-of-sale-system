@@ -68,10 +68,9 @@ function UsersDatabaseComponent() {
   const [employees, setEmployees] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [trucks, setTrucks] = useState([]);
-  const [allTrucks, setAllTrucks] = useState([]);
   const [selectedTruck, setSelectedTruck] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [customerStatusFilter, setCustomerStatusFilter] = useState("active");
+  const [customerStatusFilter, setCustomerStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -113,16 +112,9 @@ function UsersDatabaseComponent() {
 
   const fetchTrucks = useCallback(async () => {
     try {
-      const [activeRes, allRes] = await Promise.all([
-        fetch("/api/trucks?status=active"),
-        fetch("/api/trucks"),
-      ]);
-      const [activeData, allData] = await Promise.all([
-        activeRes.json(),
-        allRes.json(),
-      ]);
-      setTrucks(Array.isArray(activeData) ? activeData : []);
-      setAllTrucks(Array.isArray(allData) ? allData : []);
+      const res = await fetch("/api/trucks");
+      const data = await res.json();
+      setTrucks(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch trucks:", err);
     }
@@ -198,8 +190,7 @@ function UsersDatabaseComponent() {
           description: "The customer account has been restored.",
           variant: "success",
         });
-        setCustomerStatusFilter("active");
-        fetchCustomers("active");
+        fetchCustomers(customerStatusFilter);
       } else {
         const data = await res.json();
         showAlert({
@@ -561,7 +552,7 @@ function UsersDatabaseComponent() {
         <TabsContent value="employees" className="mt-4 space-y-4">
           <div className="flex items-center gap-4 flex-wrap">
             <TruckFilter
-              trucks={allTrucks}
+              trucks={trucks}
               selectedTruck={selectedTruck}
               onSelect={setSelectedTruck}
             />
@@ -619,8 +610,8 @@ function UsersDatabaseComponent() {
               "gender_name",
               "ethnicity_name",
             ]}
-            onDelete={customerStatusFilter !== "inactive" ? handleDeleteCustomer : undefined}
-            onReactivate={customerStatusFilter === "inactive" ? handleReactivateCustomer : undefined}
+            onDelete={handleDeleteCustomer}
+            onReactivate={handleReactivateCustomer}
             loading={loading}
             emptyMessage="No customers found"
           />

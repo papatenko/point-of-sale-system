@@ -133,7 +133,7 @@ export function DataTable({
                             <Pencil className="size-4" />
                           </Button>
                         )}
-                        {onDelete && item.is_active && (
+                        {onDelete && Boolean(item.is_active) && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -143,7 +143,7 @@ export function DataTable({
                             <Trash2 className="size-4" />
                           </Button>
                         )}
-                        {onReactivate && !item.is_active && (
+                        {onReactivate && !Boolean(item.is_active) && (
                           <Button
                             variant="outline"
                             size="sm"
