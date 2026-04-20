@@ -21,7 +21,7 @@ import { Route as EmployeeReportsRouteImport } from './routes/employee/reports'
 import { Route as EmployeePosRouteImport } from './routes/employee/pos'
 import { Route as EmployeeOrdersRouteImport } from './routes/employee/orders'
 import { Route as EmployeeInventoryRouteImport } from './routes/employee/inventory'
-import { Route as CustomerUmaRouteImport } from './routes/customer/uma'
+import { Route as CustomerAbautUSRouteImport } from './routes/customer/abautUS'
 import { Route as ConfirmationOrderIdRouteImport } from './routes/confirmation.$orderId'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
@@ -92,9 +92,9 @@ const EmployeeInventoryRoute = EmployeeInventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => EmployeeRouteRoute,
 } as any)
-const CustomerUmaRoute = CustomerUmaRouteImport.update({
-  id: '/customer/uma',
-  path: '/customer/uma',
+const CustomerAbautUSRoute = CustomerAbautUSRouteImport.update({
+  id: '/customer/abautUS',
+  path: '/customer/abautUS',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfirmationOrderIdRoute = ConfirmationOrderIdRouteImport.update({
@@ -158,7 +158,7 @@ export interface FileRoutesByFullPath {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
-  '/customer/uma': typeof CustomerUmaRoute
+  '/customer/abautUS': typeof CustomerAbautUSRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -181,7 +181,7 @@ export interface FileRoutesByTo {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
-  '/customer/uma': typeof CustomerUmaRoute
+  '/customer/abautUS': typeof CustomerAbautUSRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -206,7 +206,7 @@ export interface FileRoutesById {
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/confirmation/$orderId': typeof ConfirmationOrderIdRoute
-  '/customer/uma': typeof CustomerUmaRoute
+  '/customer/abautUS': typeof CustomerAbautUSRoute
   '/employee/inventory': typeof EmployeeInventoryRoute
   '/employee/orders': typeof EmployeeOrdersRoute
   '/employee/pos': typeof EmployeePosRoute
@@ -232,7 +232,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
-    | '/customer/uma'
+    | '/customer/abautUS'
     | '/employee/inventory'
     | '/employee/orders'
     | '/employee/pos'
@@ -255,7 +255,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
-    | '/customer/uma'
+    | '/customer/abautUS'
     | '/employee/inventory'
     | '/employee/orders'
     | '/employee/pos'
@@ -279,7 +279,7 @@ export interface FileRouteTypes {
     | '/auth/login'
     | '/auth/signup'
     | '/confirmation/$orderId'
-    | '/customer/uma'
+    | '/customer/abautUS'
     | '/employee/inventory'
     | '/employee/orders'
     | '/employee/pos'
@@ -303,7 +303,7 @@ export interface RootRouteChildren {
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
   ConfirmationOrderIdRoute: typeof ConfirmationOrderIdRoute
-  CustomerUmaRoute: typeof CustomerUmaRoute
+  CustomerAbautUSRoute: typeof CustomerAbautUSRoute
   AuthIndexRoute: typeof AuthIndexRoute
 }
 
@@ -393,11 +393,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmployeeInventoryRouteImport
       parentRoute: typeof EmployeeRouteRoute
     }
-    '/customer/uma': {
-      id: '/customer/uma'
-      path: '/customer/uma'
-      fullPath: '/customer/uma'
-      preLoaderRoute: typeof CustomerUmaRouteImport
+    '/customer/abautUS': {
+      id: '/customer/abautUS'
+      path: '/customer/abautUS'
+      fullPath: '/customer/abautUS'
+      preLoaderRoute: typeof CustomerAbautUSRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/confirmation/$orderId': {
@@ -519,7 +519,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
   ConfirmationOrderIdRoute: ConfirmationOrderIdRoute,
-  CustomerUmaRoute: CustomerUmaRoute,
+  CustomerAbautUSRoute: CustomerAbautUSRoute,
   AuthIndexRoute: AuthIndexRoute,
 }
 export const routeTree = rootRouteImport

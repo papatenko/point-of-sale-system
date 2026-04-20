@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, XCircle, AlertCircle, Info } from "lucide-react";
+import { AlertTriangle, XCircle, AlertCircle, Info, CheckCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +16,7 @@ const ICONS = {
   error: XCircle,
   warning: AlertTriangle,
   info: Info,
+  success: CheckCircle,
 };
 
 const STYLES = {
@@ -23,6 +24,7 @@ const STYLES = {
   error: "text-red-500",
   warning: "text-amber-500",
   info: "text-blue-500",
+  success: "text-green-500",
 };
 
 export function AlertPopup({
@@ -74,7 +76,7 @@ export function AlertPopup({
   const Icon = ICONS[variant];
   const iconStyle = STYLES[variant];
 
-  const showCancel = variant === "destructive" || variant === "warning";
+  const showCancel = variant === "destructive" || variant === "warning" || !!onConfirm;
 
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>

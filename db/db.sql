@@ -27,7 +27,8 @@ CREATE TABLE food_trucks (
     phone_number          VARCHAR(15),
     accepts_online_orders BOOLEAN      DEFAULT TRUE,
     operating_hours_start VARCHAR(100),
-    operating_hours_end   VARCHAR(100)
+    operating_hours_end   VARCHAR(100),
+    is_active     BOOLEAN      DEFAULT TRUE,
 );
 
 -- USERS / AUTH
@@ -50,6 +51,7 @@ CREATE TABLE users (
 CREATE TABLE customers (
     email           VARCHAR(100) NOT NULL,
     default_address TEXT,
+    is_active     BOOLEAN      DEFAULT TRUE,
     CONSTRAINT pk_customers
         PRIMARY KEY (email),
     CONSTRAINT fk_customers_email
@@ -267,3 +269,4 @@ BEGIN
   END IF;
 END$$
 DELIMITER ;
+

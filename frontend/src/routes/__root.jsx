@@ -185,7 +185,7 @@ function RootLayout() {
                       Order Online
                     </Link>
                     <Link
-                      to="/customer/uma"
+                      to="/customer/abaoutus"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-foreground hover:bg-muted transition-colors"
                     >
@@ -257,7 +257,7 @@ function RootLayout() {
                     asChild
                     className={navigationMenuTriggerStyle()}
                   >
-                    <Link to="/customer/uma">About Us</Link>
+                    <Link to="/customer/abautUS">About Us</Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
 

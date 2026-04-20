@@ -40,8 +40,15 @@ router.put("/api/users", async (body, db) => {
   const { email, ...data } = body;
   return UserService.updateUser(db, email, data);
 });
-router.delete("/api/users", async (body, db) => {
-  const { email } = body;
+// router.delete("/api/users", async (body, db) => {
+//   const { email } = body;
+//   return UserService.deleteUser(db, email);
+// });
+router.delete("/api/users/:email", async (_, db, _req, url, params) => {
+  const email = params.email;
+
+  if (!email) return { error: "email is required" };
+
   return UserService.deleteUser(db, email);
 });
 router.get("/api/users/genders", async (_, db) =>
@@ -83,7 +90,11 @@ router.put("/api/ingredients", async (body, db) =>
 );
 
 // Trucks
-router.get("/api/trucks", async (_, db) => TruckService.getAllTrucks(db));
+router.get("/api/trucks", async (_, db, _req, url) => {
+  const { searchParams } = new URL(url, "http://localhost");
+  const status = searchParams.get("status") || "all";
+  return TruckService.getAllTrucks(db, status);
+});
 router.post("/api/trucks", async (body, db) =>
   TruckService.createTruck(db, body),
 );
@@ -125,9 +136,11 @@ router.get("/api/menu/:id/ingredients", async (_, db, _req, _url, params) => {
   );
   return rows;
 });
-router.get("/api/menu-items", async (_, db) =>
-  MenuItemService.getAllMenuItemsWithRecipes(db),
-);
+router.get("/api/menu-items", async (_, db, _req, url) => {
+  const { searchParams } = new URL(url, "http://localhost");
+  const status = searchParams.get("status") || "all";
+  return MenuItemService.getAllMenuItemsWithRecipes(db, status);
+});
 router.post("/api/menu-items", async (body, db) =>
   MenuItemService.createMenuItem(db, body),
 );
@@ -215,15 +228,33 @@ router.post("/api/inventory/add-ingredient", async (body, db) =>
 );
 
 // Customers
-router.get("/api/customers", async (_, db) =>
-  CustomerService.getAllCustomers(db),
-);
+router.get("/api/customers", async (body, db, _req, url) => {
+  const { searchParams } = new URL(url, "http://localhost");
+  const status = searchParams.get("status") || "active";
+  return CustomerService.getAllCustomers(db, status);
+});
 router.post("/api/customers", async (body, db) =>
   CustomerService.createCustomer(db, body),
 );
-router.delete("/api/customers", async (body, db) => {
-  const { email } = body;
+// router.delete("/api/customers", async (body, db) => {
+//   const { email } = body;
+//   return CustomerService.deleteCustomer(db, email);
+// });
+
+router.delete("/api/customers/:email", async (_, db, _req, url, params) => {
+  const email = params.email;
+
+  if (!email) return { error: "email is required" };
+
   return CustomerService.deleteCustomer(db, email);
+});
+
+router.put("/api/customers/:email/reactivate", async (_, db, _req, url, params) => {
+  const email = params.email;
+
+  if (!email) return { error: "email is required" };
+
+  return CustomerService.reactivateCustomer(db, email);
 });
 
 // Checkout — customer online orders

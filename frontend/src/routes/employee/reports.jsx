@@ -236,7 +236,7 @@ function RouteComponent() {
   useEffect(() => {
     let cancelled = false;
     const token = localStorage.getItem("token");
-    fetch("/api/trucks", {
+    fetch("/api/trucks?status=active", {
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     })
       .then((res) => res.json())

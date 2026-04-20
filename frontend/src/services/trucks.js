@@ -1,7 +1,7 @@
 import { apiFetch } from "./api";
 
 export async function getTrucks() {
-  return apiFetch("/api/trucks");
+  return apiFetch("/api/trucks?status=active");
 }
 
 export async function getTruck(licensePlate) {

@@ -1,8 +1,8 @@
 import * as CustomerModel from "../models/customer.model.js";
 // import * as UserService from "./users.service.js";
 
-export async function getAllCustomers(db) {
-  return await CustomerModel.findAll(db);
+export async function getAllCustomers(db, status = "active") {
+  return await CustomerModel.findAll(db, status);
 }
 
 export async function createCustomer(db, data) {
@@ -45,10 +45,22 @@ export async function deleteCustomer(db, email) {
   }
 
   await CustomerModel.remove(db, email);
-  await CustomerModel.removeUser(db, email);
 
   return {
     success: true,
-    message: "Customer and associated user deleted successfully",
+    message: "Customer deleted successfully",
+  };
+}
+
+export async function reactivateCustomer(db, email) {
+  if (!email) {
+    return { error: "email is required" };
+  }
+
+  await CustomerModel.reactivate(db, email);
+
+  return {
+    success: true,
+    message: "Customer reactivated successfully",
   };
 }

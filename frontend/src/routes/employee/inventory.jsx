@@ -935,7 +935,7 @@ function InventoryPage() {
   // Load trucks + menu items on mount
   useEffect(() => {
     if (authUser?.role === "admin") {
-      fetch("/api/trucks")
+      fetch("/api/trucks?status=active")
         .then((r) => r.json())
         .then((data) => {
           setTrucks(data);

@@ -24,3 +24,14 @@ export async function updateProfile(data) {
     body: JSON.stringify(data),
   });
 }
+export async function deleteUser(email) {
+  return apiFetch(`/api/users/${encodeURIComponent(email)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function deleteCustomer(email) {
+  return apiFetch(`/api/customers/${encodeURIComponent(email)}`, {
+    method: "DELETE",
+  });
+}

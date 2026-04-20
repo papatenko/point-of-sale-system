@@ -1,12 +1,12 @@
 import * as MenuItemModel from "../models/menuItems.model.js";
 import * as RecipeModel from "../models/recipes.model.js";
 
-export async function getAllMenuItems(db) {
-  return await MenuItemModel.findAll(db);
+export async function getAllMenuItems(db, status = "all") {
+  return await MenuItemModel.findAll(db, status);
 }
 
-export async function getAllMenuItemsWithRecipes(db) {
-  return await MenuItemModel.findAllWithRecipes(db);
+export async function getAllMenuItemsWithRecipes(db, status = "all") {
+  return await MenuItemModel.findAllWithRecipes(db, status);
 }
 
 export async function getAvailableMenuItems(db) {
