@@ -21,7 +21,7 @@ export function useInventory(currentUser = "manager@example.com") {
 
   const fetchTrucks = useCallback(async () => {
     try {
-      const res = await fetch("/api/trucks");
+      const res = await fetch("/api/trucks?status=active");
       const data = await res.json();
       setTrucks(data);
       if (data.length > 0 && !selectedTruck) {

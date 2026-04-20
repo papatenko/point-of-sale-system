@@ -66,7 +66,7 @@ function PosScreen() {
 
     Promise.all([
       fetch("/api/menu").then((r) => r.json()),
-      fetch("/api/trucks").then((r) => r.json()),
+      fetch("/api/trucks?status=active").then((r) => r.json()),
       stockFetch,
     ])
       .then(([menuData, truckData, stockData]) => {

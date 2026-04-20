@@ -68,6 +68,7 @@ function UsersDatabaseComponent() {
   const [employees, setEmployees] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [trucks, setTrucks] = useState([]);
+  const [allTrucks, setAllTrucks] = useState([]);
   const [selectedTruck, setSelectedTruck] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [customerStatusFilter, setCustomerStatusFilter] = useState("active");
@@ -112,9 +113,16 @@ function UsersDatabaseComponent() {
 
   const fetchTrucks = useCallback(async () => {
     try {
-      const res = await fetch("/api/trucks");
-      const data = await res.json();
-      setTrucks(Array.isArray(data) ? data : []);
+      const [activeRes, allRes] = await Promise.all([
+        fetch("/api/trucks?status=active"),
+        fetch("/api/trucks"),
+      ]);
+      const [activeData, allData] = await Promise.all([
+        activeRes.json(),
+        allRes.json(),
+      ]);
+      setTrucks(Array.isArray(activeData) ? activeData : []);
+      setAllTrucks(Array.isArray(allData) ? allData : []);
     } catch (err) {
       console.error("Failed to fetch trucks:", err);
     }
@@ -553,7 +561,7 @@ function UsersDatabaseComponent() {
         <TabsContent value="employees" className="mt-4 space-y-4">
           <div className="flex items-center gap-4 flex-wrap">
             <TruckFilter
-              trucks={trucks}
+              trucks={allTrucks}
               selectedTruck={selectedTruck}
               onSelect={setSelectedTruck}
             />
@@ -611,8 +619,8 @@ function UsersDatabaseComponent() {
               "gender_name",
               "ethnicity_name",
             ]}
-            onDelete={handleDeleteCustomer}
-            onReactivate={handleReactivateCustomer}
+            onDelete={customerStatusFilter !== "inactive" ? handleDeleteCustomer : undefined}
+            onReactivate={customerStatusFilter === "inactive" ? handleReactivateCustomer : undefined}
             loading={loading}
             emptyMessage="No customers found"
           />

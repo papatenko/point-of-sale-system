@@ -93,14 +93,14 @@ export function DataTable({
               {columns.map((col) => (
                 <TableHead key={col.key}>{col.label}</TableHead>
               ))}
-              {(onEdit || onDelete) && <TableHead className="w-[100px]">Actions</TableHead>}
+              {(onEdit || onDelete || onReactivate) && <TableHead className="w-[100px]">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length + ((onEdit || onDelete) ? 1 : 0)}
+                  colSpan={columns.length + ((onEdit || onDelete || onReactivate) ? 1 : 0)}
                   className="text-center py-8"
                 >
                   Loading...
@@ -109,7 +109,7 @@ export function DataTable({
             ) : paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length + ((onEdit || onDelete) ? 1 : 0)}
+                  colSpan={columns.length + ((onEdit || onDelete || onReactivate) ? 1 : 0)}
                   className="text-center py-8 text-muted-foreground"
                 >
                   {emptyMessage}
@@ -121,7 +121,7 @@ export function DataTable({
                   {columns.map((col) => (
                     <TableCell key={col.key}>{renderCell(col, item)}</TableCell>
                   ))}
-                  {(onEdit || onDelete) && (
+                  {(onEdit || onDelete || onReactivate) && (
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {onEdit && (
@@ -133,7 +133,7 @@ export function DataTable({
                             <Pencil className="size-4" />
                           </Button>
                         )}
-                        {onDelete && item.user_type !== null && (
+                        {onDelete && item.is_active && (
                           <Button
                             variant="outline"
                             size="sm"
@@ -143,7 +143,7 @@ export function DataTable({
                             <Trash2 className="size-4" />
                           </Button>
                         )}
-                        {onReactivate && item.user_type === null && (
+                        {onReactivate && !item.is_active && (
                           <Button
                             variant="outline"
                             size="sm"

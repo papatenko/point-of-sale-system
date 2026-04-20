@@ -6,9 +6,10 @@ export async function login(email, password) {
   const db = await getDatabase();
 
   const [rows] = await db.query(
-    `SELECT u.email, u.password, u.first_name, u.user_type, e.role, e.license_plate, e.is_active
+    `SELECT u.email, u.password, u.first_name, u.user_type, e.role, e.license_plate, e.is_active AS employee_is_active, c.is_active AS customer_is_active
      FROM users u
      LEFT JOIN employees e ON u.email = e.email
+     LEFT JOIN customers c ON u.email = c.email
      WHERE u.email = ?  
     AND u.user_type IS NOT NULL `,
     [email],
@@ -23,8 +24,12 @@ export async function login(email, password) {
     throw new Error("Incorrect password");
   }
 
-  if (user.user_type === "employee" && user.is_active === 0) {
-    throw new Error("Invalid email or password");
+  if (user.user_type === "employee" && user.employee_is_active === 0) {
+    throw new Error("This account has been deactivated. Please contact an administrator.");
+  }
+
+  if (user.user_type === "customer" && user.customer_is_active === 0) {
+    throw new Error("This account has been deactivated. Please contact an administrator.");
   }
 
   const token = signUserToken(

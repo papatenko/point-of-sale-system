@@ -121,7 +121,7 @@ function CheckoutPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/trucks")
+    fetch("/api/trucks?status=active")
       .then((r) => r.json())
       .then((data) => {
         const list = Array.isArray(data) ? data : [];

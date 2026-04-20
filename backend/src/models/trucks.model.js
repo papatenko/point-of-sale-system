@@ -125,6 +125,15 @@ export async function remove(db, licensePlate) {
       [licensePlate]
     );
 
+    // 3. cancel all incomplete orders for the truck
+    await db.query(
+      `UPDATE checkout
+       SET order_status = 'cancelled'
+       WHERE license_plate = ?
+         AND order_status NOT IN ('completed', 'cancelled')`,
+      [licensePlate]
+    );
+
     await db.query("COMMIT");
   } catch (err) {
     await db.query("ROLLBACK");
